@@ -1,0 +1,17 @@
+{
+  "name": "verify-dashboard",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev --workspace=apps/client",
+    "dev:server": "npm run start:dev --workspace=apps/server",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\""
+  },
+  "devDependencies": {
+    "concurrently": "latest"
+  }
+}
