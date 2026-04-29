@@ -43,16 +43,10 @@ Start database:
 npm run db:up
 ```
 
-Start backend:
+Start backend / frontend:
 
 ```bash
-npm run dev:server
-```
-
-Start frontend:
-
-```bash
-npm run dev:client
+npm run dev
 ```
 
 ## URLs
