@@ -1,4 +1,6 @@
 import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
+
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,

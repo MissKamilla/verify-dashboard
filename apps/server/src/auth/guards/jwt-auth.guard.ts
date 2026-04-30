@@ -8,7 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
 type JwtPayload = {
-  sub: string;
+  sub: number;
   email: string;
 };
 
