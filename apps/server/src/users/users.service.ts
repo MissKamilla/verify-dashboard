@@ -86,8 +86,8 @@ export class UsersService {
       user.password = await bcrypt.hash(dto.password, 10);
     }
 
-    const updateUser = await this.usersRepository.save(user);
+    await this.usersRepository.save(user);
 
-    return updateUser;
+    return this.findById(userId);
   }
 }
