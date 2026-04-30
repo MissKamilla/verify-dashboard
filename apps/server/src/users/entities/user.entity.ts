@@ -10,6 +10,6 @@ export class User {
   @Column() firstname!: string;
   @Column() lastname!: string;
   @Column({ unique: true }) email!: string;
-  @Column() password!: string;
+  @Column({ select: false }) password!: string;
   @CreateDateColumn() createdAt!: Date;
 }

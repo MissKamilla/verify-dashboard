@@ -23,8 +23,19 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
-  findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+  findByEmail(
+    email: string,
+    options?: { withPassword?: boolean },
+  ): Promise<User | null> {
+    const query = this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.email = :email', { email });
+
+    if (options?.withPassword) {
+      query.addSelect('user.password');
+    }
+
+    return query.getOne();
   }
 
   async findById(id: number): Promise<Omit<User, 'password'>> {
@@ -34,8 +45,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const { password, ...profile } = user;
-    return profile;
+    return user;
   }
 
   createUser(data: CreateUserData): Promise<User> {
@@ -77,8 +87,7 @@ export class UsersService {
     }
 
     const updateUser = await this.usersRepository.save(user);
-    const { password, ...profile } = updateUser;
 
-    return profile;
+    return updateUser;
   }
 }
