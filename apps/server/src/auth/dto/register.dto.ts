@@ -4,6 +4,7 @@ import {
   IsEmail,
   IsNotEmpty,
   IsString,
+  Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -36,10 +37,13 @@ export class RegisterDto {
   @MaxLength(255)
   email!: string;
 
-  @ApiProperty({ example: '123456' })
+  @ApiProperty({ example: 'password123' })
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
+    message: 'Password must contain at least one letter and one number',
+  })
+  @MinLength(8)
   @MaxLength(100)
   password!: string;
 }

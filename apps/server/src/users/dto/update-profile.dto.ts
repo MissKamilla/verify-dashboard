@@ -7,6 +7,7 @@ import {
   IsString,
   MinLength,
   MaxLength,
+  Matches,
 } from 'class-validator';
 
 export class UpdateProfileDto {
@@ -40,11 +41,14 @@ export class UpdateProfileDto {
   @MaxLength(255)
   email?: string;
 
-  @ApiPropertyOptional({ example: 'newpassword' })
+  @ApiPropertyOptional({ example: 'newpassword123' })
   @IsOptional()
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
+  @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
+    message: 'Password must contain at least one letter and one number',
+  })
+  @MinLength(8)
   @MaxLength(100)
   password?: string;
 }
