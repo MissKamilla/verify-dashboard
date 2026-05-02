@@ -1,5 +1,5 @@
-import { AppNavigation } from "./components/AppNavigation";
-import { AppRouter } from "./router/AppRouter";
+import { AppNavigation } from "@/components/AppNavigation";
+import { AppRouter } from "@/router/AppRouter";
 
 function App() {
   return (
