@@ -1,6 +1,6 @@
 import { useState, type ChangeEvent, type SyntheticEvent } from "react";
 
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 
 import { FormInputField } from "@/shared/ui/FormInputField";
@@ -134,6 +134,9 @@ export function RegisterPage() {
         <button type="submit" disabled={registerMutation.isPending}>
           Continue
         </button>
+        <p>
+          Already have an account? <Link to="/login">Sign In</Link>
+        </p>
       </form>
     </main>
   );
