@@ -1,14 +1,11 @@
-import axios from "axios";
-
+import { httpClient } from "@/shared/api/httpClient";
 import type { AuthResponse, LoginFormValues, RegisterPayload } from "./types";
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 
 export const registerUser = async (
   payload: RegisterPayload,
 ): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(
-    `${API_BASE_URL}/auth/register`,
+  const response = await httpClient.post<AuthResponse>(
+    "/auth/register",
     payload,
   );
 
@@ -18,10 +15,7 @@ export const registerUser = async (
 export const loginUser = async (
   payload: LoginFormValues,
 ): Promise<AuthResponse> => {
-  const response = await axios.post<AuthResponse>(
-    `${API_BASE_URL}/auth/login`,
-    payload,
-  );
+  const response = await httpClient.post<AuthResponse>("/auth/login", payload);
 
   return response.data;
 };
