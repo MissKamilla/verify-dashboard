@@ -16,3 +16,9 @@ export type LoginFormValues = {
 };
 
 export type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>;
+
+export type RegisterPayload = Omit<RegisterFormValues, "confirmPassword">;
+
+export type AuthResponse = {
+  token: string;
+};

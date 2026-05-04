@@ -1,10 +1,20 @@
+import { useState, type ChangeEvent, type SyntheticEvent } from "react";
+
+import { useNavigate } from "react-router";
+import { useMutation } from "@tanstack/react-query";
+
+import { FormInputField } from "@/shared/ui/FormInputField";
+
+import { registerUser } from "@/features/auth/authApi";
+import { setAuthToken } from "@/features/auth/authToken";
+import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type {
   RegisterFormErrors,
   RegisterFormValues,
+  RegisterPayload,
 } from "@/features/auth/types";
+
 import { validateRegisterForm } from "@/features/auth/validateRegisterForm";
-import { FormInputField } from "@/shared/ui/FormInputField";
-import { useState, type ChangeEvent, type SyntheticEvent } from "react";
 
 const initialFormValues: RegisterFormValues = {
   firstname: "",
@@ -17,8 +27,8 @@ const initialFormValues: RegisterFormValues = {
 export function RegisterPage() {
   const [formValues, setFormValues] =
     useState<RegisterFormValues>(initialFormValues);
-
   const [errors, setErrors] = useState<RegisterFormErrors>({});
+  const [apiError, setApiError] = useState("");
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.currentTarget;
@@ -28,6 +38,19 @@ export function RegisterPage() {
       [name as keyof RegisterFormValues]: value,
     }));
   };
+
+  const navigate = useNavigate();
+
+  const registerMutation = useMutation({
+    mutationFn: registerUser,
+    onSuccess: ({ token }) => {
+      setAuthToken(token);
+      navigate("/galleries", { replace: true });
+    },
+    onError: (error) => {
+      setApiError(getApiErrorMessage(error));
+    },
+  });
 
   const handleSubmit = (
     event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
@@ -40,7 +63,16 @@ export function RegisterPage() {
     if (Object.keys(validationErrors).length > 0) {
       return;
     }
-    console.log(formValues);
+
+    setApiError("");
+
+    const registerPayload: RegisterPayload = {
+      firstname: formValues.firstname,
+      lastname: formValues.lastname,
+      email: formValues.email,
+      password: formValues.password,
+    };
+    registerMutation.mutate(registerPayload);
   };
 
   return (
@@ -98,7 +130,10 @@ export function RegisterPage() {
           autoComplete="new-password"
         />
 
-        <button type="submit">Create account</button>
+        {apiError && <p role="alert">{apiError}</p>}
+        <button type="submit" disabled={registerMutation.isPending}>
+          Continue
+        </button>
       </form>
     </main>
   );
