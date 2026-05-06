@@ -9,6 +9,7 @@ import { setAuthToken } from "@/features/auth/authToken";
 import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type { LoginFormValues } from "@/features/auth/types";
 import { validateLoginForm } from "@/features/auth/validateLoginForm";
+import { AuthLayout } from "@/shared/ui/AuthLayout/AuthLayout";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 
@@ -50,55 +51,89 @@ export function LoginPage() {
           loginMutation.isPending;
 
         return (
-          <div>
-            <header>
-              <h1>Sign In</h1>
+          <AuthLayout>
+            <div>
+              <header className="mb-9">
+                <h1 className="text-[36px] font-bold leading-[56px] text-[#161616]">
+                  Sign In
+                </h1>
 
-              <p>Enter your email and password to sign in!</p>
-            </header>
-
-            <Form noValidate>
-              <FormInputField
-                label="Email"
-                type="email"
-                name="email"
-                value={values.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.email ? errors.email : undefined}
-                autoComplete="email"
-                placeholder="mail@simmmple.com"
-                required
-              />
-
-              <PasswordInputField
-                label="Password"
-                name="password"
-                value={values.password}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={touched.password ? errors.password : undefined}
-                autoComplete="current-password"
-                placeholder="Min. 8 characters"
-                required
-              />
-
-              {apiError && (
-                <p role="alert" aria-live="polite">
-                  {apiError}
+                <p className="text-[14px] leading-[24px] text-[#878787]">
+                  Enter your email and password to sign in!
                 </p>
-              )}
+              </header>
 
-              <button type="submit" disabled={isSubmitDisabled}>
-                Sign In
-              </button>
+              <Form noValidate className="flex flex-col gap-6">
+                <FormInputField
+                  label="Email"
+                  type="email"
+                  name="email"
+                  value={values.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.email ? errors.email : undefined}
+                  autoComplete="email"
+                  placeholder="mail@simmmple.com"
+                  required
+                />
 
-              <p>
-                Not registered yet?{" "}
-                <Link to="/register">Create an Account</Link>
-              </p>
-            </Form>
-          </div>
+                <PasswordInputField
+                  label="Password"
+                  name="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.password ? errors.password : undefined}
+                  autoComplete="current-password"
+                  placeholder="Min. 8 characters"
+                  required
+                />
+
+                {apiError && (
+                  <p role="alert" aria-live="polite">
+                    {apiError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmitDisabled}
+                  className={
+                    isSubmitDisabled
+                      ? "h-[50px] w-full rounded-[16px] bg-[#DBDADA] text-[14px] font-bold leading-none text-[#878787] disabled:cursor-not-allowed"
+                      : "h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-none text-[#FFFFFF]"
+                  }
+                >
+                  Sign In
+                </button>
+
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-3 text-[14px] font-normal leading-none text-[#161616]">
+                    <input
+                      type="checkbox"
+                      defaultChecked
+                      className="h-5 w-5 accent-[#168B6C]"
+                    />
+                    Keep me logged in
+                  </label>
+
+                  <a
+                    href="#"
+                    className="text-[14px] font-normal leading-none text-[#168B6C]"
+                  >
+                    Forget password?
+                  </a>
+                </div>
+
+                <p className="text-[14px] leading-none text-[#161616]">
+                  Not registered yet?{" "}
+                  <Link to="/register" className="text-[#168B6C]">
+                    Create an Account
+                  </Link>
+                </p>
+              </Form>
+            </div>
+          </AuthLayout>
         );
       }}
     </Formik>

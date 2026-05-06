@@ -46,7 +46,6 @@ export function RegisterPage() {
       validateOnMount
       onSubmit={(values) => {
         setApiError("");
-        // registerMutation.mutate(values);
         registerMutation.mutate({
           firstname: values.firstname,
           lastname: values.lastname,
@@ -77,7 +76,7 @@ export function RegisterPage() {
                   </p>
                 </div>
               </header>
-              <Form noValidate className="flex flex-col gap-5">
+              <Form noValidate className="flex flex-col gap-6">
                 <FormInputField
                   label="First name"
                   type="text"
@@ -176,7 +175,7 @@ export function RegisterPage() {
                   Continue
                 </button>
                 <p className="text-[14px] leading-none text-[#161616]">
-                  Already have an account?
+                  Already have an account?{" "}
                   <Link to="/login" className="font-bold text-[#168B6C]">
                     Sign In
                   </Link>

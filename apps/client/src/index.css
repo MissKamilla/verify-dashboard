@@ -1,1 +1,11 @@
 @import "tailwindcss";
+
+body {
+  font-family: "DM Sans", sans-serif;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+  -webkit-text-fill-color: #161616;
+}
