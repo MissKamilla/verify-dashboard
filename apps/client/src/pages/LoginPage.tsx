@@ -1,16 +1,16 @@
-import { useState, type ChangeEvent, type SyntheticEvent } from "react";
+import { useState } from "react";
 
 import { useMutation } from "@tanstack/react-query";
+import { Form, Formik } from "formik";
 import { Link, useNavigate } from "react-router";
-
-import { FormInputField } from "@/shared/ui/FormInputField";
 
 import { loginUser } from "@/features/auth/authApi";
 import { setAuthToken } from "@/features/auth/authToken";
 import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
-import type { LoginFormValues, LoginFormErrors } from "@/features/auth/types";
-
+import type { LoginFormValues } from "@/features/auth/types";
 import { validateLoginForm } from "@/features/auth/validateLoginForm";
+import { FormInputField } from "@/shared/ui/FormInputField";
+import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 
 const initialFormValues: LoginFormValues = {
   email: "",
@@ -18,20 +18,7 @@ const initialFormValues: LoginFormValues = {
 };
 
 export function LoginPage() {
-  const [formValues, setFormValues] =
-    useState<LoginFormValues>(initialFormValues);
-  const [errors, setErrors] = useState<LoginFormErrors>({});
   const [apiError, setApiError] = useState("");
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.currentTarget;
-
-    setFormValues((prev) => ({
-      ...prev,
-      [name as keyof LoginFormValues]: value,
-    }));
-  };
-
   const navigate = useNavigate();
 
   const loginMutation = useMutation({
@@ -45,52 +32,75 @@ export function LoginPage() {
     },
   });
 
-  const handleSubmit = (
-    event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
-  ) => {
-    event.preventDefault();
-    const validationErrors = validateLoginForm(formValues);
-
-    setErrors(validationErrors);
-    if (Object.keys(validationErrors).length > 0) {
-      return;
-    }
-
-    setApiError("");
-    loginMutation.mutate(formValues);
-  };
-
   return (
-    <main>
-      <form onSubmit={handleSubmit} noValidate>
-        <FormInputField
-          label="Email"
-          type="email"
-          name="email"
-          value={formValues.email}
-          onChange={handleChange}
-          error={errors.email}
-          autoComplete="email"
-        />
+    <Formik<LoginFormValues>
+      initialValues={initialFormValues}
+      validate={validateLoginForm}
+      validateOnMount
+      onSubmit={(values) => {
+        setApiError("");
+        loginMutation.mutate(values);
+      }}
+    >
+      {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
+        const isSubmitDisabled =
+          !values.email.trim() ||
+          !values.password ||
+          !isValid ||
+          loginMutation.isPending;
 
-        <FormInputField
-          label="Password"
-          type="password"
-          name="password"
-          value={formValues.password}
-          onChange={handleChange}
-          error={errors.password}
-          autoComplete="current-password"
-        />
+        return (
+          <div>
+            <header>
+              <h1>Sign In</h1>
 
-        {apiError && <p role="alert">{apiError}</p>}
-        <button type="submit" disabled={loginMutation.isPending}>
-          Sign In
-        </button>
-        <p>
-          Don't have an account? <Link to="/register">Sign up</Link>
-        </p>
-      </form>
-    </main>
+              <p>Enter your email and password to sign in!</p>
+            </header>
+
+            <Form noValidate>
+              <FormInputField
+                label="Email"
+                type="email"
+                name="email"
+                value={values.email}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.email ? errors.email : undefined}
+                autoComplete="email"
+                placeholder="mail@simmmple.com"
+                required
+              />
+
+              <PasswordInputField
+                label="Password"
+                name="password"
+                value={values.password}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.password ? errors.password : undefined}
+                autoComplete="current-password"
+                placeholder="Min. 8 characters"
+                required
+              />
+
+              {apiError && (
+                <p role="alert" aria-live="polite">
+                  {apiError}
+                </p>
+              )}
+
+              <button type="submit" disabled={isSubmitDisabled}>
+                Sign In
+              </button>
+
+              <p>
+                Not registered yet?{" "}
+                <Link to="/register">Create an Account</Link>
+              </p>
+            </Form>
+          </div>
+        );
+      }}
+    </Formik>
   );
 }

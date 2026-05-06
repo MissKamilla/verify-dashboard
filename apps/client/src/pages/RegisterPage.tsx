@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type SyntheticEvent } from "react";
+import { useState } from "react";
 
 import { Link, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
@@ -8,13 +8,12 @@ import { FormInputField } from "@/shared/ui/FormInputField";
 import { registerUser } from "@/features/auth/authApi";
 import { setAuthToken } from "@/features/auth/authToken";
 import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
-import type {
-  RegisterFormErrors,
-  RegisterFormValues,
-  RegisterPayload,
-} from "@/features/auth/types";
+import type { RegisterFormValues } from "@/features/auth/types";
 
 import { validateRegisterForm } from "@/features/auth/validateRegisterForm";
+import { AuthLayout } from "@/shared/ui/AuthLayout/AuthLayout";
+import { PasswordInputField } from "@/shared/ui/PasswordInputField";
+import { Form, Formik } from "formik";
 
 const initialFormValues: RegisterFormValues = {
   firstname: "",
@@ -25,19 +24,7 @@ const initialFormValues: RegisterFormValues = {
 };
 
 export function RegisterPage() {
-  const [formValues, setFormValues] =
-    useState<RegisterFormValues>(initialFormValues);
-  const [errors, setErrors] = useState<RegisterFormErrors>({});
   const [apiError, setApiError] = useState("");
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.currentTarget;
-
-    setFormValues((prev) => ({
-      ...prev,
-      [name as keyof RegisterFormValues]: value,
-    }));
-  };
 
   const navigate = useNavigate();
 
@@ -52,92 +39,153 @@ export function RegisterPage() {
     },
   });
 
-  const handleSubmit = (
-    event: SyntheticEvent<HTMLFormElement, SubmitEvent>,
-  ) => {
-    event.preventDefault();
-    const validationErrors = validateRegisterForm(formValues);
-
-    setErrors(validationErrors);
-
-    if (Object.keys(validationErrors).length > 0) {
-      return;
-    }
-
-    setApiError("");
-
-    const registerPayload: RegisterPayload = {
-      firstname: formValues.firstname,
-      lastname: formValues.lastname,
-      email: formValues.email,
-      password: formValues.password,
-    };
-    registerMutation.mutate(registerPayload);
-  };
-
   return (
-    <main>
-      <h1>Register</h1>
+    <Formik<RegisterFormValues>
+      initialValues={initialFormValues}
+      validate={validateRegisterForm}
+      validateOnMount
+      onSubmit={(values) => {
+        setApiError("");
+        // registerMutation.mutate(values);
+        registerMutation.mutate({
+          firstname: values.firstname,
+          lastname: values.lastname,
+          email: values.email,
+          password: values.password,
+        });
+      }}
+    >
+      {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
+        const isSubmitDisabled =
+          !values.firstname.trim() ||
+          !values.lastname.trim() ||
+          !values.email.trim() ||
+          !values.password ||
+          !values.confirmPassword ||
+          !isValid ||
+          registerMutation.isPending;
+        return (
+          <AuthLayout>
+            <div>
+              <header className="mb-6">
+                <h1 className="text-[36px] font-bold leading-[56px] text-[#161616]">
+                  Sign Up
+                </h1>
+                <div className="mt-6 inline-block border-b-2 border-[#168B6C] pb-3">
+                  <p className="text-[16px] font-bold leading-none text-[#161616]">
+                    Personal Information
+                  </p>
+                </div>
+              </header>
+              <Form noValidate className="flex flex-col gap-5">
+                <FormInputField
+                  label="First name"
+                  type="text"
+                  name="firstname"
+                  value={values.firstname}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.firstname ? errors.firstname : undefined}
+                  autoComplete="given-name"
+                  placeholder="Your first name"
+                  required
+                />
 
-      <form onSubmit={handleSubmit} noValidate>
-        <FormInputField
-          label="First Name"
-          type="text"
-          name="firstname"
-          value={formValues.firstname}
-          onChange={handleChange}
-          error={errors.firstname}
-          autoComplete="given-name"
-        />
+                <FormInputField
+                  label="Last name"
+                  type="text"
+                  name="lastname"
+                  value={values.lastname}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.lastname ? errors.lastname : undefined}
+                  autoComplete="family-name"
+                  placeholder="Your last name"
+                  required
+                />
 
-        <FormInputField
-          label="Last Name"
-          type="text"
-          name="lastname"
-          value={formValues.lastname}
-          onChange={handleChange}
-          error={errors.lastname}
-          autoComplete="family-name"
-        />
+                <FormInputField
+                  label="Email"
+                  type="email"
+                  name="email"
+                  value={values.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.email ? errors.email : undefined}
+                  autoComplete="email"
+                  placeholder="mail@simmmple.com"
+                  required
+                />
 
-        <FormInputField
-          label="Email"
-          type="email"
-          name="email"
-          value={formValues.email}
-          onChange={handleChange}
-          error={errors.email}
-          autoComplete="email"
-        />
+                <PasswordInputField
+                  label="Password"
+                  name="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.password ? errors.password : undefined}
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
+                  required
+                />
 
-        <FormInputField
-          label="Password"
-          type="password"
-          name="password"
-          value={formValues.password}
-          onChange={handleChange}
-          error={errors.password}
-          autoComplete="new-password"
-        />
+                <PasswordInputField
+                  label="Confirm Password"
+                  name="confirmPassword"
+                  value={values.confirmPassword}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={
+                    touched.confirmPassword ? errors.confirmPassword : undefined
+                  }
+                  autoComplete="new-password"
+                  placeholder="Min. 8 characters"
+                  required
+                />
 
-        <FormInputField
-          label="Confirm Password"
-          type="password"
-          name="confirmPassword"
-          value={formValues.confirmPassword}
-          onChange={handleChange}
-          error={errors.confirmPassword}
-          autoComplete="new-password"
-        />
+                {apiError && (
+                  <p
+                    role="alert"
+                    aria-live="polite"
+                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+                  >
+                    {apiError}
+                  </p>
+                )}
 
-        {apiError && <p role="alert">{apiError}</p>}
-        <button type="submit" disabled={registerMutation.isPending}>
-          Continue
-        </button>
-        <p>
-          Already have an account? <Link to="/login">Sign In</Link>
-        </p>
-      </form>
-    </main>
+                <p className="text-[14px] leading-[24px] text-[#878787]">
+                  By registering you agree to{" "}
+                  <a href="#" className="font-medium text-[#007A5A] underline">
+                    Terms & Conditions{" "}
+                  </a>
+                  and{" "}
+                  <a href="#" className="font-medium text-[#007A5A] underline">
+                    Privacy Policy
+                  </a>
+                </p>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitDisabled}
+                  className={
+                    isSubmitDisabled
+                      ? "h-[50px] w-full rounded-[16px] bg-[#DBDADA] text-[14px] font-bold leading-none text-[#878787] disabled:cursor-not-allowed"
+                      : "h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-none text-[#FFFFFF]"
+                  }
+                >
+                  Continue
+                </button>
+                <p className="text-[14px] leading-none text-[#161616]">
+                  Already have an account?
+                  <Link to="/login" className="font-bold text-[#168B6C]">
+                    Sign In
+                  </Link>
+                </p>
+              </Form>
+            </div>
+          </AuthLayout>
+        );
+      }}
+    </Formik>
   );
 }
