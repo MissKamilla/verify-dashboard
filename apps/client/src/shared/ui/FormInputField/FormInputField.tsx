@@ -34,7 +34,7 @@ export function FormInputField({
           id={inputId}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
-          className={`h-[50px] w-full rounded-[16px] border px-[18px] pr-12 text-[14px] font-normal text-[#161616] outline-none placeholder:text-[#A0B1A5] ${inputBorderClass}`}
+          className={`h-[50px] w-full rounded-[16px] border pl-[18px] pr-12 text-[14px] font-normal text-[#161616] outline-none placeholder:text-[#A0B1A5] ${inputBorderClass}`}
           {...inputProps}
         />
         {endIcon && (

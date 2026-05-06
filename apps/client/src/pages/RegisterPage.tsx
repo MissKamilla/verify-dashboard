@@ -11,9 +11,10 @@ import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type { RegisterFormValues } from "@/features/auth/types";
 
 import { validateRegisterForm } from "@/features/auth/validateRegisterForm";
-import { AuthLayout } from "@/shared/ui/AuthLayout/AuthLayout";
+import { AuthLayout } from "@/shared/ui/AuthLayout";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 import { Form, Formik } from "formik";
+import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 
 const initialFormValues: RegisterFormValues = {
   firstname: "",
@@ -142,16 +143,6 @@ export function RegisterPage() {
                   required
                 />
 
-                {apiError && (
-                  <p
-                    role="alert"
-                    aria-live="polite"
-                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
-                  >
-                    {apiError}
-                  </p>
-                )}
-
                 <p className="text-[14px] leading-[24px] text-[#878787]">
                   By registering you agree to{" "}
                   <a href="#" className="font-medium text-[#007A5A] underline">
@@ -163,17 +154,18 @@ export function RegisterPage() {
                   </a>
                 </p>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitDisabled}
-                  className={
-                    isSubmitDisabled
-                      ? "h-[50px] w-full rounded-[16px] bg-[#DBDADA] text-[14px] font-bold leading-none text-[#878787] disabled:cursor-not-allowed"
-                      : "h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-none text-[#FFFFFF]"
-                  }
-                >
-                  Continue
-                </button>
+                {apiError && (
+                  <p
+                    role="alert"
+                    aria-live="polite"
+                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+                  >
+                    {apiError}
+                  </p>
+                )}
+
+                <FormSubmitButton text="Continue" disabled={isSubmitDisabled} />
+
                 <p className="text-[14px] leading-none text-[#161616]">
                   Already have an account?{" "}
                   <Link to="/login" className="font-bold text-[#168B6C]">

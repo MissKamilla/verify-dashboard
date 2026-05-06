@@ -9,9 +9,10 @@ import { setAuthToken } from "@/features/auth/authToken";
 import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type { LoginFormValues } from "@/features/auth/types";
 import { validateLoginForm } from "@/features/auth/validateLoginForm";
-import { AuthLayout } from "@/shared/ui/AuthLayout/AuthLayout";
+import { AuthLayout } from "@/shared/ui/AuthLayout";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
+import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 
 const initialFormValues: LoginFormValues = {
   email: "",
@@ -89,16 +90,6 @@ export function LoginPage() {
                   required
                 />
 
-                {apiError && (
-                  <p
-                    role="alert"
-                    aria-live="polite"
-                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
-                  >
-                    {apiError}
-                  </p>
-                )}
-
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-3 text-[14px] font-normal leading-none text-[#161616]">
                     <input
@@ -117,17 +108,17 @@ export function LoginPage() {
                   </a>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitDisabled}
-                  className={
-                    isSubmitDisabled
-                      ? "h-[50px] w-full rounded-[16px] bg-[#DBDADA] text-[14px] font-bold leading-none text-[#878787] disabled:cursor-not-allowed"
-                      : "h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-none text-[#FFFFFF]"
-                  }
-                >
-                  Sign In
-                </button>
+                {apiError && (
+                  <p
+                    role="alert"
+                    aria-live="polite"
+                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+                  >
+                    {apiError}
+                  </p>
+                )}
+
+                <FormSubmitButton text="Sign In" disabled={isSubmitDisabled} />
 
                 <p className="text-[14px] leading-none text-[#161616]">
                   Not registered yet?{" "}
