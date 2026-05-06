@@ -51,14 +51,14 @@ export function LoginPage() {
           loginMutation.isPending;
 
         return (
-          <AuthLayout>
+          <AuthLayout heroVariant="login">
             <div>
               <header className="mb-9">
-                <h1 className="text-[36px] font-bold leading-[56px] text-[#161616]">
+                <h1 className="text-center text-[36px] font-bold leading-[56px] text-[#161616] min-[1440px]:text-left">
                   Sign In
                 </h1>
 
-                <p className="text-[14px] leading-[24px] text-[#878787]">
+                <p className="text-center text-[14px] leading-[24px] text-[#878787] min-[1440px]:text-left">
                   Enter your email and password to sign in!
                 </p>
               </header>
@@ -90,22 +90,14 @@ export function LoginPage() {
                 />
 
                 {apiError && (
-                  <p role="alert" aria-live="polite">
+                  <p
+                    role="alert"
+                    aria-live="polite"
+                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+                  >
                     {apiError}
                   </p>
                 )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitDisabled}
-                  className={
-                    isSubmitDisabled
-                      ? "h-[50px] w-full rounded-[16px] bg-[#DBDADA] text-[14px] font-bold leading-none text-[#878787] disabled:cursor-not-allowed"
-                      : "h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-none text-[#FFFFFF]"
-                  }
-                >
-                  Sign In
-                </button>
 
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-3 text-[14px] font-normal leading-none text-[#161616]">
@@ -124,6 +116,18 @@ export function LoginPage() {
                     Forget password?
                   </a>
                 </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitDisabled}
+                  className={
+                    isSubmitDisabled
+                      ? "h-[50px] w-full rounded-[16px] bg-[#DBDADA] text-[14px] font-bold leading-none text-[#878787] disabled:cursor-not-allowed"
+                      : "h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-none text-[#FFFFFF]"
+                  }
+                >
+                  Sign In
+                </button>
 
                 <p className="text-[14px] leading-none text-[#161616]">
                   Not registered yet?{" "}

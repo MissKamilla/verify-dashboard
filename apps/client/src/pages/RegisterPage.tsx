@@ -64,10 +64,10 @@ export function RegisterPage() {
           !isValid ||
           registerMutation.isPending;
         return (
-          <AuthLayout>
+          <AuthLayout heroVariant="register">
             <div>
               <header className="mb-6">
-                <h1 className="text-[36px] font-bold leading-[56px] text-[#161616]">
+                <h1 className="text-center text-[36px] font-bold leading-[56px] text-[#161616] min-[1440px]:text-left">
                   Sign Up
                 </h1>
                 <div className="mt-6 inline-block border-b-2 border-[#168B6C] pb-3">
