@@ -5,6 +5,7 @@ import { GalleriesPage } from "@/pages/GalleriesPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { ProtectedRoute } from "@/router/ProtectedRoute";
 import { PublicOnlyRoute } from "./PublicOnlyRoute";
+import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 
 export function AppRouter() {
   return (
@@ -16,8 +17,10 @@ export function AppRouter() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/galleries" element={<GalleriesPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route element={<AuthenticatedLayout />}>
+          <Route path="/galleries" element={<GalleriesPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
       </Route>
     </Routes>
   );

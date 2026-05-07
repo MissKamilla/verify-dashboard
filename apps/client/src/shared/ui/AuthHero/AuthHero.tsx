@@ -1,5 +1,5 @@
 import authBackground from "@/assets/auth-background.png";
-import verifyLogoHorizontal from "@/assets/verify-logo-horizontal.svg";
+import verifyLogoWhite from "@/assets/verify-logo-white.svg";
 import verifyLogoCard from "@/assets/verify-logo-card.svg";
 
 type AuthHeroProps = {
@@ -16,7 +16,7 @@ export function AuthHero({ variant }: AuthHeroProps) {
 
       {variant === "register" ? (
         <img
-          src={verifyLogoHorizontal}
+          src={verifyLogoWhite}
           alt="Verify"
           className="absolute right-[100px] top-[50px] h-[72px] w-[176px]"
         />
