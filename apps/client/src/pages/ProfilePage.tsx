@@ -47,7 +47,7 @@ export function ProfilePage() {
   return (
     <section className="flex min-h-[calc(100vh-60px)] flex-col">
       <header className="mb-[30px] flex items-center justify-between">
-        <h1 className="text-[32px] font-bold leading-[150%] text-[#161616]">
+        <h1 className="text-[32px] font-bold leading-[150%] text-text-main">
           Profile settings
         </h1>
 
@@ -61,7 +61,7 @@ export function ProfilePage() {
         </button>
       </header>
 
-      <div className="rounded-[30px] bg-white px-[24px] pb-[38px] pt-[24px] shadow-[14px_17px_40px_4px_rgba(125,181,147,0.08)]">
+      <div className="rounded-[30px] bg-white px-[24px] pb-[38px] pt-[24px] shadow-card">
         <div className="h-[132px] rounded-[16px] bg-cover bg-center">
           <img
             src={profileBannerUrl}
@@ -73,15 +73,15 @@ export function ProfilePage() {
         </div>
 
         <div className="-mt-[55px] flex flex-col items-center text-center">
-          <div className="flex h-[110px] w-[110px] items-center justify-center rounded-full border-[5px] border-white bg-[#1FB28B] text-[32px] font-bold leading-[150%] text-white">
+          <div className="flex h-[110px] w-[110px] items-center justify-center rounded-full border-[5px] border-white bg-avatar text-[32px] font-bold leading-[150%] text-white">
             {initials}
           </div>
 
-          <h2 className="mt-[12px] text-[28px] font-bold leading-[150%] text-[#161616]">
+          <h2 className="mt-[12px] text-[28px] font-bold leading-[150%] text-text-main">
             {fullName}
           </h2>
 
-          <p className="text-[18px] font-normal leading-[150%] text-[#878787]">
+          <p className="text-[18px] font-normal leading-[150%] text-text-secondary">
             {profile.email}
           </p>
         </div>
@@ -101,7 +101,7 @@ export function ProfilePage() {
               startIcon={
                 <Icon
                   src={profileIconUrl}
-                  className="h-[20px] w-[20px] text-[#161616]"
+                  className="h-[20px] w-[20px] text-text-main"
                 />
               }
             />
@@ -114,7 +114,7 @@ export function ProfilePage() {
               startIcon={
                 <Icon
                   src={profileIconUrl}
-                  className="h-[20px] w-[20px] text-[#161616]"
+                  className="h-[20px] w-[20px] text-text-main"
                 />
               }
             />
@@ -127,14 +127,14 @@ export function ProfilePage() {
               startIcon={
                 <Icon
                   src={companyIconUrl}
-                  className="h-[20px] w-[20px] text-[#161616]"
+                  className="h-[20px] w-[20px] text-text-main"
                 />
               }
             />
 
             <button
               type="button"
-              className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-[150%] text-white lg:ml-auto lg:mr-0 lg:w-[180px]"
+              className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-brand text-[14px] font-bold leading-[150%] text-white lg:ml-auto lg:mr-0 lg:w-[180px]"
             >
               Save changes
             </button>
@@ -166,7 +166,7 @@ export function ProfilePage() {
 
             <button
               type="button"
-              className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-[#168B6C] text-[14px] font-bold leading-[150%] text-white lg:ml-auto lg:mr-0 lg:w-[180px]"
+              className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-brand text-[14px] font-bold leading-[150%] text-white lg:ml-auto lg:mr-0 lg:w-[180px]"
             >
               Change password
             </button>

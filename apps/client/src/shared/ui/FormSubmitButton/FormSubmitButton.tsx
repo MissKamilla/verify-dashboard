@@ -5,8 +5,8 @@ type FormSubmitButtonProps = {
 
 export function FormSubmitButton({ text, disabled }: FormSubmitButtonProps) {
   const buttonStateClass = disabled
-    ? "bg-[#DBDADA] text-[#878787] disabled:cursor-not-allowed"
-    : "bg-[#168B6C] text-white";
+    ? "bg-border-default text-text-secondary disabled:cursor-not-allowed"
+    : "bg-brand text-white";
 
   return (
     <button

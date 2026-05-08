@@ -20,18 +20,18 @@ export function FormInputField({
   const errorId = `${inputId}-error`;
 
   const inputBorderClass = error
-    ? "border-[#E95A54]"
-    : "border-[#DBDADA] focus:border-[#168B6C]";
+    ? "border-error"
+    : "border-border-default focus:border-brand";
 
   const inputPaddingClass = startIcon ? "pl-[50px]" : "pl-[18px]";
   return (
     <div className="flex flex-col gap-2">
       <label
         htmlFor={inputId}
-        className="text-[14px] leading-none font-medium text-[#161616]"
+        className="text-[14px] leading-none font-medium text-text-main"
       >
         {label}
-        {inputProps.required && <span className="text-[#E95A54]"> *</span>}
+        {inputProps.required && <span className="text-error"> *</span>}
       </label>
       <div className="relative">
         {startIcon && (
@@ -43,7 +43,7 @@ export function FormInputField({
           id={inputId}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
-          className={`h-[50px] w-full rounded-[16px] border ${inputPaddingClass} pr-12 text-[14px] font-normal text-[#161616] outline-none placeholder:text-[#A0B1A5] ${inputBorderClass}`}
+          className={`h-[50px] w-full rounded-[16px] border ${inputPaddingClass} pr-12 text-[14px] font-normal text-text-main outline-none placeholder:text-text-muted ${inputBorderClass}`}
           {...inputProps}
         />
         {endIcon && (
@@ -55,7 +55,7 @@ export function FormInputField({
       {error && (
         <p
           id={errorId}
-          className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+          className="text-[12px] font-normal leading-[24px] text-error"
           role="alert"
         >
           {error}

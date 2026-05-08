@@ -20,11 +20,11 @@ type SidebarProps = {
   className?: string;
 };
 
-const activeTextClassName = "text-[#161616]";
-const inactiveTextClassName = "text-[#A0B1A5] hover:text-[#161616]";
+const activeTextClassName = "text-text-main";
+const inactiveTextClassName = "text-text-muted hover:text-text-main";
 
-const openedSectionIconClassName = "text-[#168B6C]";
-const closedSectionIconClassName = "text-[#A0B1A5]";
+const openedSectionIconClassName = "text-brand";
+const closedSectionIconClassName = "text-text-muted";
 
 export function Sidebar({
   firstname,
@@ -88,13 +88,13 @@ export function Sidebar({
 
   return (
     <aside
-      className={`flex w-[290px] shrink-0 flex-col rounded-[30px] bg-white shadow-[14px_17px_40px_4px_rgba(125,181,147,0.08)] ${className}`}
+      className={`flex w-[290px] shrink-0 flex-col rounded-[30px] bg-white shadow-card ${className}`}
     >
       <div className="flex h-[136px] items-center justify-center">
         <img src={logoUrl} alt="Verify" className="max-w-[158px]" />
       </div>
 
-      <div className="h-px w-full bg-[#EDEDED]" />
+      <div className="h-px w-full bg-border-light" />
 
       <nav className="mt-[36px]">
         <div className="flex h-[24px] w-full items-center px-[20px]">
@@ -157,20 +157,20 @@ export function Sidebar({
           onClick={onNavigate}
           className={({ isActive }) =>
             `mb-[24px] flex h-[68px] w-[270px] cursor-pointer items-center gap-[10px] rounded-[16px] p-[10px] transition-colors ${
-              isActive ? "bg-[#ECFFEE]" : "hover:bg-[#ECFFEE]"
+              isActive ? "bg-brand-light" : "hover:bg-brand-light"
             }`
           }
         >
-          <div className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-[#1FB28B] text-[16px] font-bold leading-[150%] text-white">
+          <div className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-avatar text-[16px] font-bold leading-[150%] text-white">
             {isProfilePending ? "" : userInitials}
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-[16px] font-bold leading-[150%] text-[#161616]">
+            <p className="truncate text-[16px] font-bold leading-[150%] text-text-main">
               {userName}
             </p>
 
-            <p className="truncate text-[12px] font-normal leading-[150%] text-[#878787]">
+            <p className="truncate text-[12px] font-normal leading-[150%] text-text-secondary">
               {userEmail}
             </p>
           </div>
@@ -179,7 +179,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onLogout}
-          className="flex h-[30px] cursor-pointer items-center gap-[10px] px-[20px] text-[16px] font-normal leading-[150%] text-[#A0B1A5] transition-colors hover:text-[#E95A54]"
+          className="flex h-[30px] cursor-pointer items-center gap-[10px] px-[20px] text-[16px] font-normal leading-[150%] text-text-muted transition-colors hover:text-error"
         >
           <Icon src={logoutIconUrl} className="h-[24px] w-[24px]" />
           <span>Log Out</span>

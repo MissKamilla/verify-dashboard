@@ -55,11 +55,11 @@ export function LoginPage() {
           <AuthLayout heroVariant="login">
             <div>
               <header className="mb-9">
-                <h1 className="text-center text-[36px] font-bold leading-[56px] text-[#161616] min-[1440px]:text-left">
+                <h1 className="text-center text-[36px] font-bold leading-[56px] text-text-main min-[1440px]:text-left">
                   Sign In
                 </h1>
 
-                <p className="text-center text-[14px] leading-[24px] text-[#878787] min-[1440px]:text-left">
+                <p className="text-center text-[14px] leading-[24px] text-text-secondary min-[1440px]:text-left">
                   Enter your email and password to sign in!
                 </p>
               </header>
@@ -91,18 +91,18 @@ export function LoginPage() {
                 />
 
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-3 text-[14px] font-normal leading-none text-[#161616]">
+                  <label className="flex items-center gap-3 text-[14px] font-normal leading-none text-text-main">
                     <input
                       type="checkbox"
                       defaultChecked
-                      className="h-5 w-5 accent-[#168B6C]"
+                      className="h-5 w-5 accent-brand"
                     />
                     Keep me logged in
                   </label>
 
                   <a
                     href="#"
-                    className="text-[14px] font-normal leading-none text-[#168B6C]"
+                    className="text-[14px] font-normal leading-none text-brand"
                   >
                     Forget password?
                   </a>
@@ -112,7 +112,7 @@ export function LoginPage() {
                   <p
                     role="alert"
                     aria-live="polite"
-                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+                    className="text-[12px] font-normal leading-[24px] text-error"
                   >
                     {apiError}
                   </p>
@@ -120,9 +120,9 @@ export function LoginPage() {
 
                 <FormSubmitButton text="Sign In" disabled={isSubmitDisabled} />
 
-                <p className="text-[14px] leading-none text-[#161616]">
+                <p className="text-[14px] leading-none text-text-main">
                   Not registered yet?{" "}
-                  <Link to="/register" className="text-[#168B6C]">
+                  <Link to="/register" className="text-brand">
                     Create an Account
                   </Link>
                 </p>

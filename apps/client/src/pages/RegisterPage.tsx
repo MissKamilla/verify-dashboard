@@ -68,11 +68,11 @@ export function RegisterPage() {
           <AuthLayout heroVariant="register">
             <div>
               <header className="mb-6">
-                <h1 className="text-center text-[36px] font-bold leading-[56px] text-[#161616] min-[1440px]:text-left">
+                <h1 className="text-center text-[36px] font-bold leading-[56px] text-text-main min-[1440px]:text-left">
                   Sign Up
                 </h1>
-                <div className="mt-6 inline-block border-b-2 border-[#168B6C] pb-3">
-                  <p className="text-[16px] font-bold leading-none text-[#161616]">
+                <div className="mt-6 inline-block border-b-2 border-brand pb-3">
+                  <p className="text-[16px] font-bold leading-none text-text-main">
                     Personal Information
                   </p>
                 </div>
@@ -143,7 +143,7 @@ export function RegisterPage() {
                   required
                 />
 
-                <p className="text-[14px] leading-[24px] text-[#878787]">
+                <p className="text-[14px] leading-[24px] text-text-secondary">
                   By registering you agree to{" "}
                   <a href="#" className="font-medium text-[#007A5A] underline">
                     Terms & Conditions{" "}
@@ -158,7 +158,7 @@ export function RegisterPage() {
                   <p
                     role="alert"
                     aria-live="polite"
-                    className="text-[12px] font-normal leading-[24px] text-[#E95A54]"
+                    className="text-[12px] font-normal leading-[24px] text-error"
                   >
                     {apiError}
                   </p>
@@ -166,9 +166,9 @@ export function RegisterPage() {
 
                 <FormSubmitButton text="Continue" disabled={isSubmitDisabled} />
 
-                <p className="text-[14px] leading-none text-[#161616]">
+                <p className="text-[14px] leading-none text-text-main">
                   Already have an account?{" "}
-                  <Link to="/login" className="font-bold text-[#168B6C]">
+                  <Link to="/login" className="font-bold text-brand">
                     Sign In
                   </Link>
                 </p>

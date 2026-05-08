@@ -15,7 +15,7 @@ export function AuthLayout({ children, heroVariant }: AuthLayoutProps) {
           {children}
         </div>
 
-        <p className="mt-auto px-5 pb-[53px] pt-[53px] text-center text-[14px] font-medium leading-[24px] text-[#161616] min-[1440px]:hidden">
+        <p className="mt-auto px-5 pb-[53px] pt-[53px] text-center text-[14px] font-medium leading-[24px] text-text-main min-[1440px]:hidden">
           © {new Date().getFullYear()} Verify. All Rights Reserved.
         </p>
       </section>

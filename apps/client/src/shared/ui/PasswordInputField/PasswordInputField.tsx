@@ -27,7 +27,7 @@ export function PasswordInputField(props: PasswordInputFieldProps) {
         >
           <Icon
             src={isPasswordVisible ? eyeOffIcon : eyeIcon}
-            className="h-6 w-6 text-[#A0B1A5]"
+            className="h-6 w-6 text-text-muted"
           />
         </button>
       }

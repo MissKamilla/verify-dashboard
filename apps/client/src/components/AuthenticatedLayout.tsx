@@ -51,7 +51,7 @@ export function AuthenticatedLayout() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#FCFCFC] px-[16px] pt-[30px] pb-0 lg:p-[30px]">
+      <div className="min-h-screen bg-page-bg px-[16px] pt-[30px] pb-0 lg:p-[30px]">
         <div className="flex min-h-[calc(100vh-60px)] gap-[30px]">
           <Sidebar
             {...sidebarProps}
