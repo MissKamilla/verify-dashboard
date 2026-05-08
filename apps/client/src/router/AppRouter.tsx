@@ -19,6 +19,8 @@ export function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AuthenticatedLayout />}>
           <Route path="/galleries" element={<GalleriesPage />} />
+          <Route path="/galleries/list" element={<GalleriesPage />} />
+          <Route path="/galleries/search" element={<GalleriesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { NavLink } from "react-router";
+import { NavLink, useLocation } from "react-router";
 
 import logoUrl from "@/assets/verify-logo-black.svg";
 import galleryIconUrl from "@/assets/icons/gallery.svg";
@@ -28,7 +28,27 @@ export function Sidebar({
   onNavigate,
   className = "",
 }: SidebarProps) {
-  const [isGalleryMenuOpen, setIsGalleryMenuOpen] = useState(true);
+  const [openSectionIds, setOpenSectionIds] = useState<string[]>(["galleries"]);
+
+  const toggleSection = (sectionId: string) => {
+    setOpenSectionIds((currentIds) =>
+      currentIds.includes(sectionId)
+        ? currentIds.filter((id) => id !== sectionId)
+        : [...currentIds, sectionId],
+    );
+  };
+
+  const isSectionOpen = (sectionId: string) => {
+    return openSectionIds.includes(sectionId);
+  };
+
+  const location = useLocation();
+
+  const isSectionActive = (path: string) => {
+    return (
+      location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
+  };
 
   const userInitials = getInitials(firstname, lastname);
 
@@ -55,35 +75,47 @@ export function Sidebar({
       <div className="h-px w-full bg-[#EDEDED]" />
 
       <nav className="mt-[36px]">
-        <button
-          type="button"
-          onClick={() => setIsGalleryMenuOpen((isOpen) => !isOpen)}
-          className="flex h-[24px] w-full cursor-pointer items-center px-[20px] text-[16px] font-bold leading-[150%] text-[#161616]"
-          aria-expanded={isGalleryMenuOpen}
-        >
-          <img
-            src={galleryIconUrl}
-            alt=""
-            className="mr-[10px] h-[24px] w-[24px]"
-          />
+        <div className="flex h-[24px] w-full items-center px-[20px]">
+          <NavLink
+            to="/galleries"
+            onClick={onNavigate}
+            className={() =>
+              `flex items-center gap-[10px] text-[16px] font-bold leading-[150%] transition-colors ${
+                isSectionActive("/galleries")
+                  ? "text-[#161616]"
+                  : "text-[#A0B1A5] hover:text-[#161616]"
+              }`
+            }
+          >
+            <img src={galleryIconUrl} alt="" className="h-[24px] w-[24px]" />
+            <span>Gallery</span>
+          </NavLink>
 
-          <span>Gallery</span>
-
-          <span className="ml-auto flex h-[24px] w-[24px] items-center justify-center">
+          <button
+            type="button"
+            onClick={() => toggleSection("galleries")}
+            className="ml-auto flex h-[24px] w-[24px] cursor-pointer items-center justify-center"
+            aria-label={
+              isSectionOpen("galleries")
+                ? "Collapse gallery menu"
+                : "Expand gallery menu"
+            }
+            aria-expanded={isSectionOpen("galleries")}
+          >
             <img
               src={chevronDownIconUrl}
               alt=""
               className={`h-[5px] w-[10px] transition-transform ${
-                isGalleryMenuOpen ? "rotate-0" : "-rotate-90"
+                isSectionOpen("galleries") ? "rotate-0" : "-rotate-90"
               }`}
             />
-          </span>
-        </button>
+          </button>
+        </div>
 
-        {isGalleryMenuOpen && (
+        {isSectionOpen("galleries") && (
           <div className="mt-[18px] flex flex-col gap-[24px]">
             <NavLink
-              to="/galleries"
+              to="/galleries/list"
               onClick={onNavigate}
               className={getSubmenuLinkClassName}
             >
@@ -91,7 +123,7 @@ export function Sidebar({
             </NavLink>
 
             <NavLink
-              to="/galleries"
+              to="/galleries/search"
               onClick={onNavigate}
               className={getSubmenuLinkClassName}
             >

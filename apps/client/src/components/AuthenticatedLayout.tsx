@@ -40,15 +40,19 @@ export function AuthenticatedLayout() {
     navigate("/login", { replace: true });
   };
 
+  const sidebarProps = {
+    firstname: profile?.firstname,
+    lastname: profile?.lastname,
+    email: profile?.email,
+    isProfilePending: isPending,
+    onLogout: handleLogout,
+  };
+
   return (
     <div className="min-h-screen bg-[#FCFCFC] p-[30px]">
       <div className="flex min-h-[calc(100vh-60px)] gap-[30px]">
         <Sidebar
-          firstname={profile?.firstname}
-          lastname={profile?.lastname}
-          email={profile?.email}
-          isProfilePending={isPending}
-          onLogout={handleLogout}
+          {...sidebarProps}
           className="hidden h-[calc(100vh-60px)] lg:flex"
         />
 
@@ -80,11 +84,7 @@ export function AuthenticatedLayout() {
             </button>
 
             <Sidebar
-              firstname={profile?.firstname}
-              lastname={profile?.lastname}
-              email={profile?.email}
-              isProfilePending={isPending}
-              onLogout={handleLogout}
+              {...sidebarProps}
               onNavigate={() => setIsMobileSidebarOpen(false)}
               className="h-full overflow-y-auto"
             />
