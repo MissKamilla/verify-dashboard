@@ -1,5 +1,5 @@
 import { useOutletContext } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
 import companyIconUrl from "@/assets/icons/company.svg";
@@ -7,7 +7,7 @@ import profileIconUrl from "@/assets/icons/profile.svg";
 import profileBannerUrl from "@/assets/profile-banner.png";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
-import { getProfile } from "@/features/profile/profileApi";
+import { getProfile, updateProfile } from "@/features/profile/profileApi";
 import { getInitials } from "@/features/profile/getInitials";
 import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
 import { FormInputField } from "@/shared/ui/FormInputField";
@@ -15,6 +15,12 @@ import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { SettingsCard } from "@/shared/ui/SettingsCard";
 import { Icon } from "@/shared/ui/Icon";
+import { useState } from "react";
+import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
+import { Form, Formik } from "formik";
+import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
+import type { AccountSettingsFormValues } from "@/features/profile/types";
+import { validateAccountSettingsForm } from "@/features/profile/validateAccountSettingsForm";
 
 export function ProfilePage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
@@ -29,6 +35,20 @@ export function ProfilePage() {
     retry: false,
   });
 
+  const [accountApiError, setAccountApiError] = useState("");
+  const queryClient = useQueryClient();
+
+  const updateProfileMutation = useMutation({
+    mutationFn: updateProfile,
+    onSuccess: () => {
+      setAccountApiError("");
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (error) => {
+      setAccountApiError(getApiErrorMessage(error));
+    },
+  });
+
   if (isPending) {
     return <p>Loading profile...</p>;
   }
@@ -41,8 +61,17 @@ export function ProfilePage() {
     return <p>Failed to load profile</p>;
   }
 
+  if (!profile) {
+    return <p>Failed to load profile</p>;
+  }
+
   const fullName = `${profile.firstname} ${profile.lastname}`;
   const initials = getInitials(profile.firstname, profile.lastname);
+
+  const accountInitialValues: AccountSettingsFormValues = {
+    firstname: profile.firstname,
+    lastname: profile.lastname,
+  };
 
   return (
     <section className="flex min-h-[calc(100vh-60px)] flex-col">
@@ -68,8 +97,6 @@ export function ProfilePage() {
             alt=""
             className="h-full w-full rounded-[16px] object-cover"
           />
-
-          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
         </div>
 
         <div className="-mt-[55px] flex flex-col items-center text-center">
@@ -92,53 +119,101 @@ export function ProfilePage() {
           title="Account Settings"
           description="Here you can change your account information."
         >
-          <form className="flex flex-col gap-[24px]">
-            <FormInputField
-              label="First name"
-              name="firstname"
-              value={profile.firstname}
-              readOnly
-              startIcon={
-                <Icon
-                  src={profileIconUrl}
-                  className="h-[20px] w-[20px] text-text-main"
-                />
-              }
-            />
+          <Formik<AccountSettingsFormValues>
+            initialValues={accountInitialValues}
+            enableReinitialize
+            validate={validateAccountSettingsForm}
+            validateOnMount
+            onSubmit={(values) => {
+              setAccountApiError("");
 
-            <FormInputField
-              label="Last name"
-              name="lastname"
-              value={profile.lastname}
-              readOnly
-              startIcon={
-                <Icon
-                  src={profileIconUrl}
-                  className="h-[20px] w-[20px] text-text-main"
-                />
-              }
-            />
+              updateProfileMutation.mutate(values);
+            }}
+          >
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              isValid,
+              dirty,
+            }) => {
+              const isSubmitDisabled =
+                !dirty ||
+                !values.firstname.trim() ||
+                !values.lastname.trim() ||
+                !isValid ||
+                updateProfileMutation.isPending;
 
-            <FormInputField
-              label="Company"
-              name="company"
-              value="New Group"
-              readOnly
-              startIcon={
-                <Icon
-                  src={companyIconUrl}
-                  className="h-[20px] w-[20px] text-text-main"
-                />
-              }
-            />
+              return (
+                <Form className="flex flex-col gap-[24px]">
+                  <FormInputField
+                    label="First name"
+                    name="firstname"
+                    value={values.firstname}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.firstname ? errors.firstname : undefined}
+                    startIcon={
+                      <Icon
+                        src={profileIconUrl}
+                        className="h-[20px] w-[20px] text-text-main"
+                      />
+                    }
+                  />
 
-            <button
-              type="button"
-              className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-brand text-[14px] font-bold leading-[150%] text-white lg:ml-auto lg:mr-0 lg:w-[180px]"
-            >
-              Save changes
-            </button>
-          </form>
+                  <FormInputField
+                    label="Last name"
+                    name="lastname"
+                    value={values.lastname}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.lastname ? errors.lastname : undefined}
+                    startIcon={
+                      <Icon
+                        src={profileIconUrl}
+                        className="h-[20px] w-[20px] text-text-main"
+                      />
+                    }
+                  />
+
+                  <FormInputField
+                    label="Company"
+                    name="company"
+                    value="New Group"
+                    readOnly
+                    startIcon={
+                      <Icon
+                        src={companyIconUrl}
+                        className="h-[20px] w-[20px] text-text-main"
+                      />
+                    }
+                  />
+
+                  {accountApiError && (
+                    <p className="text-[14px] font-normal leading-[150%] text-error">
+                      {accountApiError}
+                    </p>
+                  )}
+
+                  {/* <button
+                  type="submit"
+                  disabled={updateProfileMutation.isPending}
+                  className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-brand text-[14px] font-bold leading-[150%] text-white disabled:cursor-not-allowed disabled:opacity-70 lg:ml-auto lg:mr-0 lg:w-[180px]"
+                >
+                  Save changes
+                </button> */}
+                  <div className="mx-auto mt-[4px] w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
+                    <FormSubmitButton
+                      text="Save changes"
+                      disabled={isSubmitDisabled}
+                    />
+                  </div>
+                </Form>
+              );
+            }}
+          </Formik>
         </SettingsCard>
 
         <SettingsCard

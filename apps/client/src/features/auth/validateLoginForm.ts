@@ -1,5 +1,8 @@
 import type { LoginFormErrors, LoginFormValues } from "./types";
-import { getEmailError, getRequiredPasswordError } from "./validationRules";
+import {
+  getEmailError,
+  getRequiredPasswordError,
+} from "@/shared/lib/validationRules";
 
 export const validateLoginForm = (values: LoginFormValues): LoginFormErrors => {
   const errors: LoginFormErrors = {};

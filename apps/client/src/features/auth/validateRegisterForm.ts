@@ -4,7 +4,7 @@ import {
   getEmailError,
   getNameError,
   getStrongPasswordError,
-} from "./validationRules";
+} from "@/shared/lib/validationRules";
 
 export const validateRegisterForm = (
   values: RegisterFormValues,
