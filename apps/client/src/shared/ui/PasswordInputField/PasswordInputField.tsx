@@ -22,12 +22,12 @@ export function PasswordInputField(props: PasswordInputFieldProps) {
           aria-label={isPasswordVisible ? "Hide password" : "Show password"}
           aria-pressed={isPasswordVisible}
           onClick={() => setIsPasswordVisible((prev) => !prev)}
-          className="flex h-5 w-5 items-center justify-center"
+          className="flex h-6 w-6 items-center justify-center"
         >
           <img
             src={isPasswordVisible ? eyeOffIcon : eyeIcon}
             alt=""
-            className="h-5 w-5"
+            className="h-6 w-6"
           />
         </button>
       }

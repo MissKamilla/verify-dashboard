@@ -5,6 +5,7 @@ import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayou
 import burgerIconUrl from "@/assets/icons/burger.svg";
 import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
 import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
+import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 
 export function GalleriesPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
@@ -60,9 +61,7 @@ export function GalleriesPage() {
         </div>
       </div>
 
-      <p className="mt-auto hidden pt-[30px] text-right text-[14px] font-normal leading-[150%] text-[#A0B1A5] lg:block">
-        © {new Date().getFullYear()} Verify. All Rights Reserved.
-      </p>
+      <CopyrightFooter />
     </section>
   );
 }
