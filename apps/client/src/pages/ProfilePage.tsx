@@ -14,6 +14,7 @@ import { FormInputField } from "@/shared/ui/FormInputField";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { SettingsCard } from "@/shared/ui/SettingsCard";
+import { Icon } from "@/shared/ui/Icon";
 
 export function ProfilePage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
@@ -56,7 +57,7 @@ export function ProfilePage() {
           className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
           aria-label="Open menu"
         >
-          <img src={burgerIconUrl} alt="" className="h-[24px] w-[24px]" />
+          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
         </button>
       </header>
 
@@ -67,6 +68,8 @@ export function ProfilePage() {
             alt=""
             className="h-full w-full rounded-[16px] object-cover"
           />
+
+          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
         </div>
 
         <div className="-mt-[55px] flex flex-col items-center text-center">
@@ -96,10 +99,9 @@ export function ProfilePage() {
               value={profile.firstname}
               readOnly
               startIcon={
-                <img
+                <Icon
                   src={profileIconUrl}
-                  alt=""
-                  className="h-[20px] w-[16px]"
+                  className="h-[20px] w-[20px] text-[#161616]"
                 />
               }
             />
@@ -110,10 +112,9 @@ export function ProfilePage() {
               value={profile.lastname}
               readOnly
               startIcon={
-                <img
+                <Icon
                   src={profileIconUrl}
-                  alt=""
-                  className="h-[20px] w-[16px]"
+                  className="h-[20px] w-[20px] text-[#161616]"
                 />
               }
             />
@@ -124,10 +125,9 @@ export function ProfilePage() {
               value="New Group"
               readOnly
               startIcon={
-                <img
+                <Icon
                   src={companyIconUrl}
-                  alt=""
-                  className="h-[20px] w-[16px]"
+                  className="h-[20px] w-[20px] text-[#161616]"
                 />
               }
             />

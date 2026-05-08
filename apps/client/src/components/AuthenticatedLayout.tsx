@@ -10,6 +10,7 @@ import { useRedirectOnUnauthorized } from "@/features/auth/useRedirectOnUnauthor
 import { getProfile } from "@/features/profile/profileApi";
 
 import closeIconUrl from "@/assets/icons/close.svg";
+import { Icon } from "@/shared/ui/Icon";
 
 export type AuthenticatedLayoutContext = {
   openMobileSidebar: () => void;
@@ -80,7 +81,7 @@ export function AuthenticatedLayout() {
                 className="absolute right-[20px] top-[20px] z-10 flex h-[16px] w-[16px] cursor-pointer items-center justify-center"
                 aria-label="Close menu"
               >
-                <img src={closeIconUrl} alt="" className="h-[16px] w-[16px]" />
+                <Icon src={closeIconUrl} className="h-[16px] w-[16px]" />
               </button>
 
               <Sidebar

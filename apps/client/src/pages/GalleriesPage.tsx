@@ -6,6 +6,7 @@ import burgerIconUrl from "@/assets/icons/burger.svg";
 import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
 import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
+import { Icon } from "@/shared/ui/Icon";
 
 export function GalleriesPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
@@ -22,7 +23,10 @@ export function GalleriesPage() {
           className="hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-[#168B6C] text-[16px] font-bold leading-[150%] text-[#168B6C] lg:flex"
         >
           <span>Go to upload photos</span>
-          <img src={arrowRightIconUrl} alt="" className="h-[12px] w-[15px]" />
+          <Icon
+            src={arrowRightIconUrl}
+            className="h-[12px] w-[15px] text-[#168B6C]"
+          />
         </button>
 
         <button
@@ -31,7 +35,7 @@ export function GalleriesPage() {
           className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
           aria-label="Open menu"
         >
-          <img src={burgerIconUrl} alt="" className="h-[24px] w-[24px]" />
+          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
         </button>
       </header>
 
@@ -56,7 +60,10 @@ export function GalleriesPage() {
             className="mt-[28px] flex cursor-pointer items-center gap-[10px] text-[16px] font-bold uppercase leading-[150%] text-[#168B6C]"
           >
             <span>Go to upload photos</span>
-            <img src={arrowRightIconUrl} alt="" className="h-[12px] w-[15px]" />
+            <Icon
+              src={arrowRightIconUrl}
+              className="h-[12px] w-[15px] text-[#168B6C]"
+            />
           </button>
         </div>
       </div>

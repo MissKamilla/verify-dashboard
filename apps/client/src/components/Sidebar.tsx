@@ -8,6 +8,7 @@ import chevronDownIconUrl from "@/assets/icons/chevron-down.svg";
 import logoutIconUrl from "@/assets/icons/logout.svg";
 
 import { getInitials } from "@/features/profile/getInitials";
+import { Icon } from "@/shared/ui/Icon";
 
 type SidebarProps = {
   firstname?: string;
@@ -18,6 +19,12 @@ type SidebarProps = {
   onNavigate?: () => void;
   className?: string;
 };
+
+const activeTextClassName = "text-[#161616]";
+const inactiveTextClassName = "text-[#A0B1A5] hover:text-[#161616]";
+
+const openedSectionIconClassName = "text-[#168B6C]";
+const closedSectionIconClassName = "text-[#A0B1A5]";
 
 export function Sidebar({
   firstname,
@@ -58,11 +65,26 @@ export function Sidebar({
   const userEmail = email ?? "";
 
   const getSubmenuLinkClassName = ({ isActive }: { isActive: boolean }) =>
-    `h-[30px] pl-[54px] pt-[3px] text-[16px] leading-[150%] transition-colors active:text-[#161616] ${
+    `h-[30px] pl-[54px] pt-[3px] text-[16px] leading-[150%] transition-colors${
       isActive
-        ? "font-bold text-[#161616]"
-        : "font-normal text-[#A0B1A5] hover:text-[#161616]"
+        ? `font-bold ${activeTextClassName}`
+        : `font-normal ${inactiveTextClassName}`
     }`;
+
+  const getSectionLinkClassName = (sectionPath: string) =>
+    `flex items-center gap-[10px] text-[16px] font-bold leading-[150%] transition-colors ${
+      isSectionActive(sectionPath) ? activeTextClassName : inactiveTextClassName
+    }`;
+
+  const getSectionIconClassName = (sectionId: string) =>
+    isSectionOpen(sectionId)
+      ? openedSectionIconClassName
+      : closedSectionIconClassName;
+
+  const getSectionChevronClassName = (sectionId: string) =>
+    isSectionOpen(sectionId)
+      ? `rotate-0 ${openedSectionIconClassName}`
+      : `-rotate-90 ${closedSectionIconClassName}`;
 
   return (
     <aside
@@ -79,16 +101,13 @@ export function Sidebar({
           <NavLink
             to="/galleries"
             onClick={onNavigate}
-            className={() =>
-              `flex items-center gap-[10px] text-[16px] font-bold leading-[150%] transition-colors ${
-                isSectionActive("/galleries")
-                  ? "text-[#161616]"
-                  : "text-[#A0B1A5] hover:text-[#161616]"
-              }`
-            }
+            className={() => getSectionLinkClassName("/galleries")}
           >
-            <img src={galleryIconUrl} alt="" className="h-[24px] w-[24px]" />
-            <span>Gallery</span>
+            <Icon
+              src={galleryIconUrl}
+              className={`h-[24px] w-[24px] ${getSectionIconClassName("galleries")}`}
+            />
+            Gallery
           </NavLink>
 
           <button
@@ -102,12 +121,11 @@ export function Sidebar({
             }
             aria-expanded={isSectionOpen("galleries")}
           >
-            <img
+            <Icon
               src={chevronDownIconUrl}
-              alt=""
-              className={`h-[5px] w-[10px] transition-transform ${
-                isSectionOpen("galleries") ? "rotate-0" : "-rotate-90"
-              }`}
+              className={`h-[5px] w-[10px] transition-transform ${getSectionChevronClassName(
+                "galleries",
+              )}`}
             />
           </button>
         </div>
@@ -161,9 +179,9 @@ export function Sidebar({
         <button
           type="button"
           onClick={onLogout}
-          className="flex h-[30px] cursor-pointer items-center gap-[10px] px-[20px] text-[16px] font-normal leading-[150%] text-[#A0B1A5] transition-colors hover:text-[#161616]"
+          className="flex h-[30px] cursor-pointer items-center gap-[10px] px-[20px] text-[16px] font-normal leading-[150%] text-[#A0B1A5] transition-colors hover:text-[#E95A54]"
         >
-          <img src={logoutIconUrl} alt="" className="h-[24px] w-[24px]" />
+          <Icon src={logoutIconUrl} className="h-[24px] w-[24px]" />
           <span>Log Out</span>
         </button>
       </div>
