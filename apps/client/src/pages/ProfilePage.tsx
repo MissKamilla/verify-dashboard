@@ -27,6 +27,7 @@ import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { Icon } from "@/shared/ui/Icon";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 import { SettingsCard } from "@/shared/ui/SettingsCard";
+import { SuccessModal } from "@/shared/ui/SuccessModal";
 
 const changePasswordInitialValues: ChangePasswordFormValues = {
   oldPassword: "",
@@ -53,10 +54,13 @@ export function ProfilePage() {
   const [accountApiError, setAccountApiError] = useState("");
   const [passwordApiError, setPasswordApiError] = useState("");
 
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+
   const updateProfileMutation = useMutation({
     mutationFn: updateProfile,
     onSuccess: () => {
       setAccountApiError("");
+      setIsSuccessModalOpen(true);
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: (error) => {
@@ -68,6 +72,7 @@ export function ProfilePage() {
     mutationFn: updateProfile,
     onSuccess: () => {
       setPasswordApiError("");
+      setIsSuccessModalOpen(true);
     },
     onError: (error) => {
       setPasswordApiError(getApiErrorMessage(error));
@@ -337,6 +342,12 @@ export function ProfilePage() {
       </div>
 
       <CopyrightFooter />
+      <SuccessModal
+        isOpen={isSuccessModalOpen}
+        title="Changes saved"
+        description="Your changes were successfully saved."
+        onClose={() => setIsSuccessModalOpen(false)}
+      />
     </section>
   );
 }
