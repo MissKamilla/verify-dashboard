@@ -19,5 +19,16 @@ export type UpdateProfilePayload = {
   firstname?: string;
   lastname?: string;
   email?: string;
+  oldPassword?: string;
   password?: string;
 };
+
+export type ChangePasswordFormValues = {
+  oldPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+};
+
+export type ChangePasswordFormErrors = Partial<
+  Record<keyof ChangePasswordFormValues, string>
+>;

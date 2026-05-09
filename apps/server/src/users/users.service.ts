@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -83,6 +84,29 @@ export class UsersService {
     }
 
     if (dto.password) {
+      if (!dto.oldPassword) {
+        throw new BadRequestException('Old password is required');
+      }
+
+      const userWithPassword = await this.usersRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('user.id = :id', { id: userId })
+        .getOne();
+
+      if (!userWithPassword) {
+        throw new NotFoundException('User not found');
+      }
+
+      const isOldPasswordValid = await bcrypt.compare(
+        dto.oldPassword,
+        userWithPassword.password,
+      );
+
+      if (!isOldPasswordValid) {
+        throw new BadRequestException('Old password is incorrect');
+      }
+
       user.password = await bcrypt.hash(dto.password, 10);
     }
 

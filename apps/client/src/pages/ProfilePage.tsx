@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { useOutletContext } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Form, Formik, type FormikHelpers } from "formik";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
 import companyIconUrl from "@/assets/icons/company.svg";
@@ -7,23 +9,36 @@ import profileIconUrl from "@/assets/icons/profile.svg";
 import profileBannerUrl from "@/assets/profile-banner.png";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
-import { getProfile, updateProfile } from "@/features/profile/profileApi";
-import { getInitials } from "@/features/profile/getInitials";
-import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
-import { FormInputField } from "@/shared/ui/FormInputField";
-import { PasswordInputField } from "@/shared/ui/PasswordInputField";
-import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
-import { SettingsCard } from "@/shared/ui/SettingsCard";
-import { Icon } from "@/shared/ui/Icon";
-import { useState } from "react";
+
 import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
-import { Form, Formik } from "formik";
-import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
-import type { AccountSettingsFormValues } from "@/features/profile/types";
+import { getInitials } from "@/features/profile/getInitials";
+import { getProfile, updateProfile } from "@/features/profile/profileApi";
+import type {
+  AccountSettingsFormValues,
+  ChangePasswordFormValues,
+} from "@/features/profile/types";
 import { validateAccountSettingsForm } from "@/features/profile/validateAccountSettingsForm";
+import { validateChangePasswordForm } from "@/features/profile/validateChangePasswordForm";
+
+import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
+import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
+import { FormInputField } from "@/shared/ui/FormInputField";
+import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
+import { Icon } from "@/shared/ui/Icon";
+import { PasswordInputField } from "@/shared/ui/PasswordInputField";
+import { SettingsCard } from "@/shared/ui/SettingsCard";
+
+const changePasswordInitialValues: ChangePasswordFormValues = {
+  oldPassword: "",
+  newPassword: "",
+  confirmNewPassword: "",
+};
 
 export function ProfilePage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
+
+  const queryClient = useQueryClient();
+
   const {
     data: profile,
     error,
@@ -36,7 +51,7 @@ export function ProfilePage() {
   });
 
   const [accountApiError, setAccountApiError] = useState("");
-  const queryClient = useQueryClient();
+  const [passwordApiError, setPasswordApiError] = useState("");
 
   const updateProfileMutation = useMutation({
     mutationFn: updateProfile,
@@ -48,6 +63,35 @@ export function ProfilePage() {
       setAccountApiError(getApiErrorMessage(error));
     },
   });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: updateProfile,
+    onSuccess: () => {
+      setPasswordApiError("");
+    },
+    onError: (error) => {
+      setPasswordApiError(getApiErrorMessage(error));
+    },
+  });
+
+  const handleChangePasswordSubmit = (
+    values: ChangePasswordFormValues,
+    { resetForm }: FormikHelpers<ChangePasswordFormValues>,
+  ) => {
+    setPasswordApiError("");
+
+    changePasswordMutation.mutate(
+      {
+        oldPassword: values.oldPassword,
+        password: values.newPassword,
+      },
+      {
+        onSuccess: () => {
+          resetForm();
+        },
+      },
+    );
+  };
 
   if (isPending) {
     return <p>Loading profile...</p>;
@@ -197,13 +241,6 @@ export function ProfilePage() {
                     </p>
                   )}
 
-                  {/* <button
-                  type="submit"
-                  disabled={updateProfileMutation.isPending}
-                  className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-brand text-[14px] font-bold leading-[150%] text-white disabled:cursor-not-allowed disabled:opacity-70 lg:ml-auto lg:mr-0 lg:w-[180px]"
-                >
-                  Save changes
-                </button> */}
                   <div className="mx-auto mt-[4px] w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
                     <FormSubmitButton
                       text="Save changes"
@@ -220,32 +257,82 @@ export function ProfilePage() {
           title="Change Password"
           description="Here you can set your new password."
         >
-          <form className="flex flex-col gap-[24px]">
-            <PasswordInputField
-              label="Old password"
-              name="oldPassword"
-              placeholder="********"
-            />
+          <Formik<ChangePasswordFormValues>
+            initialValues={changePasswordInitialValues}
+            enableReinitialize
+            validate={validateChangePasswordForm}
+            validateOnMount
+            onSubmit={handleChangePasswordSubmit}
+          >
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              isValid,
+              dirty,
+            }) => {
+              const isSubmitDisabled =
+                !dirty ||
+                !values.oldPassword.trim() ||
+                !values.newPassword.trim() ||
+                !values.confirmNewPassword.trim() ||
+                !isValid ||
+                changePasswordMutation.isPending;
 
-            <PasswordInputField
-              label="New password"
-              name="newPassword"
-              placeholder="Min. 8 characters"
-            />
+              return (
+                <Form className="flex flex-col gap-[24px]">
+                  <PasswordInputField
+                    label="Old password"
+                    name="oldPassword"
+                    placeholder="********"
+                    value={values.oldPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.oldPassword ? errors.oldPassword : undefined}
+                  />
 
-            <PasswordInputField
-              label="New password confirmation"
-              name="confirmNewPassword"
-              placeholder="New password confirmation"
-            />
+                  <PasswordInputField
+                    label="New password"
+                    name="newPassword"
+                    placeholder="Min. 8 characters"
+                    value={values.newPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.newPassword ? errors.newPassword : undefined}
+                  />
 
-            <button
-              type="button"
-              className="mx-auto mt-[4px] h-[50px] w-full rounded-[16px] bg-brand text-[14px] font-bold leading-[150%] text-white lg:ml-auto lg:mr-0 lg:w-[180px]"
-            >
-              Change password
-            </button>
-          </form>
+                  <PasswordInputField
+                    label="New password confirmation"
+                    name="confirmNewPassword"
+                    placeholder="New password confirmation"
+                    value={values.confirmNewPassword}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={
+                      touched.confirmNewPassword
+                        ? errors.confirmNewPassword
+                        : undefined
+                    }
+                  />
+
+                  {passwordApiError && (
+                    <p className="text-[14px] font-normal leading-[150%] text-error">
+                      {passwordApiError}
+                    </p>
+                  )}
+
+                  <div className="mx-auto mt-[4px] w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
+                    <FormSubmitButton
+                      text="Change password"
+                      disabled={isSubmitDisabled}
+                    />
+                  </div>
+                </Form>
+              );
+            }}
+          </Formik>
         </SettingsCard>
       </div>
 
