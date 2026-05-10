@@ -23,6 +23,17 @@ const changePasswordInitialValues: ChangePasswordFormValues = {
 export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
   const [passwordApiError, setPasswordApiError] = useState("");
 
+  const changePasswordMutation = useMutation({
+    mutationFn: updateProfile,
+    onSuccess: () => {
+      setPasswordApiError("");
+      onSuccess();
+    },
+    onError: (error) => {
+      setPasswordApiError(getApiErrorMessage(error));
+    },
+  });
+
   const handleChangePasswordSubmit = (
     values: ChangePasswordFormValues,
     { resetForm }: FormikHelpers<ChangePasswordFormValues>,
@@ -42,17 +53,6 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
     );
   };
 
-  const changePasswordMutation = useMutation({
-    mutationFn: updateProfile,
-    onSuccess: () => {
-      setPasswordApiError("");
-      onSuccess();
-    },
-    onError: (error) => {
-      setPasswordApiError(getApiErrorMessage(error));
-    },
-  });
-
   return (
     <SettingsCard
       title="Change Password"
@@ -60,7 +60,6 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
     >
       <Formik<ChangePasswordFormValues>
         initialValues={changePasswordInitialValues}
-        enableReinitialize
         validate={validateChangePasswordForm}
         validateOnMount
         onSubmit={handleChangePasswordSubmit}

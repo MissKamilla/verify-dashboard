@@ -43,7 +43,6 @@ export class UpdateProfileDto {
   )
   @IsOptional()
   @IsEmail()
-  @IsNotEmpty()
   @MaxLength(255)
   email?: string;
 

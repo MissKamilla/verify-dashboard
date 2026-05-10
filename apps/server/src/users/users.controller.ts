@@ -15,6 +15,7 @@ import { Auth } from '../auth/decorators/auth.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 
+@Auth()
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
@@ -31,7 +32,6 @@ export class UsersController {
   @ApiNotFoundResponse({
     description: 'User not found',
   })
-  @Auth()
   @Get('profile')
   getProfile(@CurrentUser('sub') userId: number) {
     return this.usersService.findById(userId);
@@ -54,7 +54,6 @@ export class UsersController {
   @ApiConflictResponse({
     description: 'User with this email already exists',
   })
-  @Auth()
   @Patch('profile')
   updateProfile(
     @CurrentUser('sub') userId: number,

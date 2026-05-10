@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
-  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
@@ -39,11 +38,10 @@ export class RegisterDto {
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsEmail()
-  @IsNotEmpty()
   @MaxLength(255)
   email!: string;
 
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: 'Password123' })
   @IsString()
   @Matches(/[a-z]/, {
     message: 'Password must contain at least one lowercase letter',

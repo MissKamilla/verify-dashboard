@@ -26,6 +26,8 @@ export function SuccessModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="relative w-full max-w-[438px] rounded-[16px] bg-white px-[32px] pb-[48px] pt-[46px] text-center"
         onClick={(event) => event.stopPropagation()}
       >

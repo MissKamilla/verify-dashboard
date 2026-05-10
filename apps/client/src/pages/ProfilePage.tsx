@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
@@ -9,9 +10,14 @@ import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
 import { SuccessModal } from "@/shared/ui/SuccessModal";
+import { PageLoader } from "@/shared/ui/PageLoader";
+import { PageError } from "@/shared/ui/PageError";
 
 import { getInitials } from "@/features/profile/getInitials";
-import { useProfileQuery } from "@/features/profile/profileQueries";
+import {
+  profileQueryKey,
+  useProfileQuery,
+} from "@/features/profile/profileQueries";
 import { ProfileHeaderCard } from "@/features/profile/components/ProfileHeaderCard";
 import { AccountSettingsForm } from "@/features/profile/components/AccountSettingsForm";
 import { ChangePasswordForm } from "@/features/profile/components/ChangePasswordForm";
@@ -19,24 +25,34 @@ import { ChangePasswordForm } from "@/features/profile/components/ChangePassword
 export function ProfilePage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
 
-  const { data: profile, error, isError, isPending } = useProfileQuery();
-
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
-  if (isPending) {
-    return <p>Loading profile...</p>;
+  const {
+    data: profile,
+    error,
+    isError,
+    isPending,
+    isFetching,
+  } = useProfileQuery();
+
+  const queryClient = useQueryClient();
+  const handleProfileRetry = () => {
+    void queryClient.invalidateQueries({ queryKey: profileQueryKey });
+  };
+
+  if (isPending || (isError && isUnauthorizedError(error))) {
+    return <PageLoader text="Loading profile..." />;
   }
 
-  if (isError) {
-    if (isUnauthorizedError(error)) {
-      return <p>Redirecting to login...</p>;
-    }
-
-    return <p>Failed to load profile</p>;
-  }
-
-  if (!profile) {
-    return <p>Failed to load profile</p>;
+  if (isError || !profile) {
+    return (
+      <PageError
+        title="Couldn’t load profile"
+        description="Please try again."
+        onAction={handleProfileRetry}
+        isActionPending={isFetching}
+      />
+    );
   }
 
   const fullName = `${profile.firstname} ${profile.lastname}`;
