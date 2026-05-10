@@ -144,11 +144,11 @@ export function RegisterPage() {
 
                 <p className="text-[14px] leading-[24px] text-text-secondary">
                   By registering you agree to{" "}
-                  <a href="#" className="font-medium text-[#007A5A] underline">
+                  <a href="#" className="font-medium text-brand underline">
                     Terms & Conditions{" "}
                   </a>
                   and{" "}
-                  <a href="#" className="font-medium text-[#007A5A] underline">
+                  <a href="#" className="font-medium text-brand underline">
                     Privacy Policy
                   </a>
                 </p>

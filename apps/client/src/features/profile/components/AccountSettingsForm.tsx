@@ -33,10 +33,10 @@ export function AccountSettingsForm({
 
   const updateProfileMutation = useMutation({
     mutationFn: updateProfile,
-    onSuccess: () => {
+    onSuccess: (updatedProfile) => {
       setAccountApiError("");
+      queryClient.setQueryData(profileQueryKey, updatedProfile);
       onSuccess();
-      queryClient.invalidateQueries({ queryKey: profileQueryKey });
     },
     onError: (error) => {
       setAccountApiError(getApiErrorMessage(error));
