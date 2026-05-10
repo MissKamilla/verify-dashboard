@@ -1,4 +1,5 @@
 import { httpClient } from "@/shared/api/httpClient";
+
 import type { UpdateProfilePayload, UserProfile } from "./types";
 
 export const getProfile = async (): Promise<UserProfile> => {

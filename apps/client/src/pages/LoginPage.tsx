@@ -1,14 +1,14 @@
 import { useState } from "react";
-
+import { Link, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
 import { Form, Formik } from "formik";
-import { Link, useNavigate } from "react-router";
 
 import { loginUser } from "@/features/auth/authApi";
 import { setAuthToken } from "@/features/auth/authToken";
-import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type { LoginFormValues } from "@/features/auth/types";
-import { validateLoginForm } from "@/features/auth/validateLoginForm";
+import { validateLoginForm } from "@/features/auth/validateAuthForms";
+
+import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { AuthLayout } from "@/shared/ui/AuthLayout";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
@@ -35,35 +35,35 @@ export function LoginPage() {
   });
 
   return (
-    <Formik<LoginFormValues>
-      initialValues={initialFormValues}
-      validate={validateLoginForm}
-      validateOnMount
-      onSubmit={(values) => {
-        setApiError("");
-        loginMutation.mutate(values);
-      }}
-    >
-      {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
-        const isSubmitDisabled =
-          !values.email.trim() ||
-          !values.password ||
-          !isValid ||
-          loginMutation.isPending;
+    <AuthLayout heroVariant="login">
+      <div>
+        <header className="mb-9">
+          <h1 className="text-center text-[36px] font-bold leading-[56px] text-text-main min-[1440px]:text-left">
+            Sign In
+          </h1>
 
-        return (
-          <AuthLayout heroVariant="login">
-            <div>
-              <header className="mb-9">
-                <h1 className="text-center text-[36px] font-bold leading-[56px] text-text-main min-[1440px]:text-left">
-                  Sign In
-                </h1>
+          <p className="text-center text-[14px] leading-[24px] text-text-secondary min-[1440px]:text-left">
+            Enter your email and password to sign in!
+          </p>
+        </header>
 
-                <p className="text-center text-[14px] leading-[24px] text-text-secondary min-[1440px]:text-left">
-                  Enter your email and password to sign in!
-                </p>
-              </header>
+        <Formik<LoginFormValues>
+          initialValues={initialFormValues}
+          validate={validateLoginForm}
+          validateOnMount
+          onSubmit={(values) => {
+            setApiError("");
+            loginMutation.mutate(values);
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
+            const isSubmitDisabled =
+              !values.email.trim() ||
+              !values.password ||
+              !isValid ||
+              loginMutation.isPending;
 
+            return (
               <Form noValidate className="flex flex-col gap-6">
                 <FormInputField
                   label="Email"
@@ -127,10 +127,10 @@ export function LoginPage() {
                   </Link>
                 </p>
               </Form>
-            </div>
-          </AuthLayout>
-        );
-      }}
-    </Formik>
+            );
+          }}
+        </Formik>
+      </div>
+    </AuthLayout>
   );
 }

@@ -1,10 +1,11 @@
 import { useOutletContext } from "react-router";
 
-import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
-
 import burgerIconUrl from "@/assets/icons/burger.svg";
 import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
 import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
+
+import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
+
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
 

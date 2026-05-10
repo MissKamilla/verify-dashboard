@@ -1,4 +1,5 @@
 import { httpClient } from "@/shared/api/httpClient";
+
 import type { AuthResponse, LoginFormValues, RegisterPayload } from "./types";
 
 export const registerUser = async (

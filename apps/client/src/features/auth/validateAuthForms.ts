@@ -1,10 +1,17 @@
-import type { RegisterFormErrors, RegisterFormValues } from "./types";
 import {
-  getConfirmPasswordError,
   getEmailError,
+  getRequiredPasswordError,
+  getConfirmPasswordError,
   getNameError,
   getStrongPasswordError,
 } from "@/shared/lib/validationRules";
+
+import type {
+  LoginFormErrors,
+  LoginFormValues,
+  RegisterFormErrors,
+  RegisterFormValues,
+} from "./types";
 
 export const validateRegisterForm = (
   values: RegisterFormValues,
@@ -38,6 +45,23 @@ export const validateRegisterForm = (
 
   if (confirmPasswordError) {
     errors.confirmPassword = confirmPasswordError;
+  }
+
+  return errors;
+};
+
+export const validateLoginForm = (values: LoginFormValues): LoginFormErrors => {
+  const errors: LoginFormErrors = {};
+
+  const emailError = getEmailError(values.email);
+  const passwordError = getRequiredPasswordError(values.password);
+
+  if (emailError) {
+    errors.email = emailError;
+  }
+
+  if (passwordError) {
+    errors.password = passwordError;
   }
 
   return errors;

@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from "react-router";
+
+import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
+
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { GalleriesPage } from "@/pages/GalleriesPage";
 import { ProfilePage } from "@/pages/ProfilePage";
-import { ProtectedRoute } from "@/router/ProtectedRoute";
-import { PublicOnlyRoute } from "./PublicOnlyRoute";
-import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
+
+import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
 
 export function AppRouter() {
   return (

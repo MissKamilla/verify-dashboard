@@ -1,1 +1,0 @@
-export { AuthHero } from "./AuthHero";

@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import { NavLink, useLocation } from "react-router";
 
 import logoUrl from "@/assets/verify-logo-black.svg";
@@ -8,6 +7,7 @@ import chevronDownIconUrl from "@/assets/icons/chevron-down.svg";
 import logoutIconUrl from "@/assets/icons/logout.svg";
 
 import { getInitials } from "@/features/profile/getInitials";
+
 import { Icon } from "@/shared/ui/Icon";
 
 type SidebarProps = {

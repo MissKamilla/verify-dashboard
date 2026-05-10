@@ -1,20 +1,18 @@
 import { useState } from "react";
-
 import { Link, useNavigate } from "react-router";
 import { useMutation } from "@tanstack/react-query";
-
-import { FormInputField } from "@/shared/ui/FormInputField";
+import { Form, Formik } from "formik";
 
 import { registerUser } from "@/features/auth/authApi";
 import { setAuthToken } from "@/features/auth/authToken";
-import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type { RegisterFormValues } from "@/features/auth/types";
+import { validateRegisterForm } from "@/features/auth/validateAuthForms";
 
-import { validateRegisterForm } from "@/features/auth/validateRegisterForm";
+import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { AuthLayout } from "@/shared/ui/AuthLayout";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
-import { Form, Formik } from "formik";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
+import { FormInputField } from "@/shared/ui/FormInputField";
 
 const initialFormValues: RegisterFormValues = {
   firstname: "",
@@ -41,42 +39,43 @@ export function RegisterPage() {
   });
 
   return (
-    <Formik<RegisterFormValues>
-      initialValues={initialFormValues}
-      validate={validateRegisterForm}
-      validateOnMount
-      onSubmit={(values) => {
-        setApiError("");
-        registerMutation.mutate({
-          firstname: values.firstname,
-          lastname: values.lastname,
-          email: values.email,
-          password: values.password,
-        });
-      }}
-    >
-      {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
-        const isSubmitDisabled =
-          !values.firstname.trim() ||
-          !values.lastname.trim() ||
-          !values.email.trim() ||
-          !values.password ||
-          !values.confirmPassword ||
-          !isValid ||
-          registerMutation.isPending;
-        return (
-          <AuthLayout heroVariant="register">
-            <div>
-              <header className="mb-6">
-                <h1 className="text-center text-[36px] font-bold leading-[56px] text-text-main min-[1440px]:text-left">
-                  Sign Up
-                </h1>
-                <div className="mt-6 inline-block border-b-2 border-brand pb-3">
-                  <p className="text-[16px] font-bold leading-none text-text-main">
-                    Personal Information
-                  </p>
-                </div>
-              </header>
+    <AuthLayout heroVariant="register">
+      <div>
+        <header className="mb-6">
+          <h1 className="text-center text-[36px] font-bold leading-[56px] text-text-main min-[1440px]:text-left">
+            Sign Up
+          </h1>
+          <div className="mt-6 inline-block border-b-2 border-brand pb-3">
+            <p className="text-[16px] font-bold leading-none text-text-main">
+              Personal Information
+            </p>
+          </div>
+        </header>
+
+        <Formik<RegisterFormValues>
+          initialValues={initialFormValues}
+          validate={validateRegisterForm}
+          validateOnMount
+          onSubmit={(values) => {
+            setApiError("");
+            registerMutation.mutate({
+              firstname: values.firstname,
+              lastname: values.lastname,
+              email: values.email,
+              password: values.password,
+            });
+          }}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
+            const isSubmitDisabled =
+              !values.firstname.trim() ||
+              !values.lastname.trim() ||
+              !values.email.trim() ||
+              !values.password ||
+              !values.confirmPassword ||
+              !isValid ||
+              registerMutation.isPending;
+            return (
               <Form noValidate className="flex flex-col gap-6">
                 <FormInputField
                   label="First name"
@@ -173,10 +172,10 @@ export function RegisterPage() {
                   </Link>
                 </p>
               </Form>
-            </div>
-          </AuthLayout>
-        );
-      }}
-    </Formik>
+            );
+          }}
+        </Formik>
+      </div>
+    </AuthLayout>
   );
 }

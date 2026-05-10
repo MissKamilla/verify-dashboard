@@ -2,8 +2,9 @@ import { useState, type ComponentProps } from "react";
 
 import eyeIcon from "@/assets/icons/eye.svg";
 import eyeOffIcon from "@/assets/icons/eye-off.svg";
+
 import { FormInputField } from "@/shared/ui/FormInputField";
-import { Icon } from "../Icon";
+import { Icon } from "@/shared/ui/Icon";
 
 type PasswordInputFieldProps = Omit<
   ComponentProps<typeof FormInputField>,

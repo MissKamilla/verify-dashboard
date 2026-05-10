@@ -1,16 +1,16 @@
 import { useState } from "react";
-
 import { Outlet, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
+
+import closeIconUrl from "@/assets/icons/close.svg";
 
 import { Sidebar } from "@/components/Sidebar";
 
 import { removeAuthToken } from "@/features/auth/authToken";
 import { useRedirectOnUnauthorized } from "@/features/auth/useRedirectOnUnauthorized";
-
-import closeIconUrl from "@/assets/icons/close.svg";
-import { Icon } from "@/shared/ui/Icon";
 import { useProfileQuery } from "@/features/profile/profileQueries";
+
+import { Icon } from "@/shared/ui/Icon";
 
 export type AuthenticatedLayoutContext = {
   openMobileSidebar: () => void;

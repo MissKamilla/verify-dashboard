@@ -6,13 +6,6 @@ import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
-import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
-import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
-import { Icon } from "@/shared/ui/Icon";
-import { SuccessModal } from "@/shared/ui/SuccessModal";
-import { PageLoader } from "@/shared/ui/PageLoader";
-import { PageError } from "@/shared/ui/PageError";
-
 import { getInitials } from "@/features/profile/getInitials";
 import {
   profileQueryKey,
@@ -21,6 +14,13 @@ import {
 import { ProfileHeaderCard } from "@/features/profile/components/ProfileHeaderCard";
 import { AccountSettingsForm } from "@/features/profile/components/AccountSettingsForm";
 import { ChangePasswordForm } from "@/features/profile/components/ChangePasswordForm";
+
+import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
+import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
+import { Icon } from "@/shared/ui/Icon";
+import { SuccessModal } from "@/shared/ui/SuccessModal";
+import { PageLoader } from "@/shared/ui/PageLoader";
+import { PageError } from "@/shared/ui/PageError";
 
 export function ProfilePage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();

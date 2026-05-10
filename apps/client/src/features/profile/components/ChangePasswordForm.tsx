@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Form, Formik, type FormikHelpers } from "formik";
 
+import type { ChangePasswordFormValues } from "@/features/profile/types";
+import { validateChangePasswordForm } from "@/features/profile/validateProfileForms";
+import { updateProfile } from "@/features/profile/profileApi";
+
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 import { SettingsCard } from "@/shared/ui/SettingsCard";
-
-import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
-import type { ChangePasswordFormValues } from "@/features/profile/types";
-import { validateChangePasswordForm } from "@/features/profile/validateChangePasswordForm";
-import { updateProfile } from "@/features/profile/profileApi";
+import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
 type ChangePasswordFormProps = {
   onSuccess: () => void;

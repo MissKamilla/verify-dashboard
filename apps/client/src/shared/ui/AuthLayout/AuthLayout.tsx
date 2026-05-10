@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { AuthHero } from "@/shared/ui/AuthHero";
+import { AuthHero } from "./AuthHero";
 
 type AuthLayoutProps = {
   children: ReactNode;

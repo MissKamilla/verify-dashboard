@@ -5,17 +5,17 @@ import { Form, Formik } from "formik";
 import companyIconUrl from "@/assets/icons/company.svg";
 import profileIconUrl from "@/assets/icons/profile.svg";
 
-import { FormInputField } from "@/shared/ui/FormInputField";
-import { SettingsCard } from "@/shared/ui/SettingsCard";
-
-import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import type {
   AccountSettingsFormValues,
   UserProfile,
 } from "@/features/profile/types";
 import { updateProfile } from "@/features/profile/profileApi";
 import { profileQueryKey } from "@/features/profile/profileQueries";
-import { validateAccountSettingsForm } from "@/features/profile/validateAccountSettingsForm";
+import { validateAccountSettingsForm } from "@/features/profile/validateProfileForms";
+
+import { FormInputField } from "@/shared/ui/FormInputField";
+import { SettingsCard } from "@/shared/ui/SettingsCard";
+import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { Icon } from "@/shared/ui/Icon";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 

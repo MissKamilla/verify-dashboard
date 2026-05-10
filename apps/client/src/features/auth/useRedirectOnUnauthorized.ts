@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-
-import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
+import { useQueryClient } from "@tanstack/react-query";
+
+import { removeAuthToken } from "@/features/auth/authToken";
 
 import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
-import { removeAuthToken } from "@/features/auth/authToken";
 
 type UseRedirectOnUnauthorizedParams = {
   isError: boolean;
