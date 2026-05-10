@@ -33,7 +33,7 @@ export class UpdateProfileDto {
   @MinLength(2)
   @MaxLength(50)
   @Matches(/^[^\d]*$/, {
-    message: 'First name cannot contain numbers',
+    message: 'Last name cannot contain numbers',
   })
   lastname?: string;
 

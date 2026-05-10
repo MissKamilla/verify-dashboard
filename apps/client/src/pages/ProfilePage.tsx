@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Form, Formik, type FormikHelpers } from "formik";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
@@ -12,7 +12,7 @@ import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayou
 
 import { getApiErrorMessage } from "@/features/auth/getApiErrorMessage";
 import { getInitials } from "@/features/profile/getInitials";
-import { getProfile, updateProfile } from "@/features/profile/profileApi";
+import { updateProfile } from "@/features/profile/profileApi";
 import type {
   AccountSettingsFormValues,
   ChangePasswordFormValues,
@@ -28,6 +28,10 @@ import { Icon } from "@/shared/ui/Icon";
 import { PasswordInputField } from "@/shared/ui/PasswordInputField";
 import { SettingsCard } from "@/shared/ui/SettingsCard";
 import { SuccessModal } from "@/shared/ui/SuccessModal";
+import {
+  profileQueryKey,
+  useProfileQuery,
+} from "@/features/profile/profileQueries";
 
 const changePasswordInitialValues: ChangePasswordFormValues = {
   oldPassword: "",
@@ -40,16 +44,7 @@ export function ProfilePage() {
 
   const queryClient = useQueryClient();
 
-  const {
-    data: profile,
-    error,
-    isError,
-    isPending,
-  } = useQuery({
-    queryKey: ["profile"],
-    queryFn: getProfile,
-    retry: false,
-  });
+  const { data: profile, error, isError, isPending } = useProfileQuery();
 
   const [accountApiError, setAccountApiError] = useState("");
   const [passwordApiError, setPasswordApiError] = useState("");
@@ -61,7 +56,7 @@ export function ProfilePage() {
     onSuccess: () => {
       setAccountApiError("");
       setIsSuccessModalOpen(true);
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      queryClient.invalidateQueries({ queryKey: profileQueryKey });
     },
     onError: (error) => {
       setAccountApiError(getApiErrorMessage(error));

@@ -1,16 +1,16 @@
 import { useState } from "react";
 
 import { Outlet, useNavigate } from "react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { Sidebar } from "@/components/Sidebar";
 
 import { removeAuthToken } from "@/features/auth/authToken";
 import { useRedirectOnUnauthorized } from "@/features/auth/useRedirectOnUnauthorized";
-import { getProfile } from "@/features/profile/profileApi";
 
 import closeIconUrl from "@/assets/icons/close.svg";
 import { Icon } from "@/shared/ui/Icon";
+import { useProfileQuery } from "@/features/profile/profileQueries";
 
 export type AuthenticatedLayoutContext = {
   openMobileSidebar: () => void;
@@ -22,16 +22,7 @@ export function AuthenticatedLayout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const {
-    data: profile,
-    error,
-    isError,
-    isPending,
-  } = useQuery({
-    queryKey: ["profile"],
-    queryFn: getProfile,
-    retry: false,
-  });
+  const { data: profile, error, isError, isPending } = useProfileQuery();
 
   useRedirectOnUnauthorized({ isError, error });
 
