@@ -1,0 +1,125 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+
+import { GalleriesService } from './galleries.service';
+import { GalleryResponseDto } from './dto/gallery-response.dto';
+import { CreateGalleryDto } from './dto/create-gallery.dto';
+import { UpdateGalleryDto } from './dto/update-gallery.dto';
+import { Auth } from '../auth/decorators/auth.decorator';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+
+@Auth()
+@ApiTags('Galleries')
+@Controller('gallery')
+export class GalleriesController {
+  constructor(private readonly galleriesService: GalleriesService) {}
+
+  @ApiOperation({ summary: 'Create gallery' })
+  @ApiCreatedResponse({
+    description: 'Gallery created',
+    type: GalleryResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid request body',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
+  @Post()
+  create(@CurrentUser('sub') userId: number, @Body() dto: CreateGalleryDto) {
+    return this.galleriesService.createGallery(userId, dto);
+  }
+
+  @ApiOperation({ summary: 'Get galleries list' })
+  @ApiOkResponse({
+    description: 'Galleries list',
+    type: [GalleryResponseDto],
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
+  @Get()
+  findAll(@CurrentUser('sub') userId: number) {
+    return this.galleriesService.findAll(userId);
+  }
+
+  @ApiOperation({ summary: 'Get gallery by id' })
+  @ApiOkResponse({
+    description: 'Gallery details',
+    type: GalleryResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
+  @ApiNotFoundResponse({
+    description: 'Gallery not found',
+  })
+  @Get(':id')
+  findById(
+    @CurrentUser('sub') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.galleriesService.findById(id, userId);
+  }
+
+  @ApiOperation({ summary: 'Update gallery' })
+  @ApiOkResponse({
+    description: 'Gallery updated',
+    type: GalleryResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid request body',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
+  @ApiNotFoundResponse({
+    description: 'Gallery not found',
+  })
+  @Patch(':id')
+  update(
+    @CurrentUser('sub') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateGalleryDto,
+  ) {
+    return this.galleriesService.updateGallery(id, userId, dto);
+  }
+
+  @ApiOperation({ summary: 'Delete gallery' })
+  @ApiNoContentResponse({
+    description: 'Gallery deleted',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
+  @ApiNotFoundResponse({
+    description: 'Gallery not found',
+  })
+  @HttpCode(204)
+  @Delete(':id')
+  remove(
+    @CurrentUser('sub') userId: number,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.galleriesService.removeGallery(id, userId);
+  }
+}
