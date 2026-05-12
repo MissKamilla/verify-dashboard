@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -10,6 +11,8 @@ import { Repository } from 'typeorm';
 
 import { User } from './entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserProfileResponseDto } from './dto/user-profile-response.dto';
+import { mapUserToProfileResponse } from './mappers/user-profile.mapper';
 
 type CreateUserData = Pick<
   User,
@@ -37,15 +40,14 @@ export class UsersService {
 
     return query.getOne();
   }
-
-  async findById(id: number): Promise<Omit<User, 'password'>> {
+  async findById(id: number): Promise<UserProfileResponseDto> {
     const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return mapUserToProfileResponse(user);
   }
 
   createUser(data: CreateUserData): Promise<User> {
@@ -57,7 +59,7 @@ export class UsersService {
   async updateProfile(
     userId: number,
     dto: UpdateProfileDto,
-  ): Promise<Omit<User, 'password'>> {
+  ): Promise<UserProfileResponseDto> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
 
     if (!user) {
@@ -83,11 +85,34 @@ export class UsersService {
     }
 
     if (dto.password) {
+      if (!dto.oldPassword) {
+        throw new BadRequestException('Old password is required');
+      }
+
+      const userWithPassword = await this.usersRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('user.id = :id', { id: userId })
+        .getOne();
+
+      if (!userWithPassword) {
+        throw new NotFoundException('User not found');
+      }
+
+      const isOldPasswordValid = await bcrypt.compare(
+        dto.oldPassword,
+        userWithPassword.password,
+      );
+
+      if (!isOldPasswordValid) {
+        throw new BadRequestException('Old password is incorrect');
+      }
+
       user.password = await bcrypt.hash(dto.password, 10);
     }
 
-    await this.usersRepository.save(user);
+    const updatedUser = await this.usersRepository.save(user);
 
-    return this.findById(userId);
+    return mapUserToProfileResponse(updatedUser);
   }
 }

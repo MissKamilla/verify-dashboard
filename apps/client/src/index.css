@@ -1,1 +1,32 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap");
+
 @import "tailwindcss";
+
+@theme {
+  --color-text-main: #161616;
+  --color-text-muted: #a0b1a5;
+  --color-text-secondary: #878787;
+
+  --color-brand: #168b6c;
+  --color-brand-light: #ecffee;
+  --color-brand-active: #0f654e;
+  --color-avatar: #1fb28b;
+
+  --color-border-default: #dbdada;
+  --color-border-light: #ededed;
+  --color-error: #e95a54;
+
+  --color-page-bg: #fcfcfc;
+
+  --shadow-card: 14px 17px 40px 4px rgb(125 181 147 / 0.08);
+}
+
+body {
+  font-family: "DM Sans", sans-serif;
+}
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px white inset;
+  -webkit-text-fill-color: #161616;
+}

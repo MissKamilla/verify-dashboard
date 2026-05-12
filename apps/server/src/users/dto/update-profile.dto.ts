@@ -17,8 +17,11 @@ export class UpdateProfileDto {
   )
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
+  @MinLength(2)
   @MaxLength(50)
+  @Matches(/^[^\d]*$/, {
+    message: 'First name cannot contain numbers',
+  })
   firstname?: string;
 
   @ApiPropertyOptional({ example: 'Smith' })
@@ -27,8 +30,11 @@ export class UpdateProfileDto {
   )
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
+  @MinLength(2)
   @MaxLength(50)
+  @Matches(/^[^\d]*$/, {
+    message: 'Last name cannot contain numbers',
+  })
   lastname?: string;
 
   @ApiPropertyOptional({ example: 'anna@test.com' })
@@ -37,18 +43,28 @@ export class UpdateProfileDto {
   )
   @IsOptional()
   @IsEmail()
-  @IsNotEmpty()
   @MaxLength(255)
   email?: string;
 
-  @ApiPropertyOptional({ example: 'newpassword123' })
+  @ApiPropertyOptional({ example: 'newPassword123' })
   @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
-    message: 'Password must contain at least one letter and one number',
+  @Matches(/[a-z]/, {
+    message: 'Password must contain at least one lowercase letter',
+  })
+  @Matches(/[A-Z]/, {
+    message: 'Password must contain at least one uppercase letter',
+  })
+  @Matches(/\d/, {
+    message: 'Password must contain at least one number',
   })
   @MinLength(8)
   @MaxLength(100)
   password?: string;
+
+  @ApiPropertyOptional({ example: 'oldPassword123' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  oldPassword?: string;
 }

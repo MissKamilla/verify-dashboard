@@ -7,10 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
-type JwtPayload = {
-  sub: number;
-  email: string;
-};
+import type { JwtPayload } from '../types/jwt-payload.type';
 
 type RequestWithUser = Request & {
   user?: JwtPayload;

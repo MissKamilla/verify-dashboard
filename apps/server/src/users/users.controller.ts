@@ -1,9 +1,6 @@
-import { Body, Controller, Get, Patch, Req, UseGuards } from '@nestjs/common';
-import type { Request } from 'express';
-
+import { Body, Controller, Get, Patch } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
-  ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -11,25 +8,20 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
+
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Auth } from '../auth/decorators/auth.decorator';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserProfileResponseDto } from './dto/user-profile-response.dto';
 
-type AuthenticatedRequest = Request & {
-  user: {
-    sub: number;
-    email: string;
-  };
-};
-
+@Auth()
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiBearerAuth()
   @ApiOkResponse({
     description: 'Current user profile',
     type: UserProfileResponseDto,
@@ -40,14 +32,12 @@ export class UsersController {
   @ApiNotFoundResponse({
     description: 'User not found',
   })
-  @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Req() request: AuthenticatedRequest) {
-    return this.usersService.findById(request.user.sub);
+  getProfile(@CurrentUser('sub') userId: number) {
+    return this.usersService.findById(userId);
   }
 
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiBearerAuth()
   @ApiOkResponse({
     description: 'Updated user profile',
     type: UserProfileResponseDto,
@@ -64,12 +54,11 @@ export class UsersController {
   @ApiConflictResponse({
     description: 'User with this email already exists',
   })
-  @UseGuards(JwtAuthGuard)
   @Patch('profile')
   updateProfile(
-    @Req() request: AuthenticatedRequest,
+    @CurrentUser('sub') userId: number,
     @Body() dto: UpdateProfileDto,
   ) {
-    return this.usersService.updateProfile(request.user.sub, dto);
+    return this.usersService.updateProfile(userId, dto);
   }
 }

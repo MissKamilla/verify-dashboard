@@ -1,0 +1,1 @@
+export { CopyrightFooter } from "./CopyrightFooter";

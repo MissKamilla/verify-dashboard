@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   IsEmail,
-  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
@@ -15,8 +14,11 @@ export class RegisterDto {
     typeof value === 'string' ? value.trim() : value,
   )
   @IsString()
-  @IsNotEmpty()
+  @MinLength(2)
   @MaxLength(50)
+  @Matches(/^[^\d]*$/, {
+    message: 'First name cannot contain numbers',
+  })
   firstname!: string;
 
   @ApiProperty({ example: 'Smith' })
@@ -24,8 +26,11 @@ export class RegisterDto {
     typeof value === 'string' ? value.trim() : value,
   )
   @IsString()
-  @IsNotEmpty()
+  @MinLength(2)
   @MaxLength(50)
+  @Matches(/^[^\d]*$/, {
+    message: 'Last name cannot contain numbers',
+  })
   lastname!: string;
 
   @ApiProperty({ example: 'anna@test.com' })
@@ -33,15 +38,19 @@ export class RegisterDto {
     typeof value === 'string' ? value.trim().toLowerCase() : value,
   )
   @IsEmail()
-  @IsNotEmpty()
   @MaxLength(255)
   email!: string;
 
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: 'Password123' })
   @IsString()
-  @IsNotEmpty()
-  @Matches(/^(?=.*[A-Za-z])(?=.*\d).+$/, {
-    message: 'Password must contain at least one letter and one number',
+  @Matches(/[a-z]/, {
+    message: 'Password must contain at least one lowercase letter',
+  })
+  @Matches(/[A-Z]/, {
+    message: 'Password must contain at least one uppercase letter',
+  })
+  @Matches(/\d/, {
+    message: 'Password must contain at least one number',
   })
   @MinLength(8)
   @MaxLength(100)
