@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -32,7 +33,7 @@ import { GalleriesListResponseDto } from './dto/galleries-list-response.dto';
 
 @Auth()
 @ApiTags('Galleries')
-@Controller('gallery')
+@Controller('galleries')
 export class GalleriesController {
   constructor(private readonly galleriesService: GalleriesService) {}
 
@@ -40,6 +41,9 @@ export class GalleriesController {
   @ApiCreatedResponse({
     description: 'Gallery created',
     type: GalleryResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'Gallery with this title already exists',
   })
   @ApiBadRequestResponse({
     description: 'Invalid request body',
@@ -88,6 +92,9 @@ export class GalleriesController {
   @ApiOkResponse({
     description: 'Gallery updated',
     type: GalleryResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'Gallery with this title already exists',
   })
   @ApiBadRequestResponse({
     description: 'Invalid request body',
