@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -26,6 +27,8 @@ import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { Auth } from '../auth/decorators/auth.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
+import { GalleriesListResponseDto } from './dto/galleries-list-response.dto';
 
 @Auth()
 @ApiTags('Galleries')
@@ -51,15 +54,15 @@ export class GalleriesController {
 
   @ApiOperation({ summary: 'Get galleries list' })
   @ApiOkResponse({
-    description: 'Galleries list',
-    type: [GalleryResponseDto],
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Missing or invalid token',
+    description: 'Paginated galleries list',
+    type: GalleriesListResponseDto,
   })
   @Get()
-  findAll(@CurrentUser('sub') userId: number) {
-    return this.galleriesService.findAll(userId);
+  findAll(
+    @CurrentUser('sub') userId: number,
+    @Query() query: GetGalleriesQueryDto,
+  ) {
+    return this.galleriesService.findAll(userId, query);
   }
 
   @ApiOperation({ summary: 'Get gallery by id' })

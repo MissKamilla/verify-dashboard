@@ -5,9 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Gallery } from './entities/gallery.entity';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
+import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
 
 @Injectable()
 export class GalleriesService {
@@ -36,15 +37,39 @@ export class GalleriesService {
     return this.galleriesRepository.save(gallery);
   }
 
-  findAll(userId: number): Promise<Gallery[]> {
-    return this.galleriesRepository.find({
+  async findAll(
+    userId: number,
+    query: GetGalleriesQueryDto,
+  ): Promise<{
+    items: Gallery[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortOrder = query.sortOrder ?? 'DESC';
+    const search = query.search?.trim();
+
+    const [items, total] = await this.galleriesRepository.findAndCount({
       where: {
         userId,
+        ...(search ? { title: ILike(`%${search}%`) } : {}),
       },
       order: {
-        createdAt: 'DESC',
+        [sortBy]: sortOrder,
       },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+    };
   }
 
   async findById(id: number, userId: number): Promise<Gallery> {
