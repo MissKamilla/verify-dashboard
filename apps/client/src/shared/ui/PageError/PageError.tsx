@@ -31,7 +31,7 @@ export function PageError({
             type="button"
             onClick={onAction}
             disabled={isActionPending}
-            className="mt-[24px] h-[50px] min-w-[160px] rounded-[16px] bg-brand px-[24px] text-[14px] font-bold leading-[150%] text-white disabled:cursor-not-allowed disabled:bg-border-default disabled:text-text-secondary"
+            className="mt-[24px] h-[50px] min-w-[160px] cursor-pointer rounded-[16px] bg-brand px-[24px] text-[14px] font-bold leading-[150%] text-white hover:bg-avatar active:bg-brand-active disabled:cursor-not-allowed disabled:bg-border-default disabled:text-text-secondary disabled:hover:bg-border-default disabled:active:bg-border-default"
           >
             {isActionPending ? pendingActionText : actionText}
           </button>

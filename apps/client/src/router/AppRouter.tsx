@@ -8,6 +8,7 @@ import { GalleriesPage } from "@/pages/GalleriesPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 
 import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
+import { GalleryDetailsPage } from "@/pages/GalleryDetailsPage";
 
 export function AppRouter() {
   return (
@@ -21,6 +22,10 @@ export function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AuthenticatedLayout />}>
           <Route path="/galleries" element={<GalleriesPage />} />
+          <Route
+            path="/galleries/:galleryId"
+            element={<GalleryDetailsPage />}
+          />
           <Route path="/galleries/list" element={<GalleriesPage />} />
           <Route path="/galleries/search" element={<GalleriesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
