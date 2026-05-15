@@ -1,4 +1,4 @@
-import { useOutletContext } from "react-router";
+import { Link, useOutletContext } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
@@ -48,8 +48,8 @@ export function GalleriesPage() {
           List of galleries
         </h1>
 
-        <button
-          type="button"
+        <Link
+          to="/galleries/create"
           className="hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand lg:flex"
         >
           <span>Create a new gallery</span>
@@ -57,7 +57,7 @@ export function GalleriesPage() {
             src={arrowRightIconUrl}
             className="h-[12px] w-[15px] text-brand"
           />
-        </button>
+        </Link>
 
         <button
           type="button"

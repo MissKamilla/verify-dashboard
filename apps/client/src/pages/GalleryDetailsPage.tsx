@@ -5,10 +5,7 @@ import {
   galleryQueryKeys,
   useGalleryQuery,
 } from "@/features/gallery/galleryQueries";
-
-import { PageError } from "@/shared/ui/PageError";
-import { PageLoader } from "@/shared/ui/PageLoader";
-import { isNotFoundError } from "@/shared/api/isNotFoundError";
+import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
 
 export function GalleryDetailsPage() {
   const { galleryId } = useParams();
@@ -33,37 +30,21 @@ export function GalleryDetailsPage() {
     });
   };
 
-  if (!isValidGalleryId) {
-    return (
-      <PageError
-        title="Invalid Gallery"
-        description="This gallery id is incorrect."
-      />
-    );
+  const galleryPageState = getGalleryPageState({
+    isValidGalleryId,
+    isPending,
+    isError: isError || !gallery,
+    error,
+    isFetching,
+    onRetry: handleRetry,
+  });
+
+  if (galleryPageState) {
+    return galleryPageState;
   }
 
-  if (isPending) {
-    return <PageLoader text="Loading gallery..." />;
-  }
-
-  if (isError && isNotFoundError(error)) {
-    return (
-      <PageError
-        title="Gallery Not Found"
-        description="This gallery doesn’t exist or you don’t have access to it."
-      />
-    );
-  }
-
-  if (isError || !gallery) {
-    return (
-      <PageError
-        title="Couldn’t Load Gallery"
-        description="Please try again."
-        onAction={handleRetry}
-        isActionPending={isFetching}
-      />
-    );
+  if (!gallery) {
+    return null;
   }
 
   return (
@@ -74,7 +55,7 @@ export function GalleryDetailsPage() {
         </h1>
 
         <p className="mt-[8px] text-[18px] leading-[150%] text-text-secondary">
-          {gallery.description}
+          {gallery.description || "No description yet..."}
         </p>
 
         <div className="mt-[32px] flex min-h-[260px] items-center justify-center rounded-[24px] border border-dashed border-border-default">

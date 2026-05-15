@@ -2,13 +2,15 @@ import { Navigate, Route, Routes } from "react-router";
 
 import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 
-import { LoginPage } from "@/pages/LoginPage";
-import { RegisterPage } from "@/pages/RegisterPage";
+import { CreateGalleryPage } from "@/pages/CreateGalleryPage";
+import { EditGalleryPage } from "@/pages/EditGalleryPage";
 import { GalleriesPage } from "@/pages/GalleriesPage";
+import { GalleryDetailsPage } from "@/pages/GalleryDetailsPage";
+import { LoginPage } from "@/pages/LoginPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { RegisterPage } from "@/pages/RegisterPage";
 
 import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
-import { GalleryDetailsPage } from "@/pages/GalleryDetailsPage";
 
 export function AppRouter() {
   return (
@@ -22,12 +24,19 @@ export function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AuthenticatedLayout />}>
           <Route path="/galleries" element={<GalleriesPage />} />
+          <Route path="/galleries/list" element={<GalleriesPage />} />
+          <Route path="/galleries/search" element={<GalleriesPage />} />
+
+          <Route path="/galleries/create" element={<CreateGalleryPage />} />
+          <Route
+            path="/galleries/:galleryId/edit"
+            element={<EditGalleryPage />}
+          />
           <Route
             path="/galleries/:galleryId"
             element={<GalleryDetailsPage />}
           />
-          <Route path="/galleries/list" element={<GalleriesPage />} />
-          <Route path="/galleries/search" element={<GalleriesPage />} />
+
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
