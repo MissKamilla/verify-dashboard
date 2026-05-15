@@ -15,6 +15,8 @@ import { validateGalleryForm } from "@/features/gallery/validateGalleryForm";
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { Icon } from "@/shared/ui/Icon";
+import { GalleryUploadDropzonePlaceholder } from "@/features/gallery/components/GalleryUploadDropzonePlaceholder";
+import { GalleryPhotoPreviewPlaceholderGrid } from "@/features/gallery/components/GalleryPhotoPreviewPlaceholderGrid";
 
 const createGalleryInitialValues: GalleryFormValues = {
   title: "",
@@ -99,49 +101,12 @@ export function CreateGalleryPage() {
               <Form noValidate className="mt-[30px] flex min-h-full flex-col">
                 <div className="grid gap-[30px] xl:grid-cols-[400px_1fr]">
                   <div className="flex flex-col gap-[30px]">
-                    <div className="flex min-h-[260px] flex-col items-center justify-center rounded-[24px] border border-dashed border-brand bg-brand-light px-[24px] py-[32px] text-center">
-                      <p className="text-[18px] font-bold leading-[150%] text-text-muted">
-                        Drag and drop photo here
-                      </p>
-
-                      <p className="mt-[10px] text-[14px] leading-[150%] text-text-muted">
-                        JPEG, PNG (max 5MB / picture)
-                      </p>
-
-                      <div className="my-[22px] flex w-full items-center gap-[14px]">
-                        <span className="h-px flex-1 bg-border-default" />
-                        <span className="text-[16px] font-bold leading-[150%] text-text-muted">
-                          OR
-                        </span>
-                        <span className="h-px flex-1 bg-border-default" />
-                      </div>
-
-                      <button
-                        type="button"
-                        className="h-[50px] w-full max-w-[260px] rounded-[16px] bg-brand text-[16px] font-bold leading-[150%] text-white hover:bg-avatar active:bg-brand-active"
-                      >
-                        Upload
-                      </button>
-                    </div>
+                    <GalleryUploadDropzonePlaceholder />
 
                     <GalleryFields descriptionLabel="Description (optional)" />
                   </div>
 
-                  <div className="hidden grid-cols-4 gap-[20px] self-start xl:grid">
-                    {Array.from({ length: 8 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="flex h-[140px] items-center justify-center rounded-[16px] border border-border-default text-[14px] font-bold leading-[150%] text-border-default"
-                      >
-                        Photo preview
-                      </div>
-                    ))}
-
-                    <p className="col-span-4 text-[16px] leading-[150%] text-text-secondary">
-                      Upload a maximum of <b>50 photos</b>, no more than{" "}
-                      <b>5MB</b> each.
-                    </p>
-                  </div>
+                  <GalleryPhotoPreviewPlaceholderGrid />
                 </div>
 
                 {apiError && (

@@ -5,8 +5,8 @@ import burgerIconUrl from "@/assets/icons/burger.svg";
 import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
-import { GalleriesContent } from "@/features/gallery/components/GalleriesContent";
 
+import { GalleriesContent } from "@/features/gallery/components/GalleriesContent";
 import {
   galleryQueryKeys,
   useGalleriesQuery,
@@ -22,7 +22,6 @@ const DEFAULT_GALLERIES_PARAMS = {
 
 export function GalleriesPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
-
   const queryClient = useQueryClient();
 
   const {

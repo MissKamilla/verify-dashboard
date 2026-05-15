@@ -1,4 +1,5 @@
 import type { Gallery } from "@/features/gallery/types";
+import { useGalleryDelete } from "@/features/gallery/useGalleryDelete";
 
 import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
 import { PageError } from "@/shared/ui/PageError";
@@ -6,6 +7,7 @@ import { PageLoader } from "@/shared/ui/PageLoader";
 
 import { GalleriesEmptyState } from "./GalleriesEmptyState";
 import { GalleriesList } from "./GalleriesList";
+import { GalleryDeleteDialogs } from "./GalleryDeleteDialogs";
 
 type GalleriesContentProps = {
   galleries: Gallery[];
@@ -24,6 +26,8 @@ export function GalleriesContent({
   isFetching,
   onRetry,
 }: GalleriesContentProps) {
+  const galleryDelete = useGalleryDelete();
+
   if (isPending || (isError && isUnauthorizedError(error))) {
     return <PageLoader text="Loading galleries..." />;
   }
@@ -39,9 +43,26 @@ export function GalleriesContent({
     );
   }
 
-  if (galleries.length === 0) {
-    return <GalleriesEmptyState />;
-  }
+  return (
+    <>
+      {galleries.length === 0 ? (
+        <GalleriesEmptyState />
+      ) : (
+        <GalleriesList
+          galleries={galleries}
+          onDeleteClick={galleryDelete.openDeleteModal}
+        />
+      )}
 
-  return <GalleriesList galleries={galleries} />;
+      <GalleryDeleteDialogs
+        galleryToDelete={galleryDelete.galleryToDelete}
+        deleteError={galleryDelete.deleteError}
+        isDeleting={galleryDelete.isDeleting}
+        isSuccessModalOpen={galleryDelete.isSuccessModalOpen}
+        onConfirmDelete={galleryDelete.confirmDelete}
+        onCloseDeleteModal={galleryDelete.closeDeleteModal}
+        onCloseSuccessModal={galleryDelete.closeSuccessModal}
+      />
+    </>
+  );
 }

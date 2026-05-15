@@ -4,15 +4,15 @@ import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
 
 import type { Gallery } from "@/features/gallery/types";
 
+import { GalleryActionsMenu } from "./GalleryActionsMenu";
+
 type GalleriesGridProps = {
   galleries: Gallery[];
-  onEditClick?: (gallery: Gallery) => void;
-  onDeleteClick?: (gallery: Gallery) => void;
+  onDeleteClick: (gallery: Gallery) => void;
 };
 
 export function GalleriesList({
   galleries,
-  onEditClick,
   onDeleteClick,
 }: GalleriesGridProps) {
   return (
@@ -41,22 +41,11 @@ export function GalleriesList({
               </p>
             </Link>
 
-            <div className="mt-[10px] flex gap-[8px]">
-              <button
-                type="button"
-                onClick={() => onEditClick?.(gallery)}
-                className="rounded-[10px] border border-brand px-[14px] py-[8px] text-[14px] font-bold text-brand"
-              >
-                Edit
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onDeleteClick?.(gallery)}
-                className="rounded-[10px] border border-error px-[14px] py-[8px] text-[14px] font-bold text-error"
-              >
-                Delete
-              </button>
+            <div className="mt-[10px] flex justify-end">
+              <GalleryActionsMenu
+                gallery={gallery}
+                onDeleteClick={onDeleteClick}
+              />
             </div>
           </article>
         ))}

@@ -141,8 +141,8 @@ export function EditGalleryPage() {
                 <div className="grid gap-[30px] xl:grid-cols-[400px_1fr]">
                   <GalleryFields />
 
-                  <div className="hidden grid-cols-3 gap-[20px] self-start xl:grid">
-                    {Array.from({ length: 6 }).map((_, index) => (
+                  <div className="hidden gap-[20px] self-start xl:grid">
+                    {Array.from({ length: 3 }).map((_, index) => (
                       <div
                         key={index}
                         className="flex min-h-[220px] flex-col rounded-[16px] border border-border-default p-[14px]"
