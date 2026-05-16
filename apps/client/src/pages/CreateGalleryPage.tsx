@@ -33,7 +33,7 @@ export function CreateGalleryPage() {
   return (
     <section className="flex min-h-[calc(100vh-60px)] flex-col">
       <header className="mb-[13px] flex min-h-[94px] items-center justify-between gap-[16px] rounded-[16px] bg-page-bg/50 backdrop-blur-[20px]">
-        <h1 className="text-[32px] font-bold leading-[150%] text-text-main">
+        <h1 className="text-[24px] font-bold leading-[150%] text-text-main md:text-[32px]">
           Create a new gallery
         </h1>
 
@@ -58,83 +58,105 @@ export function CreateGalleryPage() {
         </button>
       </header>
 
-      <div className="flex-1 rounded-[30px] bg-white p-[30px] shadow-card">
-        <h2 className="text-[24px] font-bold leading-[150%] text-text-main">
-          Upload Photos
-        </h2>
+      <Link
+        to="/galleries"
+        className="mb-[13px] flex h-[50px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand lg:hidden"
+      >
+        <span>Go to gallery list</span>
+        <Icon
+          src={arrowRightIconUrl}
+          className="h-[12px] w-[15px] text-brand"
+        />
+      </Link>
 
-        <p className="mt-[8px] text-[16px] leading-[150%] text-text-secondary">
-          You can upload one photo or a set of photos.
-        </p>
+      <div className="flex flex-1 rounded-[30px] bg-white p-[30px] shadow-card">
+        <div className="mx-auto flex w-full max-w-[1200px] flex-col">
+          <h2 className="text-center text-[24px] font-bold leading-[150%] text-text-main min-[900px]:text-left">
+            Upload Photos
+          </h2>
 
-        <Formik<GalleryFormValues>
-          initialValues={createGalleryInitialValues}
-          validate={validateGalleryForm}
-          validateOnMount
-          onSubmit={(values) => {
-            setApiError("");
+          <p className="mt-[8px] text-center text-[16px] leading-[150%] text-text-secondary min-[900px]:text-left">
+            You can upload one photo or a set of photos.
+          </p>
 
-            createGalleryMutation.mutate(
-              {
-                title: values.title.trim(),
-                description: values.description.trim(),
-              },
-              {
-                onSuccess: () => {
-                  navigate("/galleries");
+          <Formik<GalleryFormValues>
+            initialValues={createGalleryInitialValues}
+            validate={validateGalleryForm}
+            validateOnMount
+            onSubmit={(values) => {
+              setApiError("");
+
+              createGalleryMutation.mutate(
+                {
+                  title: values.title.trim(),
+                  description: values.description.trim(),
                 },
-                onError: (error) => {
-                  setApiError(getApiErrorMessage(error));
+                {
+                  onSuccess: () => {
+                    navigate("/galleries");
+                  },
+                  onError: (error) => {
+                    setApiError(getApiErrorMessage(error));
+                  },
                 },
-              },
-            );
-          }}
-        >
-          {({ values, isValid, dirty }) => {
-            const isSubmitDisabled =
-              !dirty ||
-              !values.title.trim() ||
-              !isValid ||
-              createGalleryMutation.isPending;
+              );
+            }}
+          >
+            {({ values, isValid, dirty }) => {
+              const isSubmitDisabled =
+                !dirty ||
+                !values.title.trim() ||
+                !isValid ||
+                createGalleryMutation.isPending;
 
-            return (
-              <Form noValidate className="mt-[30px] flex min-h-full flex-col">
-                <div className="grid gap-[30px] xl:grid-cols-[400px_1fr]">
-                  <div className="flex flex-col gap-[30px]">
-                    <GalleryUploadDropzonePlaceholder />
+              return (
+                <Form noValidate className="mt-[30px] flex flex-1 flex-col">
+                  <div className="mx-auto grid w-full max-w-[330px] gap-[30px] min-[900px]:mx-0 min-[900px]:max-w-none min-[900px]:grid-cols-[330px_minmax(242px,1fr)] min-[900px]:justify-between">
+                    <div className="flex flex-col gap-[30px]">
+                      <GalleryUploadDropzonePlaceholder />
 
-                    <GalleryFields descriptionLabel="Description (optional)" />
+                      <GalleryFields
+                        descriptionLabel={
+                          <>
+                            Description{" "}
+                            <span className="text-text-secondary">
+                              (optional)
+                            </span>
+                          </>
+                        }
+                      />
+                    </div>
+
+                    <GalleryPhotoPreviewPlaceholderGrid />
                   </div>
 
-                  <GalleryPhotoPreviewPlaceholderGrid />
-                </div>
+                  {apiError && (
+                    <p
+                      role="alert"
+                      aria-live="polite"
+                      className="mt-[20px] text-[12px] font-normal leading-[24px] text-error"
+                    >
+                      {apiError}
+                    </p>
+                  )}
 
-                {apiError && (
-                  <p
-                    role="alert"
-                    aria-live="polite"
-                    className="mt-[20px] text-[12px] font-normal leading-[24px] text-error"
-                  >
-                    {apiError}
-                  </p>
-                )}
-
-                <div className="mt-auto flex justify-end pt-[30px]">
-                  <div className="w-full lg:w-[300px]">
-                    <FormSubmitButton
-                      text={
-                        createGalleryMutation.isPending
-                          ? "Creating..."
-                          : "Create a new gallery"
-                      }
-                      disabled={isSubmitDisabled}
-                    />
+                  <div className="mt-auto flex justify-center pt-[30px] min-[900px]:justify-end">
+                    <div className="w-full max-w-[311px] sm:max-w-[330px] min-[900px]:max-w-[300px]">
+                      <FormSubmitButton
+                        text={
+                          createGalleryMutation.isPending
+                            ? "Creating..."
+                            : "Create a new gallery"
+                        }
+                        disabled={isSubmitDisabled}
+                      />
+                    </div>
                   </div>
-                </div>
-              </Form>
-            );
-          }}
-        </Formik>
+                </Form>
+              );
+            }}
+          </Formik>
+        </div>
       </div>
     </section>
   );

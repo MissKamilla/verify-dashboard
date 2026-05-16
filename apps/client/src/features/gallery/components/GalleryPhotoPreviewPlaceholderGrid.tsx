@@ -1,16 +1,30 @@
+import { PhotoPreviewCard } from "./PhotoPreviewCard";
+
+const getPreviewCardVisibilityClassName = (index: number) => {
+  if (index < 4) {
+    return "";
+  }
+
+  if (index < 8) {
+    return "hidden xl:flex";
+  }
+
+  return "hidden xl:flex 2xl:hidden";
+};
+
 export function GalleryPhotoPreviewPlaceholderGrid() {
   return (
-    <div className="hidden grid-cols-4 gap-[20px] self-start xl:grid">
-      {Array.from({ length: 8 }).map((_, index) => (
-        <div
-          key={index}
-          className="flex h-[140px] items-center justify-center rounded-[16px] border border-border-default text-[14px] font-bold leading-[150%] text-border-default"
-        >
-          Photo preview
-        </div>
-      ))}
+    <div className="w-full max-w-[311px] self-start justify-self-center sm:max-w-[330px] min-[900px]:ml-auto min-[900px]:max-w-[372px] xl:max-w-[580px] 2xl:max-w-[780px]">
+      <div className="grid w-full grid-cols-2 gap-[12px] min-[900px]:grid-cols-[repeat(2,minmax(115px,180px))] xl:grid-cols-[repeat(3,minmax(115px,180px))] xl:gap-[20px] 2xl:grid-cols-[repeat(4,minmax(115px,180px))]">
+        {Array.from({ length: 9 }).map((_, index) => (
+          <PhotoPreviewCard
+            key={index}
+            className={getPreviewCardVisibilityClassName(index)}
+          />
+        ))}
+      </div>
 
-      <p className="col-span-4 text-[16px] leading-[150%] text-text-secondary">
+      <p className="mt-[16px] text-center text-[16px] font-normal leading-[150%] text-text-secondary lg:mt-[30px] lg:max-w-[464px] lg:text-left">
         Upload a maximum of <b>50 photos</b>, no more than <b>5MB</b> each.
       </p>
     </div>

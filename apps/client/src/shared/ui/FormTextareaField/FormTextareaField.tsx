@@ -1,7 +1,7 @@
-import { useId, type ComponentProps } from "react";
+import { useId, type ComponentProps, type ReactNode } from "react";
 
 type FormTextareaFieldProps = {
-  label: string;
+  label: ReactNode;
   error?: string;
 } & ComponentProps<"textarea">;
 
@@ -33,7 +33,7 @@ export function FormTextareaField({
         id={textareaId}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? errorId : undefined}
-        className={`min-h-[120px] w-full resize-none rounded-[16px] border px-[18px] py-[16px] text-[14px] font-normal leading-[150%] text-text-main outline-none placeholder:text-text-muted ${textareaBorderClass}`}
+        className={`min-h-[100px] w-full resize-none rounded-[16px] border px-[18px] py-[16px] text-[14px] font-normal leading-[150%] text-text-main outline-none placeholder:text-text-muted  lg:min-h-[114px] ${textareaBorderClass}`}
         {...textareaProps}
       />
 

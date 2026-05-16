@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useFormikContext } from "formik";
 
 import type { GalleryFormValues } from "@/features/gallery/types";
@@ -6,7 +7,7 @@ import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormTextareaField } from "@/shared/ui/FormTextareaField";
 
 type GalleryFieldsProps = {
-  descriptionLabel?: string;
+  descriptionLabel?: ReactNode;
   titlePlaceholder?: string;
   descriptionPlaceholder?: string;
 };
@@ -20,7 +21,7 @@ export function GalleryFields({
     useFormikContext<GalleryFormValues>();
 
   return (
-    <div className="flex w-full max-w-[400px] flex-col gap-[17px]">
+    <div className="flex w-full max-w-[311px] flex-col gap-[16px] sm:max-w-[330px]">
       <FormInputField
         label="Gallery name"
         name="title"
