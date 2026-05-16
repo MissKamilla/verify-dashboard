@@ -41,31 +41,44 @@ export function GalleriesPage() {
   const galleries = galleriesResponse?.items ?? [];
 
   return (
-    <section className="flex min-h-[calc(100vh-60px)] flex-col">
-      <header className="mb-[13px] flex h-[94px] items-center justify-between rounded-[16px] bg-page-bg/50 backdrop-blur-[20px]">
-        <h1 className="text-[32px] font-bold leading-[150%] text-text-main">
-          List of galleries
-        </h1>
+    <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
+      <header className="mb-[24px] shrink-0: px-[30px] lg:mb-[19px] lg:h-[94px]">
+        <div className="flex items-center justify-between lg:h-full">
+          <h1 className="text-[24px] font-bold leading-[150%] text-text-main lg:text-[32px]">
+            List of galleries
+          </h1>
+
+          <Link
+            to="/galleries/create"
+            className="group hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white lg:flex"
+          >
+            <span>Create a new gallery</span>
+            <Icon
+              src={arrowRightIconUrl}
+              className="h-[12px] w-[15px] text-current"
+            />
+          </Link>
+
+          <button
+            type="button"
+            onClick={openMobileSidebar}
+            className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
+            aria-label="Open menu"
+          >
+            <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
+          </button>
+        </div>
 
         <Link
           to="/galleries/create"
-          className="hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand lg:flex"
+          className="group mt-[20px] flex h-[50px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white lg:hidden"
         >
           <span>Create a new gallery</span>
           <Icon
             src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] text-brand"
+            className="h-[12px] w-[15px] text-current"
           />
         </Link>
-
-        <button
-          type="button"
-          onClick={openMobileSidebar}
-          className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
-          aria-label="Open menu"
-        >
-          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
-        </button>
       </header>
 
       <GalleriesContent

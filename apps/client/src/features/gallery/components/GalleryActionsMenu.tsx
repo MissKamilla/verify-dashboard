@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router";
 
+import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
+import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
+import actionEditIconUrl from "@/assets/icons/action-edit.svg";
+
 import type { Gallery } from "@/features/gallery/types";
+import { Icon } from "@/shared/ui/Icon";
 
 type GalleryActionsMenuProps = {
   gallery: Gallery;
@@ -28,28 +33,41 @@ export function GalleryActionsMenu({
       <button
         type="button"
         onClick={handleToggleMenu}
-        className="flex h-[36px] w-[36px] items-center justify-center rounded-full text-[24px] leading-none text-text-secondary hover:bg-brand-light"
+        className="flex h-[24px] w-[24px] cursor-pointer items-center justify-center"
         aria-label="Open gallery actions"
         aria-expanded={isOpen}
       >
-        ...
+        <img
+          src={dotsVerticalIconUrl}
+          alt=""
+          className="h-[24px] w-[24px]"
+          aria-hidden="true"
+        />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-[44px] z-10 flex w-[140px] flex-col rounded-[16px] border border-border-default bg-white py-[8px] shadow-card">
+        <div className="absolute right-[26px] top-[34px] z-10 h-[92px] w-[132px] overflow-hidden rounded-[24px] bg-white shadow-card">
           <Link
             to={`/galleries/${gallery.id}/edit`}
-            className="px-[16px] py-[10px] text-[14px] font-medium leading-[150%] text-text-main hover:bg-brand-light"
+            className="flex h-[46px] w-full items-center gap-[8px] px-[16px] text-[14px] font-normal leading-[150%] text-text-main hover:bg-gallery-preview"
           >
-            Edit
+            <Icon
+              src={actionEditIconUrl}
+              className="h-[16px] w-[16px] shrink-0"
+            />
+            <span>Edit</span>
           </Link>
 
           <button
             type="button"
             onClick={handleDeleteClick}
-            className="px-[16px] py-[10px] text-left text-[14px] font-medium leading-[150%] text-error hover:bg-brand-light"
+            className="flex h-[46px] w-full cursor-pointer items-center gap-[8px] px-[16px] text-left text-[14px] font-normal leading-[150%] text-text-main hover:bg-gallery-preview"
           >
-            Delete
+            <Icon
+              src={actionDeleteIconUrl}
+              className="h-[16px] w-[16px] shrink-0"
+            />
+            <span>Delete</span>
           </button>
         </div>
       )}
