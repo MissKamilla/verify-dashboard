@@ -50,7 +50,7 @@ export function GalleriesPage() {
 
           <Link
             to="/galleries/create"
-            className="group hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white lg:flex"
+            className="group hidden min-h-[50px] w-[250px] shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:flex"
           >
             <span>Create a new gallery</span>
             <Icon
@@ -71,7 +71,7 @@ export function GalleriesPage() {
 
         <Link
           to="/galleries/create"
-          className="group mt-[20px] flex h-[50px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white lg:hidden"
+          className="group mt-[20px] flex min-h-[50px] w-full shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:hidden"
         >
           <span>Create a new gallery</span>
           <Icon

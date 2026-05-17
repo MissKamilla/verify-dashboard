@@ -17,7 +17,7 @@ export function GalleryEditPhotoCardPlaceholder() {
 
         <button
           type="button"
-          className="absolute right-[-8px] top-[-8px] z-10 h-[24px] w-[24px] cursor-pointer rounded-full bg-page-bg"
+          className="absolute right-[-8px] top-[-8px] z-10 flex h-[24px] w-[24px] cursor-pointer items-center justify-center rounded-full bg-page-bg"
           aria-label="Remove photo"
         >
           <Icon src={closeIconUrl} className="h-[12px] w-[12px]" />

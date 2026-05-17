@@ -76,8 +76,8 @@ export function Sidebar({
       isSectionActive(sectionPath) ? activeTextClassName : inactiveTextClassName
     }`;
 
-  const getSectionIconClassName = (sectionId: string) =>
-    isSectionOpen(sectionId)
+  const getSectionIconClassName = (sectionPath: string) =>
+    isSectionActive(sectionPath)
       ? openedSectionIconClassName
       : closedSectionIconClassName;
 
@@ -98,22 +98,10 @@ export function Sidebar({
 
       <nav className="mt-[36px]">
         <div className="flex h-[24px] w-full items-center px-[20px]">
-          <NavLink
-            to="/galleries"
-            onClick={onNavigate}
-            className={() => getSectionLinkClassName("/galleries")}
-          >
-            <Icon
-              src={galleryIconUrl}
-              className={`h-[24px] w-[24px] ${getSectionIconClassName("galleries")}`}
-            />
-            Gallery
-          </NavLink>
-
           <button
             type="button"
             onClick={() => toggleSection("galleries")}
-            className="ml-auto flex h-[24px] w-[24px] cursor-pointer items-center justify-center"
+            className="flex w-full cursor-pointer items-center"
             aria-label={
               isSectionOpen("galleries")
                 ? "Collapse gallery menu"
@@ -121,9 +109,20 @@ export function Sidebar({
             }
             aria-expanded={isSectionOpen("galleries")}
           >
+            <NavLink
+              to="/galleries"
+              onClick={onNavigate}
+              className={() => getSectionLinkClassName("/galleries")}
+            >
+              <Icon
+                src={galleryIconUrl}
+                className={`h-[24px] w-[24px] ${getSectionIconClassName("/galleries")}`}
+              />
+              Gallery
+            </NavLink>
             <Icon
               src={chevronDownIconUrl}
-              className={`h-[5px] w-[10px] transition-transform ${getSectionChevronClassName(
+              className={`ml-auto h-[5px] w-[10px] transition-transform ${getSectionChevronClassName(
                 "galleries",
               )}`}
             />
@@ -133,20 +132,19 @@ export function Sidebar({
         {isSectionOpen("galleries") && (
           <div className="mt-[18px] flex flex-col gap-[24px]">
             <NavLink
-              to="/galleries/list"
+              to="/galleries"
+              end
               onClick={onNavigate}
               className={getSubmenuLinkClassName}
             >
               List of galleries
             </NavLink>
-
-            <NavLink
-              to="/galleries/search"
-              onClick={onNavigate}
-              className={getSubmenuLinkClassName}
+            <span
+              className="h-[30px] cursor-not-allowed pl-[54px] pt-[3px] text-[16px] font-normal leading-[150%] text-text-muted opacity-50"
+              aria-disabled="true"
             >
               Search among galleries
-            </NavLink>
+            </span>
           </div>
         )}
       </nav>

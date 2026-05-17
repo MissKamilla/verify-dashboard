@@ -18,6 +18,11 @@
   --color-border-light: #ededed;
   --color-error: #e95a54;
 
+  --color-alert-success-bg: #defbe6;
+  --color-alert-error-bg: #fff1f1;
+  --color-alert-warning: #f1c219;
+  --color-alert-warning-bg: #fff8e1;
+
   --color-page-bg: #fcfcfc;
 
   --shadow-card: 14px 17px 40px 4px rgb(125 181 147 / 0.08);

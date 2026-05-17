@@ -2,14 +2,9 @@ import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
 import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 
 import { Icon } from "@/shared/ui/Icon";
+import { Link } from "react-router";
 
-type GalleriesEmptyStateProps = {
-  onCreateClick?: () => void;
-};
-
-export function GalleriesEmptyState({
-  onCreateClick,
-}: GalleriesEmptyStateProps) {
+export function GalleriesEmptyState() {
   return (
     <div className="flex min-h-[620px] flex-1 items-center justify-center rounded-[30px] bg-white shadow-card">
       <div className="flex w-full max-w-[434px] flex-col items-center text-center">
@@ -28,17 +23,16 @@ export function GalleriesEmptyState({
           className="mt-[40px] h-[274px] w-[308px] object-contain"
         />
 
-        <button
-          type="button"
-          onClick={onCreateClick}
-          className="mt-[28px] flex cursor-pointer items-center gap-[10px] text-[16px] font-bold uppercase leading-[150%] text-brand"
+        <Link
+          to="/galleries/create"
+          className="mt-[28px] flex cursor-pointer items-center gap-[10px] text-[16px] font-bold uppercase leading-[150%] text-brand hover:text-brand-active"
         >
           <span>CREATE A NEW GALLERY</span>
           <Icon
             src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] text-brand"
+            className="h-[12px] w-[15px] text-current"
           />
-        </button>
+        </Link>
       </div>
     </div>
   );

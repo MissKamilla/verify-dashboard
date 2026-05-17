@@ -11,6 +11,7 @@ type GalleriesGridProps = {
   galleries: Gallery[];
   onDeleteClick: (gallery: Gallery) => void;
 };
+const MOCK_PHOTOS_COUNT = 16;
 
 export function GalleriesList({
   galleries,
@@ -20,20 +21,20 @@ export function GalleriesList({
     useGalleryScrollThumb(galleries.length);
 
   return (
-    <div className="relative min-h-0 flex-1 rounded-[30px] bg-white shadow-card lg:overflow-hidden lg:rounded-t-none lg:rounded-b-[30px]">
+    <div className="relative min-h-0 flex-1 rounded-[30px] bg-white shadow-card lg:overflow-hidden">
       <div
         ref={scrollContainerRef}
         onScroll={updateScrollThumb}
-        className="scrollbar-gallery h-full overflow-y-auto p-[30px] pb-[156px] lg:absolute lg:top-[22px] lg:right-[30px] lg:bottom-[30px] lg:left-[30px] lg:h-auto lg:p-0 lg:pt-[8px] lg:pr-[8px] lg:pb-[126px]"
+        className="scrollbar-gallery h-full overflow-y-auto p-[30px] lg:absolute lg:top-[22px] lg:right-[30px] lg:bottom-[30px] lg:left-[30px] lg:h-auto lg:p-0 lg:pt-[8px] lg:pr-[8px] lg:pb-[72px]"
       >
-        <div className="grid gap-x-[20px] gap-y-[30px] sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="mx-auto grid w-full max-w-[1180px] justify-center grid-cols-1 gap-x-[20px] gap-y-[30px] sm:grid-cols-[repeat(2,minmax(0,280px))] xl:grid-cols-[repeat(3,minmax(0,280px))] 2xl:grid-cols-[repeat(4,minmax(0,280px))]">
           {galleries.map((gallery) => (
             <article key={gallery.id} className="relative min-w-0">
               <Link
                 to={`/galleries/${gallery.id}`}
-                className="block rounded-[16px] focus:outline-none focus:ring-2 focus:ring-brand"
+                className="block rounded-[16px] "
               >
-                <div className="flex h-[235px] items-center justify-center rounded-[16px] bg-gallery-preview">
+                <div className="flex aspect-square w-full items-center justify-center rounded-[16px] bg-gallery-preview">
                   <img
                     src={galleryPlaceholderIconUrl}
                     alt=""
@@ -41,8 +42,11 @@ export function GalleriesList({
                   />
                 </div>
 
-                <h2 className="mt-[10px] truncate text-[18px] font-bold leading-[150%] text-text-main">
-                  {gallery.title}
+                <h2 className="mt-[10px] truncate text-[18px] leading-[150%] text-text-main">
+                  <span className="font-bold">{gallery.title}</span>{" "}
+                  <span className="font-normal text-text-secondary">
+                    ({MOCK_PHOTOS_COUNT} photos)
+                  </span>
                 </h2>
 
                 <p className="truncate text-[14px] font-normal leading-[150%] text-text-secondary">

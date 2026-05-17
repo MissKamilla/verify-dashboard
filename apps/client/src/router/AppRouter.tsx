@@ -9,6 +9,7 @@ import { GalleryDetailsPage } from "@/pages/GalleryDetailsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { UploadPhotosPage } from "@/pages/UploadPhotosPage";
 
 import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
 
@@ -25,12 +26,19 @@ export function AppRouter() {
         <Route element={<AuthenticatedLayout />}>
           <Route path="/galleries" element={<GalleriesPage />} />
           <Route path="/galleries/list" element={<GalleriesPage />} />
-          <Route path="/galleries/search" element={<GalleriesPage />} />
+          <Route
+            path="/galleries/search"
+            element={<Navigate to="/galleries" replace />}
+          />
 
           <Route path="/galleries/create" element={<CreateGalleryPage />} />
           <Route
             path="/galleries/:galleryId/edit"
             element={<EditGalleryPage />}
+          />
+          <Route
+            path="/galleries/:galleryId/upload-photos"
+            element={<UploadPhotosPage />}
           />
           <Route
             path="/galleries/:galleryId"
