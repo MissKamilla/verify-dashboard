@@ -12,6 +12,7 @@ import { RegisterPage } from "@/pages/RegisterPage";
 import { UploadPhotosPage } from "@/pages/UploadPhotosPage";
 
 import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export function AppRouter() {
   return (
@@ -48,6 +49,8 @@ export function AppRouter() {
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
