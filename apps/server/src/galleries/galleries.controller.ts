@@ -61,6 +61,9 @@ export class GalleriesController {
     description: 'Paginated galleries list',
     type: GalleriesListResponseDto,
   })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
   @Get()
   findAll(
     @CurrentUser('sub') userId: number,
