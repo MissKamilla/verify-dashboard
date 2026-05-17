@@ -9,14 +9,12 @@ type PhotoPreviewCardProps = {
 export function PhotoPreviewCard({ className = "" }: PhotoPreviewCardProps) {
   return (
     <div
-      className={`flex aspect-square w-full min-w-[115px] max-w-[180px] items-center justify-center rounded-[16px] border border-border-default text-border-default ${className}`}
+      className={`flex aspect-square w-full min-w-[115px] max-w-[180px] items-center justify-center rounded-2xl border border-border-default text-border-default ${className}`}
     >
       <div className="flex flex-col items-center gap-[6px]">
-        <Icon src={photoPreviewIconUrl} className="h-[48px] w-[48px]" />
+        <Icon src={photoPreviewIconUrl} className="h-12 w-12" />
 
-        <span className="text-[12px] font-bold leading-[150%]">
-          Photo preview
-        </span>
+        <span className="text-xs font-bold leading-normal">Photo preview</span>
       </div>
     </div>
   );

@@ -13,15 +13,15 @@ export function SettingsCard({
 }: SettingsCardProps) {
   return (
     <section className="rounded-[30px] bg-white p-[30px] shadow-card">
-      <h2 className="text-[24px] font-bold leading-[150%] text-text-main">
+      <h2 className="text-2xl font-bold leading-normal text-text-main">
         {title}
       </h2>
 
-      <p className="mt-[8px] text-[16px] font-normal leading-[150%] text-text-secondary">
+      <p className="mt-2 text-base font-normal leading-normal text-text-secondary">
         {description}
       </p>
 
-      <div className="mt-[36px]">{children}</div>
+      <div className="mt-9">{children}</div>
     </section>
   );
 }

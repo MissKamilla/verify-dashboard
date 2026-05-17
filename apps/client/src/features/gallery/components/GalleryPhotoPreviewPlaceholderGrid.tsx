@@ -15,7 +15,7 @@ const getPreviewCardVisibilityClassName = (index: number) => {
 export function GalleryPhotoPreviewPlaceholderGrid() {
   return (
     <div className="w-full max-w-[311px] self-start justify-self-center sm:max-w-[330px] min-[900px]:ml-auto min-[900px]:max-w-[372px] xl:max-w-[580px] 2xl:max-w-[780px]">
-      <div className="grid w-full grid-cols-2 gap-[12px] min-[900px]:grid-cols-[repeat(2,minmax(115px,180px))] xl:grid-cols-[repeat(3,minmax(115px,180px))] xl:gap-[20px] 2xl:grid-cols-[repeat(4,minmax(115px,180px))]">
+      <div className="grid w-full grid-cols-2 gap-3 min-[900px]:grid-cols-[repeat(2,minmax(115px,180px))] xl:grid-cols-[repeat(3,minmax(115px,180px))] xl:gap-5 2xl:grid-cols-[repeat(4,minmax(115px,180px))]">
         {Array.from({ length: 9 }).map((_, index) => (
           <PhotoPreviewCard
             key={index}
@@ -24,7 +24,7 @@ export function GalleryPhotoPreviewPlaceholderGrid() {
         ))}
       </div>
 
-      <p className="mt-[16px] text-center text-[16px] font-normal leading-[150%] text-text-secondary lg:mt-[30px] lg:max-w-[464px] lg:text-left">
+      <p className="mt-4 text-center text-base font-normal leading-normal text-text-secondary lg:mt-[30px] lg:max-w-[464px] lg:text-left">
         Upload a maximum of <b>50 photos</b>, no more than <b>5MB</b> each.
       </p>
     </div>

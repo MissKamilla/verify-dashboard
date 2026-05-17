@@ -25,16 +25,16 @@ export function GalleriesList({
       <div
         ref={scrollContainerRef}
         onScroll={updateScrollThumb}
-        className="scrollbar-gallery h-full overflow-y-auto p-[30px] lg:absolute lg:top-[22px] lg:right-[30px] lg:bottom-[30px] lg:left-[30px] lg:h-auto lg:p-0 lg:pt-[8px] lg:pr-[8px] lg:pb-[72px]"
+        className="scrollbar-gallery h-full overflow-y-auto p-[30px] lg:absolute lg:top-[22px] lg:right-[30px] lg:bottom-[30px] lg:left-[30px] lg:h-auto lg:p-0 lg:pt-2 lg:pr-[8px] lg:pb-[72px]"
       >
-        <div className="mx-auto grid w-full max-w-[1180px] justify-center grid-cols-1 gap-x-[20px] gap-y-[30px] sm:grid-cols-[repeat(2,minmax(0,280px))] xl:grid-cols-[repeat(3,minmax(0,280px))] 2xl:grid-cols-[repeat(4,minmax(0,280px))]">
+        <div className="mx-auto grid w-full max-w-[1180px] justify-center grid-cols-1 gap-x-5 gap-y-[30px] sm:grid-cols-[repeat(2,minmax(0,280px))] xl:grid-cols-[repeat(3,minmax(0,280px))] 2xl:grid-cols-[repeat(4,minmax(0,280px))]">
           {galleries.map((gallery) => (
             <article key={gallery.id} className="relative min-w-0">
               <Link
                 to={`/galleries/${gallery.id}`}
-                className="block rounded-[16px] "
+                className="block rounded-2xl "
               >
-                <div className="flex aspect-square w-full items-center justify-center rounded-[16px] bg-gallery-preview">
+                <div className="flex aspect-square w-full items-center justify-center rounded-2xl bg-gallery-preview">
                   <img
                     src={galleryPlaceholderIconUrl}
                     alt=""
@@ -42,19 +42,19 @@ export function GalleriesList({
                   />
                 </div>
 
-                <h2 className="mt-[10px] truncate text-[18px] leading-[150%] text-text-main">
+                <h2 className="mt-2.5 truncate text-lg leading-normal text-text-main">
                   <span className="font-bold">{gallery.title}</span>{" "}
                   <span className="font-normal text-text-secondary">
                     ({MOCK_PHOTOS_COUNT} photos)
                   </span>
                 </h2>
 
-                <p className="truncate text-[14px] font-normal leading-[150%] text-text-secondary">
+                <p className="truncate text-sm font-normal leading-normal text-text-secondary">
                   {gallery.description || "No description yet..."}
                 </p>
               </Link>
 
-              <div className="absolute right-[-8px] top-[-8px]">
+              <div className="absolute -right-2 -top-2">
                 <GalleryActionsMenu
                   gallery={gallery}
                   onDeleteClick={onDeleteClick}
@@ -65,9 +65,9 @@ export function GalleriesList({
         </div>
       </div>
       {scrollThumb.isVisible && (
-        <div className="pointer-events-none absolute top-[30px] right-[10px] bottom-[30px] z-20 hidden w-[3px] lg:block">
+        <div className="pointer-events-none absolute top-[30px] right-2.5 bottom-[30px] z-20 hidden w-[3px] lg:block">
           <div
-            className="w-full rounded-[2px] bg-text-muted"
+            className="w-full rounded-sm bg-text-muted"
             style={{
               height: `${scrollThumb.height}px`,
               transform: `translateY(${scrollThumb.top}px)`,

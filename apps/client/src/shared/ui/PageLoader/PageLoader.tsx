@@ -11,7 +11,7 @@ export function PageLoader({ text = "Loading..." }: PageLoaderProps) {
       role="status"
       aria-live="polite"
     >
-      <div className="flex flex-col items-center gap-[16px]">
+      <div className="flex flex-col items-center gap-4">
         <img
           src={loadingIconUrl}
           alt=""
@@ -19,7 +19,7 @@ export function PageLoader({ text = "Loading..." }: PageLoaderProps) {
           aria-hidden="true"
         />
 
-        <p className="text-[16px] font-normal leading-[150%] text-text-secondary">
+        <p className="text-base font-normal leading-normal text-text-secondary">
           {text}
         </p>
       </div>

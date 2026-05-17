@@ -11,7 +11,7 @@ type GalleryActionLinkProps = {
 };
 
 const galleryActionLinkBaseClassName =
-  "cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand font-bold text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white";
+  "cursor-pointer items-center justify-center gap-2.5 rounded-2xl border border-brand font-bold text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white";
 
 export function GalleryActionLink({
   to,
@@ -21,10 +21,7 @@ export function GalleryActionLink({
   return (
     <Link to={to} className={`${galleryActionLinkBaseClassName} ${className}`}>
       <span>{label}</span>
-      <Icon
-        src={arrowRightIconUrl}
-        className="h-[12px] w-[15px] text-current"
-      />
+      <Icon src={arrowRightIconUrl} className="h-3 w-[15px] text-current" />
     </Link>
   );
 }

@@ -34,31 +34,31 @@ export function CreateGalleryPage() {
 
   return (
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
-      <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-[16px] rounded-[16px] bg-page-bg/50 backdrop-blur-[20px]">
-        <h1 className="text-[24px] font-bold leading-[150%] text-text-main md:text-[32px]">
+      <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-4 rounded-2xl bg-page-bg/50 backdrop-blur-[20px]">
+        <h1 className="text-2xl font-bold leading-normal text-text-main md:text-[32px]">
           Create a new gallery
         </h1>
 
         <GalleryActionLink
           to="/galleries"
           label="Go to gallery list"
-          className="hidden min-h-[50px] w-[220px] shrink-0 text-[16px] leading-[150%] active:bg-brand-active lg:flex"
+          className="hidden min-h-[50px] w-[220px] shrink-0 text-base leading-normal active:bg-brand-active lg:flex"
         />
 
         <button
           type="button"
           onClick={openMobileSidebar}
-          className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center lg:hidden"
           aria-label="Open menu"
         >
-          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
+          <Icon src={burgerIconUrl} className="h-6 w-6" />
         </button>
       </header>
 
       <GalleryActionLink
         to="/galleries"
         label="Go to gallery list"
-        className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-[16px] leading-[150%] active:bg-brand-active lg:hidden"
+        className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-base leading-normal active:bg-brand-active lg:hidden"
       />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] bg-white shadow-card">
@@ -69,14 +69,14 @@ export function CreateGalleryPage() {
           onCloseError={() => setApiError("")}
         />
 
-        <div className="scrollbar-gallery h-full w-full overflow-y-auto p-[30px] pb-[40px] lg:pb-[50px]">
+        <div className="scrollbar-gallery h-full w-full overflow-y-auto p-[30px] pb-10 lg:pb-[50px]">
           <div className="mx-auto flex min-h-full w-full max-w-[1200px] flex-col">
             <div className="mx-auto w-full max-w-[330px] min-[900px]:mx-0 min-[900px]:max-w-none">
-              <h2 className="text-left text-[24px] font-bold leading-[150%] text-text-main">
+              <h2 className="text-left text-2xl font-bold leading-normal text-text-main">
                 Upload Photos
               </h2>
 
-              <p className="mt-[8px] text-left text-[16px] leading-[150%] text-text-secondary">
+              <p className="mt-2 text-left text-base leading-normal text-text-secondary">
                 You can upload one photo or a set of photos.
               </p>
             </div>

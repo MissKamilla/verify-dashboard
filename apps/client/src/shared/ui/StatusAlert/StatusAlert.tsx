@@ -110,17 +110,17 @@ export function StatusAlert({
       aria-live="polite"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`relative flex h-[60px] w-full items-center gap-[14px] overflow-hidden rounded-[8px] border py-[16px] pr-[18px] pl-[24px] text-[16px] leading-[150%] before:absolute before:top-0 before:left-0 before:h-full before:w-[8px] ${variantClassNames[variant]} ${className}`}
+      className={`relative flex h-[60px] w-full items-center gap-[14px] overflow-hidden rounded-lg border py-4 pr-[18px] pl-6 text-base leading-normal before:absolute before:top-0 before:left-0 before:h-full before:w-[8px] ${variantClassNames[variant]} ${className}`}
     >
       <span
-        className={`flex h-[24px] w-[24px] shrink-0 items-center justify-center rounded-full ${iconClassNames[variant]}`}
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${iconClassNames[variant]}`}
       >
         {variant === "success" ? (
-          <Icon src={checkIconUrl} className="h-[12px] w-[12px] text-current" />
+          <Icon src={checkIconUrl} className="h-3 w-3 text-current" />
         ) : variant === "error" ? (
           <Icon src={closeIconUrl} className="h-[10px] w-[10px] text-current" />
         ) : (
-          <span className="text-[16px] font-bold leading-none">!</span>
+          <span className="text-base font-bold leading-none">!</span>
         )}
       </span>
 
@@ -133,7 +133,7 @@ export function StatusAlert({
         <button
           type="button"
           onClick={onClose}
-          className="flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center text-text-main hover:text-brand"
+          className="flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center text-text-main hover:text-brand"
           aria-label="Close alert"
         >
           <Icon src={closeIconUrl} className="h-[14px] w-[14px] text-current" />

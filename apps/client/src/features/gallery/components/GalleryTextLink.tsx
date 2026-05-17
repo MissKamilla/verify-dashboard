@@ -20,12 +20,12 @@ export function GalleryTextLink({
   return (
     <Link
       to={to}
-      className={`flex cursor-pointer items-center gap-[10px] text-[16px] font-bold leading-[150%] text-brand hover:text-brand-active ${className}`}
+      className={`flex cursor-pointer items-center gap-2.5 text-base font-bold leading-normal text-brand hover:text-brand-active ${className}`}
     >
       <span>{label}</span>
       <Icon
         src={arrowRightIconUrl}
-        className={`h-[12px] w-[15px] text-current ${iconClassName}`}
+        className={`h-3 w-[15px] text-current ${iconClassName}`}
       />
     </Link>
   );

@@ -21,7 +21,7 @@ export function GalleryFields({
     useFormikContext<GalleryFormValues>();
 
   return (
-    <div className="flex w-full max-w-[311px] flex-col gap-[16px] sm:max-w-[330px]">
+    <div className="flex w-full max-w-[311px] flex-col gap-4 sm:max-w-[330px]">
       <FormInputField
         label="Gallery name"
         name="title"

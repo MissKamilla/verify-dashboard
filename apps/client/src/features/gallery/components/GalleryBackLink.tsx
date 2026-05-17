@@ -27,11 +27,11 @@ export function GalleryBackLink({
   return (
     <Link
       to={to}
-      className={`inline-flex items-center gap-[8px] text-[16px] font-bold leading-[150%] ${variantClassNames[variant]} ${className}`}
+      className={`inline-flex items-center gap-2 text-base font-bold leading-normal ${variantClassNames[variant]} ${className}`}
     >
       <Icon
         src={arrowRightIconUrl}
-        className="h-[12px] w-[15px] rotate-180 text-current"
+        className="h-3 w-[15px] rotate-180 text-current"
       />
       <span>{label}</span>
     </Link>

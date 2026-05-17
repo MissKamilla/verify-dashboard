@@ -82,31 +82,31 @@ export function EditGalleryPage() {
 
   return (
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
-      <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-[16px] rounded-[16px] bg-page-bg/50 backdrop-blur-[20px] ">
-        <h1 className="text-[24px] font-bold leading-[150%] text-text-main md:text-[32px]">
+      <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-4 rounded-2xl bg-page-bg/50 backdrop-blur-[20px] ">
+        <h1 className="text-2xl font-bold leading-normal text-text-main md:text-[32px]">
           Edit gallery
         </h1>
 
         <GalleryActionLink
           to={`/galleries/${numericGalleryId}/upload-photos`}
           label="Upload photos"
-          className="group hidden h-[50px] w-[250px] text-[14px] leading-none lg:flex"
+          className="group hidden h-[50px] w-[250px] text-sm leading-none lg:flex"
         />
 
         <button
           type="button"
           onClick={openMobileSidebar}
-          className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center lg:hidden"
           aria-label="Open menu"
         >
-          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
+          <Icon src={burgerIconUrl} className="h-6 w-6" />
         </button>
       </header>
 
       <GalleryActionLink
         to={`/galleries/${numericGalleryId}/upload-photos`}
         label="Upload photos"
-        className="group mt-[20px] flex h-[50px] w-full shrink-0 text-[14px] leading-none lg:hidden"
+        className="group mt-5 flex h-[50px] w-full shrink-0 text-sm leading-none lg:hidden"
       />
 
       <Formik<GalleryFormValues>
@@ -158,26 +158,26 @@ export function EditGalleryPage() {
                 onCloseError={() => setApiError("")}
               />
 
-              <div className="scrollbar-gallery flex h-full flex-col overflow-y-auto px-[20px] py-[40px] pb-[40px] sm:p-[30px] sm:pb-[40px] min-[1360px]:overflow-hidden">
+              <div className="scrollbar-gallery flex h-full flex-col overflow-y-auto px-5 py-10 pb-10 sm:p-[30px] sm:pb-10 min-[1360px]:overflow-hidden">
                 <div className="relative mx-auto flex w-full max-w-[311px] flex-col min-[1360px]:min-h-0 min-[1360px]:flex-1 min-[1360px]:max-w-[900px] min-[1536px]:max-w-[950px]">
-                  <h2 className="shrink-0 text-[24px] font-bold leading-[150%] text-text-main">
+                  <h2 className="shrink-0 text-2xl font-bold leading-normal text-text-main">
                     Edit Description
                   </h2>
-                  <p className="mt-[8px] shrink-0 text-[16px] leading-[150%] text-text-secondary">
+                  <p className="mt-2 shrink-0 text-base leading-normal text-text-secondary">
                     You can edit description for your gallery.
                   </p>
-                  <div className="mt-[30px] grid w-full gap-[30px] min-[1360px]:min-h-0 min-[1360px]:flex-1 min-[1360px]:grid-cols-[330px_548px] min-[1360px]:gap-[40px] min-[1536px]:grid-cols-[330px_604px]">
+                  <div className="mt-[30px] grid w-full gap-[30px] min-[1360px]:min-h-0 min-[1360px]:flex-1 min-[1360px]:grid-cols-[330px_548px] min-[1360px]:gap-10 min-[1536px]:grid-cols-[330px_604px]">
                     <div className="shrink-0">
                       <GalleryFields />
                     </div>
 
-                    <div className="relative min-[1360px]:min-h-0 min-[1360px]:overflow-hidden min-[1360px]:pr-[18px] min-[1536px]:pr-[24px]">
+                    <div className="relative min-[1360px]:min-h-0 min-[1360px]:overflow-hidden min-[1360px]:pr-[18px] min-[1536px]:pr-6">
                       <div
                         ref={scrollContainerRef}
                         onScroll={updateScrollThumb}
                         className="scrollbar-gallery min-[1360px]:h-full min-[1360px]:overflow-y-auto min-[1360px]:pb-[190px]"
                       >
-                        <div className="flex w-full flex-col gap-[20px] pt-[8px] pr-[8px]">
+                        <div className="flex w-full flex-col gap-5 pt-2 pr-[8px]">
                           {Array.from({
                             length: EDIT_PHOTOS_PLACEHOLDER_COUNT,
                           }).map((_, index) => (
@@ -189,7 +189,7 @@ export function EditGalleryPage() {
                       {scrollThumb.isVisible && (
                         <div className="pointer-events-none absolute bottom-[166px] right-0 top-0 z-20 hidden w-[3px] min-[1360px]:block">
                           <div
-                            className="w-full rounded-[2px] bg-text-muted"
+                            className="w-full rounded-sm bg-text-muted"
                             style={{
                               height: `${scrollThumb.height}px`,
                               transform: `translateY(${scrollThumb.top}px)`,
@@ -214,7 +214,7 @@ export function EditGalleryPage() {
         }}
       </Formik>
 
-      <div className="mt-[24px] shrink-0 lg:flex lg:items-center lg:justify-between">
+      <div className="mt-6 shrink-0 lg:flex lg:items-center lg:justify-between">
         <GalleryBackLink to="/galleries" />
 
         <CopyrightFooter className="lg:!mt-0 lg:!pt-0" />

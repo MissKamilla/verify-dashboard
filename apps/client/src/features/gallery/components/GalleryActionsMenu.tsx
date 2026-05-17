@@ -33,40 +33,34 @@ export function GalleryActionsMenu({
       <button
         type="button"
         onClick={handleToggleMenu}
-        className="flex h-[24px] w-[24px] cursor-pointer items-center justify-center"
+        className="flex h-6 w-6 cursor-pointer items-center justify-center"
         aria-label="Open gallery actions"
         aria-expanded={isOpen}
       >
         <img
           src={dotsVerticalIconUrl}
           alt=""
-          className="h-[24px] w-[24px]"
+          className="h-6 w-6"
           aria-hidden="true"
         />
       </button>
 
       {isOpen && (
-        <div className="absolute right-[26px] top-[34px] z-10 h-[92px] w-[132px] overflow-hidden rounded-[24px] bg-white shadow-card">
+        <div className="absolute right-[26px] top-[34px] z-10 h-[92px] w-[132px] overflow-hidden rounded-3xl bg-white shadow-card">
           <Link
             to={`/galleries/${gallery.id}/edit`}
-            className="flex h-[46px] w-full items-center gap-[8px] px-[16px] text-[14px] font-normal leading-[150%] text-text-main hover:bg-gallery-preview"
+            className="flex h-[46px] w-full items-center gap-2 px-4 text-sm font-normal leading-normal text-text-main hover:bg-gallery-preview"
           >
-            <Icon
-              src={actionEditIconUrl}
-              className="h-[16px] w-[16px] shrink-0"
-            />
+            <Icon src={actionEditIconUrl} className="h-4 w-4 shrink-0" />
             <span>Edit</span>
           </Link>
 
           <button
             type="button"
             onClick={handleDeleteClick}
-            className="flex h-[46px] w-full cursor-pointer items-center gap-[8px] px-[16px] text-left text-[14px] font-normal leading-[150%] text-text-main hover:bg-gallery-preview"
+            className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm font-normal leading-normal text-text-main hover:bg-gallery-preview"
           >
-            <Icon
-              src={actionDeleteIconUrl}
-              className="h-[16px] w-[16px] shrink-0"
-            />
+            <Icon src={actionDeleteIconUrl} className="h-4 w-4 shrink-0" />
             <span>Delete</span>
           </button>
         </div>
