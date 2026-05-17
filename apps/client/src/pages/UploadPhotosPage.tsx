@@ -1,11 +1,11 @@
-import { Link, useOutletContext, useParams } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 
-import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
 import { GalleryUploadDropzonePlaceholder } from "@/features/gallery/components/GalleryUploadDropzonePlaceholder";
+import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
@@ -30,16 +30,12 @@ export function UploadPhotosPage() {
               Invalid gallery
             </h1>
 
-            <Link
+            <GalleryBackLink
               to="/galleries"
-              className="mt-[24px] inline-flex items-center gap-[8px] text-[16px] font-bold leading-[150%] text-brand hover:text-brand-active"
-            >
-              <Icon
-                src={arrowRightIconUrl}
-                className="h-[12px] w-[15px] rotate-180 text-current"
-              />
-              <span>Back to galleries</span>
-            </Link>
+              label="Back to galleries"
+              variant="brand"
+              className="mt-[24px]"
+            />
           </div>
         </div>
       </section>
@@ -80,16 +76,7 @@ export function UploadPhotosPage() {
       </div>
 
       <div className="mt-[24px] flex shrink-0 items-center justify-between">
-        <Link
-          to={`/galleries/${numericGalleryId}/edit`}
-          className="flex items-center gap-[8px] text-[16px] font-bold leading-[150%] text-text-main hover:text-brand"
-        >
-          <Icon
-            src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] rotate-180 text-current"
-          />
-          <span>Back</span>
-        </Link>
+        <GalleryBackLink to={`/galleries/${numericGalleryId}/edit`} />
 
         <CopyrightFooter />
       </div>

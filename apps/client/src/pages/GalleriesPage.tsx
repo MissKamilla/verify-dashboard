@@ -1,8 +1,7 @@
-import { Link, useOutletContext } from "react-router";
+import { useOutletContext } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
-import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
@@ -11,6 +10,7 @@ import {
   galleryQueryKeys,
   useGalleriesQuery,
 } from "@/features/gallery/galleryQueries";
+import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
@@ -48,16 +48,11 @@ export function GalleriesPage() {
             List of galleries
           </h1>
 
-          <Link
+          <GalleryActionLink
             to="/galleries/create"
-            className="group hidden min-h-[50px] w-[250px] shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:flex"
-          >
-            <span>Create a new gallery</span>
-            <Icon
-              src={arrowRightIconUrl}
-              className="h-[12px] w-[15px] text-current"
-            />
-          </Link>
+            label="Create a new gallery"
+            className="group hidden min-h-[50px] w-[250px] shrink-0 text-[14px] leading-none active:bg-brand-active lg:flex"
+          />
 
           <button
             type="button"
@@ -69,16 +64,11 @@ export function GalleriesPage() {
           </button>
         </div>
 
-        <Link
+        <GalleryActionLink
           to="/galleries/create"
-          className="group mt-[20px] flex min-h-[50px] w-full shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:hidden"
-        >
-          <span>Create a new gallery</span>
-          <Icon
-            src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] text-current"
-          />
-        </Link>
+          label="Create a new gallery"
+          className="group mt-[20px] flex min-h-[50px] w-full shrink-0 text-[14px] leading-none active:bg-brand-active lg:hidden"
+        />
       </header>
 
       <GalleriesContent

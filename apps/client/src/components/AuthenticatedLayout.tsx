@@ -46,7 +46,7 @@ export function AuthenticatedLayout() {
         <div className="flex min-h-[calc(100vh-60px)] gap-[30px]">
           <Sidebar
             {...sidebarProps}
-            className="hidden h-[calc(100vh-60px)] lg:flex"
+            className="hidden h-[calc(100vh-60px)] self-start lg:sticky lg:top-[30px] lg:flex"
           />
           <main className="min-w-0 flex-1">
             <Outlet

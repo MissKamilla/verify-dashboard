@@ -9,7 +9,7 @@ export function AuthHero({ variant }: AuthHeroProps) {
   return (
     <section
       aria-hidden="true"
-      className="pointer-events-none relative hidden min-h-screen w-[779px] self-stretch select-none overflow-hidden rounded-bl-[180px] min-[1440px]:block"
+      className="pointer-events-none relative hidden min-h-screen w-[calc(50vw+59px)] self-stretch select-none overflow-hidden rounded-bl-[180px] min-[1440px]:block"
     >
       <img
         src={authBackground}

@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Link, useOutletContext } from "react-router";
+import { useOutletContext } from "react-router";
 import { Form, Formik } from "formik";
 
-import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
@@ -11,14 +10,15 @@ import { GalleryFields } from "@/features/gallery/components/GalleryFields";
 import { useCreateGalleryMutation } from "@/features/gallery/galleryQueries";
 import type { GalleryFormValues } from "@/features/gallery/types";
 import { validateGalleryForm } from "@/features/gallery/validateGalleryForm";
+import { GalleryStatusAlerts } from "@/features/gallery/components/GalleryStatusAlerts";
+import { GalleryUploadDropzonePlaceholder } from "@/features/gallery/components/GalleryUploadDropzonePlaceholder";
+import { GalleryPhotoPreviewPlaceholderGrid } from "@/features/gallery/components/GalleryPhotoPreviewPlaceholderGrid";
+import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { Icon } from "@/shared/ui/Icon";
-import { GalleryUploadDropzonePlaceholder } from "@/features/gallery/components/GalleryUploadDropzonePlaceholder";
-import { GalleryPhotoPreviewPlaceholderGrid } from "@/features/gallery/components/GalleryPhotoPreviewPlaceholderGrid";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
-import { StatusAlert } from "@/shared/ui/StatusAlert";
 
 const createGalleryInitialValues: GalleryFormValues = {
   title: "",
@@ -39,16 +39,11 @@ export function CreateGalleryPage() {
           Create a new gallery
         </h1>
 
-        <Link
+        <GalleryActionLink
           to="/galleries"
-          className="hidden min-h-[50px] w-[220px] shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:flex"
-        >
-          <span>Go to gallery list</span>
-          <Icon
-            src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] text-current"
-          />
-        </Link>
+          label="Go to gallery list"
+          className="hidden min-h-[50px] w-[220px] shrink-0 text-[16px] leading-[150%] active:bg-brand-active lg:flex"
+        />
 
         <button
           type="button"
@@ -60,45 +55,19 @@ export function CreateGalleryPage() {
         </button>
       </header>
 
-      <Link
+      <GalleryActionLink
         to="/galleries"
-        className="mb-[13px] flex min-h-[50px] w-full shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:hidden"
-      >
-        <span>Go to gallery list</span>
-        <Icon
-          src={arrowRightIconUrl}
-          className="h-[12px] w-[15px] text-current"
-        />
-      </Link>
+        label="Go to gallery list"
+        className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-[16px] leading-[150%] active:bg-brand-active lg:hidden"
+      />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] bg-white shadow-card">
-        {successMessage && (
-          <div className="absolute top-[30px] right-[30px] left-[30px] z-30 min-[900px]:left-auto min-[900px]:w-[550px]">
-            <StatusAlert
-              variant="success"
-              title="Success"
-              onClose={() => setSuccessMessage("")}
-              autoCloseMs={3000}
-              tooltipText={successMessage}
-            >
-              {successMessage}
-            </StatusAlert>
-          </div>
-        )}
-
-        {apiError && (
-          <div className="absolute top-[30px] right-[30px] left-[30px] z-30 min-[900px]:left-auto min-[900px]:w-[550px]">
-            <StatusAlert
-              variant="error"
-              title="Error"
-              onClose={() => setApiError("")}
-              autoCloseMs={3000}
-              tooltipText={apiError}
-            >
-              {apiError}
-            </StatusAlert>
-          </div>
-        )}
+        <GalleryStatusAlerts
+          successMessage={successMessage}
+          errorMessage={apiError}
+          onCloseSuccess={() => setSuccessMessage("")}
+          onCloseError={() => setApiError("")}
+        />
 
         <div className="scrollbar-gallery h-full w-full overflow-y-auto p-[30px] pb-[40px] lg:pb-[50px]">
           <div className="mx-auto flex min-h-full w-full max-w-[1200px] flex-col">

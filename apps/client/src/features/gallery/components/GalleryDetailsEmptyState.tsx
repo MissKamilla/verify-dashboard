@@ -2,17 +2,23 @@ import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
 
 import { GalleryTextLink } from "./GalleryTextLink";
 
-export function GalleriesEmptyState() {
+type GalleryDetailsEmptyStateProps = {
+  galleryId: number;
+};
+
+export function GalleryDetailsEmptyState({
+  galleryId,
+}: GalleryDetailsEmptyStateProps) {
   return (
-    <div className="flex min-h-[620px] flex-1 items-center justify-center rounded-[30px] bg-white shadow-card">
-      <div className="flex w-full max-w-[434px] flex-col items-center text-center">
+    <div className="flex min-h-[620px] flex-1 items-center justify-center">
+      <div className="flex w-full max-w-[460px] flex-col items-center text-center">
         <h2 className="text-[24px] font-bold leading-[150%] text-text-main">
-          List Of Galleries Is Empty
+          Gallery Is Empty
         </h2>
 
         <p className="mt-[8px] text-[18px] font-normal leading-[150%] text-text-secondary">
-          Company don’t have any galleries. Please, click on the "Create a new
-          gallery".
+          You don&apos;t have any uploaded photos. Please, click on the &quot;Go
+          to upload photos&quot; and upload your photos.
         </p>
 
         <img
@@ -22,8 +28,8 @@ export function GalleriesEmptyState() {
         />
 
         <GalleryTextLink
-          to="/galleries/create"
-          label="CREATE A NEW GALLERY"
+          to={`/galleries/${galleryId}/upload-photos`}
+          label="GO TO UPLOAD PHOTOS"
           className="mt-[28px] uppercase"
         />
       </div>

@@ -1,7 +1,6 @@
-import { Link, useOutletContext, useParams } from "react-router";
+import { useOutletContext, useParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
-import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
@@ -13,11 +12,15 @@ import {
 import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
 import { GalleryDetailsPhotoCardPlaceholder } from "@/features/gallery/components/GalleryDetailsPhotoCardPlaceholder";
 import { useGalleryScrollThumb } from "@/features/gallery/hooks/useGalleryScrollThumb";
+import { GalleryDetailsEmptyState } from "@/features/gallery/components/GalleryDetailsEmptyState";
+import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
+import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
 
-const mockPhotosCount = 16;
+const mockPhotosCount = 10;
+const isGalleryEmpty = mockPhotosCount;
 
 export function GalleryDetailsPage() {
   const { galleryId } = useParams();
@@ -70,16 +73,11 @@ export function GalleryDetailsPage() {
           {gallery.title}
         </h1>
 
-        <Link
+        <GalleryActionLink
           to={`/galleries/${numericGalleryId}/upload-photos`}
-          className="hidden min-h-[50px] w-[180px] shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:flex"
-        >
-          <span>Upload photos</span>
-          <Icon
-            src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] text-current"
-          />
-        </Link>
+          label="Upload photos"
+          className="hidden min-h-[50px] w-[180px] shrink-0 text-[16px] leading-[150%] active:bg-brand-active lg:flex"
+        />
 
         <button
           type="button"
@@ -91,16 +89,11 @@ export function GalleryDetailsPage() {
         </button>
       </header>
 
-      <Link
+      <GalleryActionLink
         to={`/galleries/${numericGalleryId}/upload-photos`}
-        className="mb-[13px] flex min-h-[50px] w-full shrink-0 cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active lg:hidden"
-      >
-        <span>Upload photos</span>
-        <Icon
-          src={arrowRightIconUrl}
-          className="h-[12px] w-[15px] text-current"
-        />
-      </Link>
+        label="Upload photos"
+        className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-[16px] leading-[150%] active:bg-brand-active lg:hidden"
+      />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] bg-white shadow-card">
         <div
@@ -116,21 +109,26 @@ export function GalleryDetailsPage() {
             <p className="mt-[12px] px-[8px] text-[16px] leading-[150%] text-text-secondary">
               {gallery.description || "No description yet..."}
             </p>
+            {!isGalleryEmpty ? (
+              <GalleryDetailsEmptyState galleryId={numericGalleryId} />
+            ) : (
+              <>
+                <div className="mt-[30px]">
+                  <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-[20px] gap-y-[30px] px-[8px] pt-[8px] lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
+                    {Array.from({ length: mockPhotosCount }).map((_, index) => (
+                      <GalleryDetailsPhotoCardPlaceholder key={index} />
+                    ))}
+                  </div>
+                </div>
 
-            <div className="mt-[30px]">
-              <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-[20px] gap-y-[30px] px-[8px] pt-[8px] lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
-                {Array.from({ length: mockPhotosCount }).map((_, index) => (
-                  <GalleryDetailsPhotoCardPlaceholder key={index} />
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              className="relative z-20 ml-[8px] mt-[40px] cursor-pointer text-[16px] font-bold leading-[150%] text-brand hover:text-brand-active"
-            >
-              Delete All ({mockPhotosCount})
-            </button>
+                <button
+                  type="button"
+                  className="relative z-20 ml-[8px] mt-[40px] cursor-pointer text-[16px] font-bold leading-[150%] text-brand hover:text-brand-active"
+                >
+                  Delete All ({mockPhotosCount})
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -150,16 +148,7 @@ export function GalleryDetailsPage() {
       </div>
 
       <div className="mt-[24px] shrink-0 lg:flex lg:items-center lg:justify-between">
-        <Link
-          to="/galleries"
-          className="inline-flex items-center gap-[8px] text-[16px] font-bold leading-[150%] text-text-main hover:text-brand"
-        >
-          <Icon
-            src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] rotate-180 text-current"
-          />
-          <span>Back</span>
-        </Link>
+        <GalleryBackLink to="/galleries" />
 
         <CopyrightFooter className="lg:!mt-0 lg:!pt-0" />
       </div>
