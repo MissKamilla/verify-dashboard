@@ -23,7 +23,7 @@ export type GetGalleriesParams = {
 
 export type CreateGalleryPayload = {
   title: string;
-  description: string;
+  description?: string;
 };
 
 export type UpdateGalleryPayload = Partial<CreateGalleryPayload>;
