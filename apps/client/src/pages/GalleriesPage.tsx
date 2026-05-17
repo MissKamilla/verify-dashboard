@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useOutletContext } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -15,14 +16,18 @@ import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLi
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
 
-const DEFAULT_GALLERIES_PARAMS = {
-  page: 1,
-  limit: 10,
-};
+const GALLERIES_PAGE_LIMIT = 10;
 
 export function GalleriesPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
   const queryClient = useQueryClient();
+
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const galleriesParams = {
+    page: currentPage,
+    limit: GALLERIES_PAGE_LIMIT,
+  };
 
   const {
     data: galleriesResponse,
@@ -30,15 +35,25 @@ export function GalleriesPage() {
     isPending,
     isError,
     isFetching,
-  } = useGalleriesQuery(DEFAULT_GALLERIES_PARAMS);
+  } = useGalleriesQuery(galleriesParams);
 
   const handleRetry = () => {
     void queryClient.invalidateQueries({
-      queryKey: galleryQueryKeys.list(DEFAULT_GALLERIES_PARAMS),
+      queryKey: galleryQueryKeys.list(galleriesParams),
     });
   };
 
   const galleries = galleriesResponse?.items ?? [];
+
+  const totalGalleries = galleriesResponse?.total ?? 0;
+  const totalPages = Math.max(
+    1,
+    Math.ceil(totalGalleries / GALLERIES_PAGE_LIMIT),
+  );
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
@@ -77,9 +92,13 @@ export function GalleriesPage() {
         isError={isError}
         error={error}
         isFetching={isFetching}
+        currentPage={currentPage}
+        totalGalleries={totalGalleries}
+        totalPages={totalPages}
+        pageLimit={GALLERIES_PAGE_LIMIT}
+        onPageChange={handlePageChange}
         onRetry={handleRetry}
       />
-
       <CopyrightFooter />
     </section>
   );

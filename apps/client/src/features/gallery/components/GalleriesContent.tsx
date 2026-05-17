@@ -11,6 +11,11 @@ import { GalleryDeleteDialogs } from "./GalleryDeleteDialogs";
 
 type GalleriesContentProps = {
   galleries: Gallery[];
+  totalGalleries: number;
+  currentPage: number;
+  totalPages: number;
+  pageLimit: number;
+  onPageChange: (page: number) => void;
   isPending: boolean;
   isError: boolean;
   error: Error | null;
@@ -20,13 +25,24 @@ type GalleriesContentProps = {
 
 export function GalleriesContent({
   galleries,
+  totalGalleries,
+  currentPage,
+  totalPages,
+  pageLimit,
+  onPageChange,
   isPending,
   isError,
   error,
   isFetching,
   onRetry,
 }: GalleriesContentProps) {
-  const galleryDelete = useGalleryDelete();
+  const galleryDelete = useGalleryDelete({
+    onDeleteSuccess: () => {
+      if (galleries.length === 1 && currentPage > 1) {
+        onPageChange(currentPage - 1);
+      }
+    },
+  });
 
   if (isPending || (isError && isUnauthorizedError(error))) {
     return <PageLoader text="Loading galleries..." />;
@@ -50,6 +66,11 @@ export function GalleriesContent({
       ) : (
         <GalleriesList
           galleries={galleries}
+          totalGalleries={totalGalleries}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageLimit={pageLimit}
+          onPageChange={onPageChange}
           onDeleteClick={galleryDelete.openDeleteModal}
         />
       )}

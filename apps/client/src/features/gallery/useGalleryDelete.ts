@@ -4,8 +4,13 @@ import { useDeleteGalleryMutation } from "@/features/gallery/galleryQueries";
 import type { Gallery } from "@/features/gallery/types";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
+type UseGalleryDeleteParams = {
+  onDeleteSuccess?: () => void;
+};
 
-export function useGalleryDelete() {
+export function useGalleryDelete({
+  onDeleteSuccess,
+}: UseGalleryDeleteParams = {}) {
   const [galleryToDelete, setGalleryToDelete] = useState<Gallery | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
@@ -37,6 +42,7 @@ export function useGalleryDelete() {
       onSuccess: () => {
         setGalleryToDelete(null);
         setIsSuccessModalOpen(true);
+        onDeleteSuccess?.();
       },
       onError: (error) => {
         setDeleteError(getApiErrorMessage(error));
