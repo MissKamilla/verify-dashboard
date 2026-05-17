@@ -8,7 +8,10 @@ type ScrollThumbState = {
   isVisible: boolean;
 };
 
-export function useGalleryScrollThumb(itemsCount: number) {
+export function useGalleryScrollThumb(
+  itemsCount: number,
+  trackBottomOffset = 0,
+) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const [scrollThumb, setScrollThumb] = useState<ScrollThumbState>({
@@ -27,6 +30,11 @@ export function useGalleryScrollThumb(itemsCount: number) {
     const { scrollTop, scrollHeight, clientHeight } = scrollElement;
     const hasScroll = scrollHeight > clientHeight;
 
+    const trackHeight = Math.max(
+      clientHeight - trackBottomOffset,
+      MIN_SCROLL_THUMB_HEIGHT,
+    );
+
     if (!hasScroll) {
       setScrollThumb((currentValue) => ({
         ...currentValue,
@@ -36,11 +44,11 @@ export function useGalleryScrollThumb(itemsCount: number) {
     }
 
     const thumbHeight = Math.max(
-      (clientHeight / scrollHeight) * clientHeight,
+      (clientHeight / scrollHeight) * trackHeight,
       MIN_SCROLL_THUMB_HEIGHT,
     );
 
-    const maxThumbTop = clientHeight - thumbHeight;
+    const maxThumbTop = trackHeight - thumbHeight;
     const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * maxThumbTop;
 
     setScrollThumb({
@@ -48,7 +56,7 @@ export function useGalleryScrollThumb(itemsCount: number) {
       height: thumbHeight,
       isVisible: true,
     });
-  }, []);
+  }, [trackBottomOffset]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(updateScrollThumb);

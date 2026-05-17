@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useNavigate, useOutletContext, useParams } from "react-router";
+import { Link, useNavigate, useOutletContext, useParams } from "react-router";
 import { Form, Formik } from "formik";
 import { useQueryClient } from "@tanstack/react-query";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
+import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
@@ -21,6 +22,9 @@ import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { Icon } from "@/shared/ui/Icon";
+import { GalleryEditPhotoCardPlaceholder } from "@/features/gallery/components/GalleryEditPhotoCardPlaceholder";
+import { useGalleryScrollThumb } from "@/features/gallery/hooks/useGalleryScrollThumb";
+import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 
 export function EditGalleryPage() {
   const [apiError, setApiError] = useState("");
@@ -28,6 +32,8 @@ export function EditGalleryPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
+  const { scrollContainerRef, scrollThumb, updateScrollThumb } =
+    useGalleryScrollThumb(3, 166);
 
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
@@ -71,18 +77,23 @@ export function EditGalleryPage() {
   };
 
   return (
-    <section className="flex min-h-[calc(100vh-60px)] flex-col">
-      <header className="mb-[13px] flex min-h-[94px] items-center justify-between gap-[16px] rounded-[16px] bg-page-bg/50 backdrop-blur-[20px]">
-        <h1 className="text-[32px] font-bold leading-[150%] text-text-main">
+    <section className="flex min-h-[calc(100vh-60px)] flex-col min-[1360px]:h-[calc(100vh-60px)] min-[1360px]:min-h-0 min-[1360px]:overflow-hidden">
+      <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-[16px] rounded-[16px] bg-page-bg/50 backdrop-blur-[20px] ">
+        <h1 className="text-[24px] font-bold leading-[150%] text-text-main md:text-[32px]">
           Edit gallery
         </h1>
 
-        <button
-          type="button"
-          className="hidden h-[50px] w-[180px] cursor-pointer items-center justify-center rounded-[16px] bg-brand text-[16px] font-bold leading-[150%] text-white hover:bg-avatar active:bg-brand-active lg:flex"
+        <Link
+          to={`/galleries/${numericGalleryId}/upload-photos`}
+          onClick={(event) => event.preventDefault()}
+          className="group hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white lg:flex"
         >
-          Upload photos
-        </button>
+          <span>Upload photos</span>
+          <Icon
+            src={arrowRightIconUrl}
+            className="h-[12px] w-[15px] text-current"
+          />
+        </Link>
 
         <button
           type="button"
@@ -94,69 +105,96 @@ export function EditGalleryPage() {
         </button>
       </header>
 
-      <div className="flex-1 rounded-[30px] bg-white p-[30px] shadow-card">
-        <h2 className="text-[24px] font-bold leading-[150%] text-text-main">
-          Edit Description
-        </h2>
+      <Link
+        to={`/galleries/${numericGalleryId}/upload-photos`}
+        onClick={(event) => event.preventDefault()}
+        className="group mt-[20px] flex h-[50px] w-full cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[14px] font-bold leading-none text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white lg:hidden"
+      >
+        <span>Upload photos</span>
+        <Icon
+          src={arrowRightIconUrl}
+          className="h-[12px] w-[15px] text-current"
+        />
+      </Link>
 
-        <p className="mt-[8px] text-[16px] leading-[150%] text-text-secondary">
-          You can edit description for your gallery.
-        </p>
+      <Formik<GalleryFormValues>
+        initialValues={editGalleryInitialValues}
+        validate={validateGalleryForm}
+        validateOnMount
+        onSubmit={(values) => {
+          setApiError("");
 
-        <Formik<GalleryFormValues>
-          initialValues={editGalleryInitialValues}
-          validate={validateGalleryForm}
-          validateOnMount
-          onSubmit={(values) => {
-            setApiError("");
-
-            updateGalleryMutation.mutate(
-              {
-                id: numericGalleryId,
-                payload: {
-                  title: values.title.trim(),
-                  description: values.description.trim(),
-                },
+          updateGalleryMutation.mutate(
+            {
+              id: numericGalleryId,
+              payload: {
+                title: values.title.trim(),
+                description: values.description.trim(),
               },
-              {
-                onSuccess: () => {
-                  navigate(`/galleries/${numericGalleryId}`);
-                },
-                onError: (error) => {
-                  setApiError(getApiErrorMessage(error));
-                },
+            },
+            {
+              onSuccess: () => {
+                navigate(`/galleries/${numericGalleryId}`);
               },
-            );
-          }}
-        >
-          {({ values, isValid, dirty }) => {
-            const isSubmitDisabled =
-              !dirty ||
-              !values.title.trim() ||
-              !isValid ||
-              updateGalleryMutation.isPending;
+              onError: (error) => {
+                setApiError(getApiErrorMessage(error));
+              },
+            },
+          );
+        }}
+      >
+        {({ values, isValid, dirty }) => {
+          const isSubmitDisabled =
+            !dirty ||
+            !values.title.trim() ||
+            !isValid ||
+            updateGalleryMutation.isPending;
 
-            return (
-              <Form noValidate className="mt-[30px] flex min-h-full flex-col">
-                <div className="grid gap-[30px] xl:grid-cols-[400px_1fr]">
-                  <GalleryFields />
+          return (
+            <Form
+              noValidate
+              className="relative flex flex-col rounded-[30px] bg-white px-[20px] py-[40px] shadow-card sm:p-[30px] min-[1360px]:min-h-0 min-[1360px]:flex-1 min-[1360px]:overflow-hidden"
+            >
+              <div className="relative mx-auto flex w-full max-w-[311px] flex-col min-[1360px]:min-h-0 min-[1360px]:flex-1 min-[1360px]:max-w-[900px] min-[1536px]:max-w-[950px]">
+                <h2 className="shrink-0 text-[24px] font-bold leading-[150%] text-text-main">
+                  Edit Description
+                </h2>
 
-                  <div className="hidden gap-[20px] self-start xl:grid">
-                    {Array.from({ length: 3 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="flex min-h-[220px] flex-col rounded-[16px] border border-border-default p-[14px]"
-                      >
-                        <div className="mb-[12px] flex h-[100px] items-center justify-center rounded-[12px] bg-brand-light text-[14px] font-bold leading-[150%] text-border-default">
-                          Photo
-                        </div>
+                <p className="mt-[8px] shrink-0 text-[16px] leading-[150%] text-text-secondary">
+                  You can edit description for your gallery.
+                </p>
 
-                        <div className="flex flex-col gap-[8px]">
-                          <div className="h-[38px] rounded-[10px] border border-border-default" />
-                          <div className="h-[58px] rounded-[10px] border border-border-default" />
-                        </div>
+                <div className="mt-[30px] grid w-full gap-[30px] min-[1360px]:min-h-0 min-[1360px]:flex-1 min-[1360px]:grid-cols-[330px_548px] min-[1360px]:gap-[40px] min-[1536px]:grid-cols-[330px_604px]">
+                  <div className="shrink-0">
+                    <GalleryFields />
+                  </div>
+
+                  <div className="relative min-[1360px]:min-h-0 min-[1360px]:overflow-hidden min-[1360px]:pr-[18px] min-[1536px]:pr-[24px]">
+                    <div
+                      ref={scrollContainerRef}
+                      onScroll={updateScrollThumb}
+                      className="scrollbar-gallery min-[1360px]:h-full min-[1360px]:overflow-y-auto min-[1360px]:pb-[190px]"
+                    >
+                      <div className="flex w-full flex-col gap-[20px] pt-[8px] pr-[8px]">
+                        {Array.from({ length: 4 }).map((_, index) => (
+                          <GalleryEditPhotoCardPlaceholder key={index} />
+                        ))}
                       </div>
-                    ))}
+                    </div>
+
+                    {scrollThumb.isVisible && (
+                      <div className="pointer-events-none absolute bottom-[166px] right-0 top-0 z-20 hidden w-[3px] min-[1360px]:block">
+                        <div
+                          className="w-full rounded-[2px] bg-text-muted"
+                          style={{
+                            height: `${scrollThumb.height}px`,
+                            transform: `translateY(${scrollThumb.top}px)`,
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden h-[166px] bg-gradient-to-b from-white/0 via-white/95 to-white min-[1360px]:block" />
                   </div>
                 </div>
 
@@ -164,28 +202,37 @@ export function EditGalleryPage() {
                   <p
                     role="alert"
                     aria-live="polite"
-                    className="mt-[20px] text-[12px] font-normal leading-[24px] text-error"
+                    className="mt-[20px] shrink-0 text-[12px] font-normal leading-[24px] text-error"
                   >
                     {apiError}
                   </p>
                 )}
 
-                <div className="mt-auto flex justify-end pt-[30px]">
-                  <div className="w-full lg:w-[220px]">
-                    <FormSubmitButton
-                      text={
-                        updateGalleryMutation.isPending
-                          ? "Saving..."
-                          : "Save changes"
-                      }
-                      disabled={isSubmitDisabled}
-                    />
-                  </div>
+                <div className="z-30 mt-[30px] w-full max-w-[311px] min-[1360px]:absolute min-[1360px]:bottom-[30px] min-[1360px]:right-0 min-[1360px]:mt-0 min-[1360px]:w-[220px]">
+                  <FormSubmitButton
+                    text="Save changes"
+                    disabled={isSubmitDisabled}
+                  />
                 </div>
-              </Form>
-            );
-          }}
-        </Formik>
+              </div>
+            </Form>
+          );
+        }}
+      </Formik>
+
+      <div className="mt-[24px] flex shrink-0 items-center justify-between">
+        <Link
+          to="/galleries"
+          className="flex items-center gap-[8px] text-[16px] font-bold leading-[150%] text-text-main hover:text-brand"
+        >
+          <Icon
+            src={arrowRightIconUrl}
+            className="h-[12px] w-[15px] rotate-180"
+          />
+          <span>Back</span>
+        </Link>
+
+        <CopyrightFooter />
       </div>
     </section>
   );

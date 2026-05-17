@@ -42,7 +42,7 @@ export function GalleriesPage() {
 
   return (
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
-      <header className="mb-[24px] shrink-0: px-[30px] lg:mb-[19px] lg:h-[94px]">
+      <header className="mb-[24px] shrink-0 px-[30px] lg:mb-[19px] lg:h-[94px]">
         <div className="flex items-center justify-between lg:h-full">
           <h1 className="text-[24px] font-bold leading-[150%] text-text-main lg:text-[32px]">
             List of galleries
