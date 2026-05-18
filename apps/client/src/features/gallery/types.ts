@@ -36,3 +36,7 @@ export type GalleryFormValues = {
 export type GalleryFormErrors = Partial<
   Record<keyof GalleryFormValues, string>
 >;
+
+export type GallerySortBy = NonNullable<GetGalleriesParams["sortBy"]>;
+
+export type GallerySortOrder = NonNullable<GetGalleriesParams["sortOrder"]>;

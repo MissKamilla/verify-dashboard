@@ -1,59 +1,44 @@
-import { useState } from "react";
 import { useOutletContext } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
 import { GalleriesContent } from "@/features/gallery/components/GalleriesContent";
-import {
-  galleryQueryKeys,
-  useGalleriesQuery,
-} from "@/features/gallery/galleryQueries";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
+import { GalleriesFilters } from "@/features/gallery/components/GalleriesFilters";
+import { useGalleriesPage } from "@/features/gallery/hooks/useGalleriesPage";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
 
-const GALLERIES_PAGE_LIMIT = 10;
-
 export function GalleriesPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
-  const queryClient = useQueryClient();
-
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const galleriesParams = {
-    page: currentPage,
-    limit: GALLERIES_PAGE_LIMIT,
-  };
 
   const {
-    data: galleriesResponse,
+    galleries,
+    totalGalleries,
+    totalPages,
+    currentPage,
+    pageLimit,
+
+    searchValue,
+    sortBy,
+    sortOrder,
+    hasActiveFilters,
+
     error,
     isPending,
     isError,
     isFetching,
-  } = useGalleriesQuery(galleriesParams);
 
-  const handleRetry = () => {
-    void queryClient.invalidateQueries({
-      queryKey: galleryQueryKeys.list(galleriesParams),
-    });
-  };
-
-  const galleries = galleriesResponse?.items ?? [];
-
-  const totalGalleries = galleriesResponse?.total ?? 0;
-  const totalPages = Math.max(
-    1,
-    Math.ceil(totalGalleries / GALLERIES_PAGE_LIMIT),
-  );
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+    handleRetry,
+    handlePageChange,
+    handleSearchChange,
+    handleSortByChange,
+    handleSortOrderChange,
+    handleClearFilters,
+  } = useGalleriesPage();
 
   return (
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
@@ -86,6 +71,17 @@ export function GalleriesPage() {
         />
       </header>
 
+      <GalleriesFilters
+        searchValue={searchValue}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        hasActiveFilters={hasActiveFilters}
+        onSearchChange={handleSearchChange}
+        onSortByChange={handleSortByChange}
+        onSortOrderChange={handleSortOrderChange}
+        onClearFilters={handleClearFilters}
+      />
+
       <GalleriesContent
         galleries={galleries}
         isPending={isPending}
@@ -95,10 +91,11 @@ export function GalleriesPage() {
         currentPage={currentPage}
         totalGalleries={totalGalleries}
         totalPages={totalPages}
-        pageLimit={GALLERIES_PAGE_LIMIT}
+        pageLimit={pageLimit}
         onPageChange={handlePageChange}
         onRetry={handleRetry}
       />
+
       <CopyrightFooter />
     </section>
   );
