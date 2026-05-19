@@ -28,6 +28,6 @@ export class User {
   @OneToMany(() => Gallery, (gallery) => gallery.user)
   galleries!: Gallery[];
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }
