@@ -1,10 +1,13 @@
 import { useOutletContext } from "react-router";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
-import galleryEmptyImageUrl from "@/assets/gallery-empty.svg";
-import arrowRightIconUrl from "@/assets/icons/arrow-right.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
+
+import { GalleriesContent } from "@/features/gallery/components/GalleriesContent";
+import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
+import { GalleriesFilters } from "@/features/gallery/components/GalleriesFilters";
+import { useGalleriesPage } from "@/features/gallery/hooks/useGalleriesPage";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
@@ -12,62 +15,86 @@ import { Icon } from "@/shared/ui/Icon";
 export function GalleriesPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
 
+  const {
+    galleries,
+    totalGalleries,
+    totalPages,
+    currentPage,
+    pageLimit,
+
+    searchValue,
+    sortBy,
+    sortOrder,
+    hasActiveFilters,
+
+    error,
+    isPending,
+    isError,
+    isFetching,
+
+    handleRetry,
+    handlePageChange,
+    handleSearchChange,
+    handleSortByChange,
+    handleSortOrderChange,
+    handleClearFilters,
+  } = useGalleriesPage();
+
   return (
-    <section className="flex min-h-[calc(100vh-60px)] flex-col">
-      <header className="mb-[13px] flex h-[94px] items-center justify-between rounded-[16px] bg-page-bg/50 backdrop-blur-[20px]">
-        <h1 className="text-[32px] font-bold leading-[150%] text-text-main">
-          Gallery
-        </h1>
+    <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
+      <header className="mb-6 shrink-0 px-[30px] lg:mb-[19px] lg:h-[94px]">
+        <div className="flex items-center justify-between lg:h-full">
+          <h1 className="text-2xl font-bold leading-normal text-text-main lg:text-[32px]">
+            List of galleries
+          </h1>
 
-        <button
-          type="button"
-          className="hidden h-[50px] w-[250px] cursor-pointer items-center justify-center gap-[10px] rounded-[16px] border border-brand text-[16px] font-bold leading-[150%] text-brand lg:flex"
-        >
-          <span>Go to upload photos</span>
-          <Icon
-            src={arrowRightIconUrl}
-            className="h-[12px] w-[15px] text-brand"
-          />
-        </button>
-
-        <button
-          type="button"
-          onClick={openMobileSidebar}
-          className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
-          aria-label="Open menu"
-        >
-          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
-        </button>
-      </header>
-
-      <div className="flex min-h-[620px] flex-1 items-center justify-center rounded-[30px] bg-white shadow-card">
-        <div className="flex w-full max-w-[434px] flex-col items-center text-center">
-          <h2 className="text-[24px] font-bold leading-[150%] text-text-main">
-            Gallery Is Empty
-          </h2>
-
-          <p className="mt-[8px] text-[18px] font-normal leading-[150%] text-text-secondary">
-            You don't have any uploaded photos. Please, click on the "Go to
-            upload photos" and upload your photos.
-          </p>
-          <img
-            src={galleryEmptyImageUrl}
-            alt=""
-            className="mt-[40px] h-[274px] w-[308px] object-contain"
+          <GalleryActionLink
+            to="/galleries/create"
+            label="Create a new gallery"
+            className="group hidden min-h-[50px] w-[250px] shrink-0 text-sm leading-none active:bg-brand-active lg:flex"
           />
 
           <button
             type="button"
-            className="mt-[28px] flex cursor-pointer items-center gap-[10px] text-[16px] font-bold uppercase leading-[150%] text-brand"
+            onClick={openMobileSidebar}
+            className="flex h-10 w-10 cursor-pointer items-center justify-center lg:hidden"
+            aria-label="Open menu"
           >
-            <span>Go to upload photos</span>
-            <Icon
-              src={arrowRightIconUrl}
-              className="h-[12px] w-[15px] text-brand"
-            />
+            <Icon src={burgerIconUrl} className="h-6 w-6" />
           </button>
         </div>
-      </div>
+
+        <GalleryActionLink
+          to="/galleries/create"
+          label="Create a new gallery"
+          className="group mt-5 flex min-h-[50px] w-full shrink-0 text-sm leading-none active:bg-brand-active lg:hidden"
+        />
+      </header>
+
+      <GalleriesFilters
+        searchValue={searchValue}
+        sortBy={sortBy}
+        sortOrder={sortOrder}
+        hasActiveFilters={hasActiveFilters}
+        onSearchChange={handleSearchChange}
+        onSortByChange={handleSortByChange}
+        onSortOrderChange={handleSortOrderChange}
+        onClearFilters={handleClearFilters}
+      />
+
+      <GalleriesContent
+        galleries={galleries}
+        isPending={isPending}
+        isError={isError}
+        error={error}
+        isFetching={isFetching}
+        currentPage={currentPage}
+        totalGalleries={totalGalleries}
+        totalPages={totalPages}
+        pageLimit={pageLimit}
+        onPageChange={handlePageChange}
+        onRetry={handleRetry}
+      />
 
       <CopyrightFooter />
     </section>

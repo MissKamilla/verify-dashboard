@@ -42,11 +42,11 @@ export function AuthenticatedLayout() {
 
   return (
     <>
-      <div className="min-h-screen bg-page-bg px-[16px] pt-[30px] pb-0 lg:p-[30px]">
+      <div className="min-h-screen bg-page-bg px-4 pt-[30px] pb-0 lg:p-[30px]">
         <div className="flex min-h-[calc(100vh-60px)] gap-[30px]">
           <Sidebar
             {...sidebarProps}
-            className="hidden h-[calc(100vh-60px)] lg:flex"
+            className="hidden h-[calc(100vh-60px)] self-start lg:sticky lg:top-[30px] lg:flex"
           />
           <main className="min-w-0 flex-1">
             <Outlet
@@ -63,16 +63,16 @@ export function AuthenticatedLayout() {
             onClick={() => setIsMobileSidebarOpen(false)}
           >
             <div
-              className="fixed bottom-[16px] left-[16px] top-[16px] z-50 w-[290px]"
+              className="fixed bottom-4 left-4 top-4 z-50 w-[290px]"
               onClick={(event) => event.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setIsMobileSidebarOpen(false)}
-                className="absolute right-[20px] top-[20px] z-10 flex h-[16px] w-[16px] cursor-pointer items-center justify-center"
+                className="absolute right-5 top-5 z-10 flex h-4 w-4 cursor-pointer items-center justify-center"
                 aria-label="Close menu"
               >
-                <Icon src={closeIconUrl} className="h-[16px] w-[16px]" />
+                <Icon src={closeIconUrl} className="h-4 w-4" />
               </button>
 
               <Sidebar

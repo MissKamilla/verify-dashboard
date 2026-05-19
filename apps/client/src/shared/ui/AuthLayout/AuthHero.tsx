@@ -9,7 +9,7 @@ export function AuthHero({ variant }: AuthHeroProps) {
   return (
     <section
       aria-hidden="true"
-      className="pointer-events-none relative hidden min-h-screen w-[779px] self-stretch select-none overflow-hidden rounded-bl-[180px] min-[1440px]:block"
+      className="pointer-events-none relative hidden min-h-screen w-[calc(50vw+59px)] self-stretch select-none overflow-hidden rounded-bl-[180px] min-[1440px]:block"
     >
       <img
         src={authBackground}
@@ -26,11 +26,11 @@ export function AuthHero({ variant }: AuthHeroProps) {
           className="absolute right-[100px] top-[50px] h-[72px] w-[176px]"
         />
       ) : (
-        <p className="absolute left-1/2 top-[21vh] -translate-x-1/2 text-[36px] font-bold leading-[56px] text-white">
+        <p className="absolute left-1/2 top-[21vh] -translate-x-1/2 text-4xl font-bold leading-[56px] text-white">
           Welcome back 👋
         </p>
       )}
-      <div className="absolute left-1/2 top-[30vh] flex h-[409px] w-[364px] -translate-x-1/2 items-center justify-center rounded-[16px] border border-white/30 bg-white/5">
+      <div className="absolute left-1/2 top-[30vh] flex h-[409px] w-[364px] -translate-x-1/2 items-center justify-center rounded-2xl border border-white/30 bg-white/5">
         <img
           src={verifyLogoCard}
           alt="Verify"
@@ -39,7 +39,7 @@ export function AuthHero({ variant }: AuthHeroProps) {
         />
       </div>
 
-      <p className="absolute bottom-[40px] right-[100px] text-[14px] font-medium leading-[24px] text-white">
+      <p className="absolute bottom-[40px] right-[100px] text-sm font-medium leading-6 text-white">
         © {new Date().getFullYear()} Verify. All Rights Reserved.
       </p>
     </section>

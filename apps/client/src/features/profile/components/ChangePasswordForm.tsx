@@ -82,7 +82,7 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
             changePasswordMutation.isPending;
 
           return (
-            <Form className="flex flex-col gap-[24px]">
+            <Form className="flex flex-col gap-6">
               <PasswordInputField
                 label="Old password"
                 name="oldPassword"
@@ -118,12 +118,12 @@ export function ChangePasswordForm({ onSuccess }: ChangePasswordFormProps) {
               />
 
               {passwordApiError && (
-                <p className="text-[14px] font-normal leading-[150%] text-error">
+                <p className="text-sm font-normal leading-normal text-error">
                   {passwordApiError}
                 </p>
               )}
 
-              <div className="mx-auto mt-[4px] w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
+              <div className="mx-auto mt-1 w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
                 <FormSubmitButton
                   text="Change password"
                   disabled={isSubmitDisabled}

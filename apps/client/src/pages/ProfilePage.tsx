@@ -61,17 +61,17 @@ export function ProfilePage() {
   return (
     <section className="flex min-h-[calc(100vh-60px)] flex-col">
       <header className="mb-[30px] flex items-center justify-between">
-        <h1 className="text-[32px] font-bold leading-[150%] text-text-main">
+        <h1 className="text-[32px] font-bold leading-normal text-text-main">
           Profile settings
         </h1>
 
         <button
           type="button"
           onClick={openMobileSidebar}
-          className="flex h-[40px] w-[40px] cursor-pointer items-center justify-center lg:hidden"
+          className="flex h-10 w-10 cursor-pointer items-center justify-center lg:hidden"
           aria-label="Open menu"
         >
-          <Icon src={burgerIconUrl} className="h-[24px] w-[24px]" />
+          <Icon src={burgerIconUrl} className="h-6 w-6" />
         </button>
       </header>
 
@@ -81,7 +81,7 @@ export function ProfilePage() {
         initials={initials}
       />
 
-      <div className="mt-[20px] grid gap-[16px] lg:grid-cols-2 lg:gap-[20px]">
+      <div className="mt-5 grid gap-4 lg:grid-cols-2 lg:gap-5">
         <AccountSettingsForm
           profile={profile}
           onSuccess={() => setIsSuccessModalOpen(true)}

@@ -81,7 +81,7 @@ export function AccountSettingsForm({
             updateProfileMutation.isPending;
 
           return (
-            <Form className="flex flex-col gap-[24px]">
+            <Form className="flex flex-col gap-6">
               <FormInputField
                 label="First name"
                 name="firstname"
@@ -92,7 +92,7 @@ export function AccountSettingsForm({
                 startIcon={
                   <Icon
                     src={profileIconUrl}
-                    className="h-[20px] w-[20px] text-text-main"
+                    className="h-5 w-5 text-text-main"
                   />
                 }
               />
@@ -107,7 +107,7 @@ export function AccountSettingsForm({
                 startIcon={
                   <Icon
                     src={profileIconUrl}
-                    className="h-[20px] w-[20px] text-text-main"
+                    className="h-5 w-5 text-text-main"
                   />
                 }
               />
@@ -120,18 +120,18 @@ export function AccountSettingsForm({
                 startIcon={
                   <Icon
                     src={companyIconUrl}
-                    className="h-[20px] w-[20px] text-text-main"
+                    className="h-5 w-5 text-text-main"
                   />
                 }
               />
 
               {accountApiError && (
-                <p className="text-[14px] font-normal leading-[150%] text-error">
+                <p className="text-sm font-normal leading-normal text-error">
                   {accountApiError}
                 </p>
               )}
 
-              <div className="mx-auto mt-[4px] w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
+              <div className="mx-auto mt-1 w-full lg:ml-auto lg:mr-0 lg:w-[180px]">
                 <FormSubmitButton
                   text="Save changes"
                   disabled={isSubmitDisabled}

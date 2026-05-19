@@ -12,7 +12,7 @@ export function FormSubmitButton({ text, disabled }: FormSubmitButtonProps) {
     <button
       type="submit"
       disabled={disabled}
-      className={`h-[50px] w-full rounded-[16px] text-[14px] font-bold leading-none ${buttonStateClass}`}
+      className={`h-[50px] w-full rounded-2xl text-sm font-bold leading-none ${buttonStateClass}`}
     >
       {text}
     </button>

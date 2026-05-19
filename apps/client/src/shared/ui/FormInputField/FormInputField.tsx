@@ -23,12 +23,12 @@ export function FormInputField({
     ? "border-error"
     : "border-border-default focus:border-brand";
 
-  const inputPaddingClass = startIcon ? "pl-[50px]" : "pl-[18px]";
+  const inputPaddingClass = startIcon ? "pl-[50px]" : "pl-4.5";
   return (
     <div className="flex flex-col gap-2">
       <label
         htmlFor={inputId}
-        className="text-[14px] leading-none font-medium text-text-main"
+        className="text-sm leading-none font-medium text-text-main"
       >
         {label}
         {inputProps.required && <span className="text-error"> *</span>}
@@ -43,7 +43,7 @@ export function FormInputField({
           id={inputId}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorId : undefined}
-          className={`h-[50px] w-full rounded-[16px] border ${inputPaddingClass} pr-12 text-[14px] font-normal text-text-main outline-none placeholder:text-text-muted ${inputBorderClass}`}
+          className={`h-[50px] w-full rounded-2xl border ${inputPaddingClass} pr-12 text-sm font-normal text-text-main outline-none placeholder:text-text-muted ${inputBorderClass}`}
           {...inputProps}
         />
         {endIcon && (
@@ -55,7 +55,7 @@ export function FormInputField({
       {error && (
         <p
           id={errorId}
-          className="text-[12px] font-normal leading-[24px] text-error"
+          className="text-xs font-normal leading-6 text-error"
           role="alert"
         >
           {error}

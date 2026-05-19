@@ -65,19 +65,19 @@ export function Sidebar({
   const userEmail = email ?? "";
 
   const getSubmenuLinkClassName = ({ isActive }: { isActive: boolean }) =>
-    `h-[30px] pl-[54px] pt-[3px] text-[16px] leading-[150%] transition-colors${
+    `h-[30px] pl-[54px] pt-[3px] text-base leading-normal transition-colors${
       isActive
         ? `font-bold ${activeTextClassName}`
         : `font-normal ${inactiveTextClassName}`
     }`;
 
   const getSectionLinkClassName = (sectionPath: string) =>
-    `flex items-center gap-[10px] text-[16px] font-bold leading-[150%] transition-colors ${
+    `flex items-center gap-2.5 text-base font-bold leading-normal transition-colors ${
       isSectionActive(sectionPath) ? activeTextClassName : inactiveTextClassName
     }`;
 
-  const getSectionIconClassName = (sectionId: string) =>
-    isSectionOpen(sectionId)
+  const getSectionIconClassName = (sectionPath: string) =>
+    isSectionActive(sectionPath)
       ? openedSectionIconClassName
       : closedSectionIconClassName;
 
@@ -96,24 +96,12 @@ export function Sidebar({
 
       <div className="h-px w-full bg-border-light" />
 
-      <nav className="mt-[36px]">
-        <div className="flex h-[24px] w-full items-center px-[20px]">
-          <NavLink
-            to="/galleries"
-            onClick={onNavigate}
-            className={() => getSectionLinkClassName("/galleries")}
-          >
-            <Icon
-              src={galleryIconUrl}
-              className={`h-[24px] w-[24px] ${getSectionIconClassName("galleries")}`}
-            />
-            Gallery
-          </NavLink>
-
+      <nav className="mt-9">
+        <div className="flex h-6 w-full items-center px-5">
           <button
             type="button"
             onClick={() => toggleSection("galleries")}
-            className="ml-auto flex h-[24px] w-[24px] cursor-pointer items-center justify-center"
+            className="flex w-full cursor-pointer items-center"
             aria-label={
               isSectionOpen("galleries")
                 ? "Collapse gallery menu"
@@ -121,9 +109,20 @@ export function Sidebar({
             }
             aria-expanded={isSectionOpen("galleries")}
           >
+            <NavLink
+              to="/galleries"
+              onClick={onNavigate}
+              className={() => getSectionLinkClassName("/galleries")}
+            >
+              <Icon
+                src={galleryIconUrl}
+                className={`h-6 w-6 ${getSectionIconClassName("/galleries")}`}
+              />
+              Gallery
+            </NavLink>
             <Icon
               src={chevronDownIconUrl}
-              className={`h-[5px] w-[10px] transition-transform ${getSectionChevronClassName(
+              className={`ml-auto h-[5px] w-[10px] transition-transform ${getSectionChevronClassName(
                 "galleries",
               )}`}
             />
@@ -131,46 +130,45 @@ export function Sidebar({
         </div>
 
         {isSectionOpen("galleries") && (
-          <div className="mt-[18px] flex flex-col gap-[24px]">
+          <div className="mt-[18px] flex flex-col gap-6">
             <NavLink
-              to="/galleries/list"
+              to="/galleries"
+              end
               onClick={onNavigate}
               className={getSubmenuLinkClassName}
             >
               List of galleries
             </NavLink>
-
-            <NavLink
-              to="/galleries/search"
-              onClick={onNavigate}
-              className={getSubmenuLinkClassName}
+            <span
+              className="h-[30px] cursor-not-allowed pl-[54px] pt-[3px] text-base font-normal leading-normal text-text-muted opacity-50"
+              aria-disabled="true"
             >
               Search among galleries
-            </NavLink>
+            </span>
           </div>
         )}
       </nav>
 
-      <div className="mt-auto px-[10px] pb-[28px]">
+      <div className="mt-auto px-2.5 pb-7">
         <NavLink
           to="/profile"
           onClick={onNavigate}
           className={({ isActive }) =>
-            `mb-[24px] flex h-[68px] w-[270px] cursor-pointer items-center gap-[10px] rounded-[16px] p-[10px] transition-colors ${
+            `mb-6 flex h-[68px] w-[270px] cursor-pointer items-center gap-2.5 rounded-2xl p-2.5 transition-colors ${
               isActive ? "bg-brand-light" : "hover:bg-brand-light"
             }`
           }
         >
-          <div className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-avatar text-[16px] font-bold leading-[150%] text-white">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-avatar text-base font-bold leading-normal text-white">
             {isProfilePending ? "" : userInitials}
           </div>
 
           <div className="min-w-0">
-            <p className="truncate text-[16px] font-bold leading-[150%] text-text-main">
+            <p className="truncate text-base font-bold leading-normal text-text-main">
               {userName}
             </p>
 
-            <p className="truncate text-[12px] font-normal leading-[150%] text-text-secondary">
+            <p className="truncate text-xs font-normal leading-normal text-text-secondary">
               {userEmail}
             </p>
           </div>
@@ -179,9 +177,9 @@ export function Sidebar({
         <button
           type="button"
           onClick={onLogout}
-          className="flex h-[30px] cursor-pointer items-center gap-[10px] px-[20px] text-[16px] font-normal leading-[150%] text-text-muted transition-colors hover:text-error"
+          className="flex h-[30px] cursor-pointer items-center gap-2.5 px-5 text-base font-normal leading-normal text-text-muted transition-colors hover:text-error"
         >
-          <Icon src={logoutIconUrl} className="h-[24px] w-[24px]" />
+          <Icon src={logoutIconUrl} className="h-6 w-6" />
           <span>Log Out</span>
         </button>
       </div>
