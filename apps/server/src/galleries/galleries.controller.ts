@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -127,7 +128,7 @@ export class GalleriesController {
   @ApiNotFoundResponse({
     description: 'Gallery not found',
   })
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   remove(
     @CurrentUser('sub') userId: number,
