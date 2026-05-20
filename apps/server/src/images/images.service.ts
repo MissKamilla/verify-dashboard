@@ -4,15 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { GalleryImage } from './entities/image.entity';
 import { GetImagesQueryDto } from './dto/get-images-query.dto';
+import { UpdateImageMetafieldsDto } from './dto/update-image-metafields.dto';
 import {
   buildStoredImagePath,
-  removeUploadedFiles,
+  copyStoredImageFile,
   removeStoredImageFile,
+  removeUploadedFiles,
 } from './images-storage.utils';
 import { MAX_IMAGES_PER_GALLERY } from './images.constants';
 
@@ -78,7 +80,182 @@ export class ImagesService {
     galleryId: number,
     userId: number,
     files: UploadedImageFile[],
+    metafields?: UpdateImageMetafieldsDto[],
   ): Promise<GalleryImage[]> {
+    try {
+      await this.findOwnedGalleryOrFail(galleryId, userId);
+
+      await this.ensureGalleryCanAcceptImages(galleryId, files.length);
+
+      if (metafields && metafields.length !== files.length) {
+        throw new BadRequestException(
+          'Metafields count must match uploaded files count',
+        );
+      }
+    } catch (error) {
+      await removeUploadedFiles(files);
+
+      throw error;
+    }
+
+    const images = files.map((file, index) =>
+      this.imagesRepository.create({
+        path: buildStoredImagePath(file.filename),
+        galleryId,
+        originalFilename: file.originalname,
+        metafields: metafields?.[index] ?? {},
+      }),
+    );
+
+    return this.imagesRepository.save(images);
+  }
+
+  async updateMetafields(
+    imageId: number,
+    userId: number,
+    dto: UpdateImageMetafieldsDto,
+  ): Promise<GalleryImage> {
+    const image = await this.findOwnedImageOrFail(imageId, userId);
+
+    const nextMetafields = {
+      ...(image.metafields ?? {}),
+    };
+
+    if (dto.name !== undefined) {
+      nextMetafields.name = dto.name;
+    }
+
+    if (dto.comment !== undefined) {
+      nextMetafields.comment = dto.comment;
+    }
+
+    image.metafields = nextMetafields;
+
+    return this.imagesRepository.save(image);
+  }
+
+  async moveImages(
+    imageIds: number[],
+    userId: number,
+    targetGalleryId: number,
+  ): Promise<GalleryImage[]> {
+    await this.findOwnedGalleryOrFail(
+      targetGalleryId,
+      userId,
+      'Target gallery not found',
+    );
+
+    const images = await this.findOwnedImagesOrFail(imageIds, userId);
+
+    this.ensureImagesAreNotInGallery(images, targetGalleryId);
+
+    await this.ensureGalleryCanAcceptImages(targetGalleryId, images.length);
+
+    images.forEach((image) => {
+      image.galleryId = targetGalleryId;
+    });
+
+    return this.imagesRepository.save(images);
+  }
+
+  async copyImages(
+    imageIds: number[],
+    userId: number,
+    targetGalleryId: number,
+  ): Promise<GalleryImage[]> {
+    await this.findOwnedGalleryOrFail(
+      targetGalleryId,
+      userId,
+      'Target gallery not found',
+    );
+
+    const images = await this.findOwnedImagesOrFail(imageIds, userId);
+
+    this.ensureImagesAreNotInGallery(images, targetGalleryId);
+
+    await this.ensureGalleryCanAcceptImages(targetGalleryId, images.length);
+
+    const copiedPaths: string[] = [];
+
+    try {
+      const copiedImages = await Promise.all(
+        images.map(async (image) => {
+          const copiedPath = await copyStoredImageFile(image.path);
+
+          copiedPaths.push(copiedPath);
+
+          return this.imagesRepository.create({
+            path: copiedPath,
+            galleryId: targetGalleryId,
+            originalFilename: image.originalFilename,
+            metafields: {
+              ...(image.metafields ?? {}),
+            },
+          });
+        }),
+      );
+
+      return this.imagesRepository.save(copiedImages);
+    } catch (error) {
+      await Promise.all(copiedPaths.map((path) => removeStoredImageFile(path)));
+
+      throw error;
+    }
+  }
+
+  async deleteImages(imageIds: number[], userId: number): Promise<void> {
+    const images = await this.findOwnedImagesOrFail(imageIds, userId);
+
+    await this.imagesRepository.remove(images);
+
+    await Promise.all(images.map((image) => removeStoredImageFile(image.path)));
+  }
+
+  private async findOwnedImageOrFail(
+    imageId: number,
+    userId: number,
+  ): Promise<GalleryImage> {
+    const image = await this.imagesRepository.findOne({
+      where: {
+        id: imageId,
+        gallery: {
+          userId,
+        },
+      },
+    });
+
+    if (!image) {
+      throw new NotFoundException('Image not found');
+    }
+
+    return image;
+  }
+
+  private async findOwnedImagesOrFail(
+    imageIds: number[],
+    userId: number,
+  ): Promise<GalleryImage[]> {
+    const images = await this.imagesRepository.find({
+      where: {
+        id: In(imageIds),
+        gallery: {
+          userId,
+        },
+      },
+    });
+
+    if (images.length !== imageIds.length) {
+      throw new NotFoundException('One or more images not found');
+    }
+
+    return images;
+  }
+
+  private async findOwnedGalleryOrFail(
+    galleryId: number,
+    userId: number,
+    message = 'Gallery not found',
+  ) {
     const gallery = await this.galleriesRepository.findOne({
       where: {
         id: galleryId,
@@ -87,56 +264,45 @@ export class ImagesService {
     });
 
     if (!gallery) {
-      await removeUploadedFiles(files);
-      throw new NotFoundException('Gallery not found');
+      throw new NotFoundException(message);
     }
 
-    const existingImagesCount = await this.imagesRepository.count({
+    return gallery;
+  }
+
+  private async countImagesInGallery(galleryId: number): Promise<number> {
+    return this.imagesRepository.count({
       where: {
         galleryId,
       },
     });
+  }
 
-    const nextImagesCount = existingImagesCount + files.length;
+  private async ensureGalleryCanAcceptImages(
+    galleryId: number,
+    imagesToAddCount: number,
+  ): Promise<void> {
+    const currentImagesCount = await this.countImagesInGallery(galleryId);
 
-    if (nextImagesCount > MAX_IMAGES_PER_GALLERY) {
-      await removeUploadedFiles(files);
-
+    if (currentImagesCount + imagesToAddCount > MAX_IMAGES_PER_GALLERY) {
       throw new BadRequestException(
         `Gallery cannot contain more than ${MAX_IMAGES_PER_GALLERY} images`,
       );
     }
-
-    const images = files.map((file) =>
-      this.imagesRepository.create({
-        path: buildStoredImagePath(file.filename),
-        galleryId,
-        originalFilename: file.originalname,
-        metafields: {},
-      }),
-    );
-
-    return this.imagesRepository.save(images);
   }
 
-  async deleteImage(imageId: number, userId: number): Promise<void> {
-    const image = await this.imagesRepository.findOne({
-      where: {
-        id: imageId,
-        gallery: {
-          userId,
-        },
-      },
-      relations: {
-        gallery: true,
-      },
-    });
+  private ensureImagesAreNotInGallery(
+    images: GalleryImage[],
+    targetGalleryId: number,
+  ): void {
+    const hasImagesAlreadyInTargetGallery = images.some(
+      (image) => image.galleryId === targetGalleryId,
+    );
 
-    if (!image) {
-      throw new NotFoundException('Image not found');
+    if (hasImagesAlreadyInTargetGallery) {
+      throw new BadRequestException(
+        'One or more images already belong to target gallery',
+      );
     }
-
-    await this.imagesRepository.remove(image);
-    await removeStoredImageFile(image.path);
   }
 }

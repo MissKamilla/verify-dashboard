@@ -1,12 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 
-class ImageMetafieldsDto {
-  @ApiPropertyOptional({ example: 'Summer photo' })
-  name?: string;
-
-  @ApiPropertyOptional({ example: 'Photo from vacation' })
-  comment?: string;
-}
+import { ImageMetafieldsDto } from './image-metafields.dto';
 
 export class ImageResponseDto {
   @ApiProperty({ example: 1 })

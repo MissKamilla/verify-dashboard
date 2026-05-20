@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import type { Request } from 'express';
 import { diskStorage } from 'multer';
-import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
@@ -11,7 +10,10 @@ import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_SIZE_IN_BYTES,
 } from './images.constants';
-import { getUploadImagesDir } from './images-storage.utils';
+import {
+  generateStoredImageFilename,
+  getUploadImagesDir,
+} from './images-storage.utils';
 
 type DiskStorageDestinationCallback = (
   error: Error | null,
@@ -54,7 +56,7 @@ export function getImagesUploadOptions(): MulterOptions {
         callback: DiskStorageFilenameCallback,
       ) => {
         const fileExtension = extname(file.originalname).toLowerCase();
-        const filename = `${randomUUID()}${fileExtension}`;
+        const filename = generateStoredImageFilename(fileExtension);
 
         callback(null, filename);
       },
