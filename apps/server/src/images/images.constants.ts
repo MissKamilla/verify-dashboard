@@ -8,3 +8,4 @@ export const ALLOWED_IMAGE_FORMATS_LABEL = 'JPEG and PNG';
 export const UPLOAD_IMAGES_FIELD_NAME = 'images';
 
 export const DEFAULT_UPLOAD_IMAGES_DIR = 'uploads/images';
+export const DEFAULT_UPLOAD_IMAGES_PUBLIC_PATH = '/uploads/images';

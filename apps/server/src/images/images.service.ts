@@ -43,16 +43,7 @@ export class ImagesService {
     page: number;
     limit: number;
   }> {
-    const gallery = await this.galleriesRepository.findOne({
-      where: {
-        id: galleryId,
-        userId,
-      },
-    });
-
-    if (!gallery) {
-      throw new NotFoundException('Gallery not found');
-    }
+    await this.findOwnedGalleryOrFail(galleryId, userId);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
@@ -92,22 +83,22 @@ export class ImagesService {
           'Metafields count must match uploaded files count',
         );
       }
+
+      const images = files.map((file, index) =>
+        this.imagesRepository.create({
+          path: buildStoredImagePath(file.filename),
+          galleryId,
+          originalFilename: file.originalname,
+          metafields: metafields?.[index] ?? {},
+        }),
+      );
+
+      return this.imagesRepository.save(images);
     } catch (error) {
       await removeUploadedFiles(files);
 
       throw error;
     }
-
-    const images = files.map((file, index) =>
-      this.imagesRepository.create({
-        path: buildStoredImagePath(file.filename),
-        galleryId,
-        originalFilename: file.originalname,
-        metafields: metafields?.[index] ?? {},
-      }),
-    );
-
-    return this.imagesRepository.save(images);
   }
 
   async updateMetafields(
@@ -255,7 +246,7 @@ export class ImagesService {
     galleryId: number,
     userId: number,
     message = 'Gallery not found',
-  ) {
+  ): Promise<Gallery> {
     const gallery = await this.galleriesRepository.findOne({
       where: {
         id: galleryId,

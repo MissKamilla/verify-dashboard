@@ -1,8 +1,11 @@
 import { copyFile, mkdir, unlink } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
-import { extname, join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 
-import { DEFAULT_UPLOAD_IMAGES_DIR } from './images.constants';
+import {
+  DEFAULT_UPLOAD_IMAGES_DIR,
+  DEFAULT_UPLOAD_IMAGES_PUBLIC_PATH,
+} from './images.constants';
 
 type FileWithPath = {
   path: string;
@@ -16,18 +19,23 @@ export function getUploadImagesDir(): string {
   return process.env.UPLOAD_IMAGES_DIR || DEFAULT_UPLOAD_IMAGES_DIR;
 }
 
-export function buildStoredImagePath(filename: string): string {
-  const uploadDir = getUploadImagesDir()
+export function getUploadImagesPublicPath(): string {
+  return (
+    process.env.UPLOAD_IMAGES_PUBLIC_PATH || DEFAULT_UPLOAD_IMAGES_PUBLIC_PATH
+  )
     .replaceAll('\\', '/')
-    .replace(/^\/+|\/+$/g, '');
+    .replace(/^\/?/, '/')
+    .replace(/\/+$/g, '');
+}
 
-  return `/${uploadDir}/${filename}`;
+export function buildStoredImagePath(filename: string): string {
+  return `${getUploadImagesPublicPath()}/${filename}`;
 }
 
 export function buildLocalImageFilePath(storedPath: string): string {
-  const normalizedPath = storedPath.replaceAll('\\', '/').replace(/^\/+/, '');
+  const filename = basename(storedPath);
 
-  return join(process.cwd(), normalizedPath);
+  return join(process.cwd(), getUploadImagesDir(), filename);
 }
 
 export async function removeUploadedFiles(
@@ -45,14 +53,17 @@ export async function removeStoredImageFile(storedPath: string): Promise<void> {
 export async function copyStoredImageFile(
   sourceStoredPath: string,
 ): Promise<string> {
-  const sourceFilePath = buildLocalImageFilePath(sourceStoredPath); // path/to/project/uploads/images/abc-123.jpg
-  const fileExtension = extname(sourceStoredPath); // .jpg
-  const filename = generateStoredImageFilename(fileExtension); // 77576032-31a8-4609-a3bd-7020a2d0c71f.jpg
-  const targetStoredPath = buildStoredImagePath(filename); // /uploads/images/77576032-31a8-4609-a3bd-7020a2d0c71f.jpg
-  const targetFilePath = buildLocalImageFilePath(targetStoredPath); // /path/to/project/uploads/images/77576032-31a8-4609-a3bd-7020a2d0c71f.jpg
+  const sourceFilePath = buildLocalImageFilePath(sourceStoredPath);
+  const fileExtension = extname(sourceStoredPath);
+  const filename = generateStoredImageFilename(fileExtension);
+  const targetStoredPath = buildStoredImagePath(filename);
+  const targetFilePath = buildLocalImageFilePath(targetStoredPath);
 
   await mkdir(join(process.cwd(), getUploadImagesDir()), { recursive: true });
   await copyFile(sourceFilePath, targetFilePath);
 
   return targetStoredPath;
+}
+export async function ensureUploadImagesDirExists(): Promise<void> {
+  await mkdir(join(process.cwd(), getUploadImagesDir()), { recursive: true });
 }

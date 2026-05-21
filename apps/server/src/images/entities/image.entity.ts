@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
@@ -22,6 +23,7 @@ export class GalleryImage {
   @Column({ length: 500 })
   path!: string;
 
+  @Index()
   @Column({ name: 'gallery_id' })
   galleryId!: number;
 

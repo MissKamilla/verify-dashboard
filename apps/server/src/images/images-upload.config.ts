@@ -2,7 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import type { Request } from 'express';
 import { diskStorage } from 'multer';
-import { mkdirSync } from 'node:fs';
 import { extname, join } from 'node:path';
 
 import {
@@ -35,6 +34,24 @@ function isAllowedImageMimeType(
   return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType);
 }
 
+function getFileExtension(file: Express.Multer.File): string {
+  const fileExtension = extname(file.originalname).toLowerCase();
+
+  if (fileExtension) {
+    return fileExtension;
+  }
+
+  if (file.mimetype === 'image/jpeg') {
+    return '.jpg';
+  }
+
+  if (file.mimetype === 'image/png') {
+    return '.png';
+  }
+
+  return '.bin';
+}
+
 export function getImagesUploadOptions(): MulterOptions {
   return {
     storage: diskStorage({
@@ -45,8 +62,6 @@ export function getImagesUploadOptions(): MulterOptions {
       ) => {
         const uploadDir = join(process.cwd(), getUploadImagesDir());
 
-        mkdirSync(uploadDir, { recursive: true });
-
         callback(null, uploadDir);
       },
 
@@ -55,7 +70,7 @@ export function getImagesUploadOptions(): MulterOptions {
         file: Express.Multer.File,
         callback: DiskStorageFilenameCallback,
       ) => {
-        const fileExtension = extname(file.originalname).toLowerCase();
+        const fileExtension = getFileExtension(file);
         const filename = generateStoredImageFilename(fileExtension);
 
         callback(null, filename);

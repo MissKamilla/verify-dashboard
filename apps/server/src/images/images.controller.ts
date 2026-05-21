@@ -81,7 +81,7 @@ export class ImagesController {
     schema: {
       type: 'object',
       properties: {
-        images: {
+        [UPLOAD_IMAGES_FIELD_NAME]: {
           type: 'array',
           items: {
             type: 'string',
@@ -125,7 +125,7 @@ export class ImagesController {
     @UploadedFiles() files: Express.Multer.File[],
     @Body() dto: UploadImagesDto,
   ) {
-    if (!files.length) {
+    if (!files?.length) {
       throw new BadRequestException('At least one image is required');
     }
 

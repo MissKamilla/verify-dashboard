@@ -3,6 +3,7 @@ import { plainToInstance, Transform, Type } from 'class-transformer';
 import { IsArray, IsOptional, ValidateNested } from 'class-validator';
 
 import { UpdateImageMetafieldsDto } from './update-image-metafields.dto';
+import { BadRequestException } from '@nestjs/common';
 
 export class UploadImagesDto {
   @ApiPropertyOptional({
@@ -41,6 +42,6 @@ function parseJson(value: string): unknown {
   try {
     return JSON.parse(value);
   } catch {
-    return value;
+    throw new BadRequestException('Metafields must be a valid JSON string');
   }
 }
