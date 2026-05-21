@@ -28,30 +28,6 @@ type FileFilterCallback = (error: Error | null, acceptFile: boolean) => void;
 
 type AllowedImageMimeType = (typeof ALLOWED_IMAGE_MIME_TYPES)[number];
 
-function isAllowedImageMimeType(
-  mimeType: string,
-): mimeType is AllowedImageMimeType {
-  return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType);
-}
-
-function getFileExtension(file: Express.Multer.File): string {
-  const fileExtension = extname(file.originalname).toLowerCase();
-
-  if (fileExtension) {
-    return fileExtension;
-  }
-
-  if (file.mimetype === 'image/jpeg') {
-    return '.jpg';
-  }
-
-  if (file.mimetype === 'image/png') {
-    return '.png';
-  }
-
-  return '.bin';
-}
-
 export function getImagesUploadOptions(): MulterOptions {
   return {
     storage: diskStorage({
@@ -99,4 +75,28 @@ export function getImagesUploadOptions(): MulterOptions {
       callback(null, true);
     },
   };
+}
+
+function isAllowedImageMimeType(
+  mimeType: string,
+): mimeType is AllowedImageMimeType {
+  return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType);
+}
+
+function getFileExtension(file: Express.Multer.File): string {
+  const fileExtension = extname(file.originalname).toLowerCase();
+
+  if (fileExtension) {
+    return fileExtension;
+  }
+
+  if (file.mimetype === 'image/jpeg') {
+    return '.jpg';
+  }
+
+  if (file.mimetype === 'image/png') {
+    return '.png';
+  }
+
+  return '.bin';
 }

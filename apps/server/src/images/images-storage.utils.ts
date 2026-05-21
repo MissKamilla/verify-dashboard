@@ -64,6 +64,7 @@ export async function copyStoredImageFile(
 
   return targetStoredPath;
 }
+
 export async function ensureUploadImagesDirExists(): Promise<void> {
   await mkdir(join(process.cwd(), getUploadImagesDir()), { recursive: true });
 }

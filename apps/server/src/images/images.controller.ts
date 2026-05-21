@@ -33,17 +33,17 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { GetImagesQueryDto } from './dto/get-images-query.dto';
 import { ImagesListResponseDto } from './dto/images-list-response.dto';
 import { ImageResponseDto } from './dto/image-response.dto';
+import { UploadImagesDto } from './dto/upload-images.dto';
+import { UpdateImageMetafieldsDto } from './dto/update-image-metafields.dto';
+import { BulkImagesDto } from './dto/bulk-images.dto';
+import { MoveImagesDto } from './dto/move-images.dto';
+import { CopyImagesDto } from './dto/copy-images.dto';
 import {
   MAX_IMAGES_PER_GALLERY,
   UPLOAD_IMAGES_FIELD_NAME,
 } from './images.constants';
 import { ImagesService } from './images.service';
 import { getImagesUploadOptions } from './images-upload.config';
-import { UploadImagesDto } from './dto/upload-images.dto';
-import { UpdateImageMetafieldsDto } from './dto/update-image-metafields.dto';
-import { BulkImagesDto } from './dto/bulk-images.dto';
-import { MoveImagesDto } from './dto/move-images.dto';
-import { CopyImagesDto } from './dto/copy-images.dto';
 
 @Auth()
 @ApiTags('Images')

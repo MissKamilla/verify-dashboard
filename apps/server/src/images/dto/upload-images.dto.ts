@@ -1,9 +1,9 @@
+import { BadRequestException } from '@nestjs/common';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { plainToInstance, Transform, Type } from 'class-transformer';
 import { IsArray, IsOptional, ValidateNested } from 'class-validator';
 
 import { UpdateImageMetafieldsDto } from './update-image-metafields.dto';
-import { BadRequestException } from '@nestjs/common';
 
 export class UploadImagesDto {
   @ApiPropertyOptional({
