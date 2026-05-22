@@ -24,6 +24,8 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
+  ApiQuery,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -35,7 +37,6 @@ import { ImagesListResponseDto } from './dto/images-list-response.dto';
 import { ImageResponseDto } from './dto/image-response.dto';
 import { UploadImagesDto } from './dto/upload-images.dto';
 import { UpdateImageMetafieldsDto } from './dto/update-image-metafields.dto';
-import { BulkImagesDto } from './dto/bulk-images.dto';
 import { MoveImagesDto } from './dto/move-images.dto';
 import { CopyImagesDto } from './dto/copy-images.dto';
 import {
@@ -44,6 +45,7 @@ import {
 } from './images.constants';
 import { ImagesService } from './images.service';
 import { getImagesUploadOptions } from './images-upload.config';
+import { DeleteImagesQueryDto } from './dto/delete-images-query.dto';
 
 @Auth()
 @ApiTags('Images')
@@ -54,6 +56,12 @@ export class ImagesController {
   // Gallery images
 
   @ApiOperation({ summary: 'Get images by gallery' })
+  @ApiParam({
+    name: 'galleryId',
+    type: Number,
+    example: 1,
+    description: 'Gallery id',
+  })
   @ApiOkResponse({
     description: 'Paginated images list',
     type: ImagesListResponseDto,
@@ -76,6 +84,12 @@ export class ImagesController {
   // Upload images
 
   @ApiOperation({ summary: 'Upload images to gallery' })
+  @ApiParam({
+    name: 'galleryId',
+    type: Number,
+    example: 1,
+    description: 'Gallery id',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -140,6 +154,12 @@ export class ImagesController {
   // Update metafields
 
   @ApiOperation({ summary: 'Update image metafields' })
+  @ApiParam({
+    name: 'imageId',
+    type: Number,
+    example: 1,
+    description: 'Image id',
+  })
   @ApiOkResponse({
     description: 'Image metafields updated successfully',
     type: ImageResponseDto,
@@ -215,6 +235,14 @@ export class ImagesController {
   // Delete images
 
   @ApiOperation({ summary: 'Delete images' })
+  @ApiQuery({
+    name: 'imageIds',
+    required: true,
+    isArray: true,
+    type: Number,
+    example: [1, 2],
+    description: 'Image ids to delete.',
+  })
   @ApiNoContentResponse({
     description: 'Images deleted successfully',
   })
@@ -229,7 +257,10 @@ export class ImagesController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete('images')
-  deleteImages(@CurrentUser('sub') userId: number, @Body() dto: BulkImagesDto) {
-    return this.imagesService.deleteImages(dto.imageIds, userId);
+  deleteImages(
+    @CurrentUser('sub') userId: number,
+    @Query() query: DeleteImagesQueryDto,
+  ) {
+    return this.imagesService.deleteImages(query.imageIds, userId);
   }
 }

@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { GalleryImage } from './entities/image.entity';
@@ -31,6 +31,8 @@ export class ImagesService {
 
     @InjectRepository(Gallery)
     private readonly galleriesRepository: Repository<Gallery>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async findByGallery(
@@ -74,26 +76,40 @@ export class ImagesService {
     metafields?: UpdateImageMetafieldsDto[],
   ): Promise<GalleryImage[]> {
     try {
-      await this.findOwnedGalleryOrFail(galleryId, userId);
+      return await this.dataSource.transaction(async (manager) => {
+        const galleriesRepository = manager.getRepository(Gallery);
+        const imagesRepository = manager.getRepository(GalleryImage);
 
-      await this.ensureGalleryCanAcceptImages(galleryId, files.length);
-
-      if (metafields && metafields.length !== files.length) {
-        throw new BadRequestException(
-          'Metafields count must match uploaded files count',
-        );
-      }
-
-      const images = files.map((file, index) =>
-        this.imagesRepository.create({
-          path: buildStoredImagePath(file.filename),
+        await this.findOwnedGalleryOrFail(
           galleryId,
-          originalFilename: file.originalname,
-          metafields: metafields?.[index] ?? {},
-        }),
-      );
+          userId,
+          'Gallery not found',
+          galleriesRepository,
+        );
 
-      return this.imagesRepository.save(images);
+        await this.ensureGalleryCanAcceptImages(
+          galleryId,
+          files.length,
+          imagesRepository,
+        );
+
+        if (metafields && metafields.length !== files.length) {
+          throw new BadRequestException(
+            'Metafields count must match uploaded files count',
+          );
+        }
+
+        const images = files.map((file, index) =>
+          imagesRepository.create({
+            path: buildStoredImagePath(file.filename),
+            galleryId,
+            originalFilename: file.originalname,
+            metafields: metafields?.[index] ?? {},
+          }),
+        );
+
+        return imagesRepository.save(images);
+      });
     } catch (error) {
       await removeUploadedFiles(files);
 
@@ -130,23 +146,37 @@ export class ImagesService {
     userId: number,
     targetGalleryId: number,
   ): Promise<GalleryImage[]> {
-    await this.findOwnedGalleryOrFail(
-      targetGalleryId,
-      userId,
-      'Target gallery not found',
-    );
+    return this.dataSource.transaction(async (manager) => {
+      const galleriesRepository = manager.getRepository(Gallery);
+      const imagesRepository = manager.getRepository(GalleryImage);
 
-    const images = await this.findOwnedImagesOrFail(imageIds, userId);
+      await this.findOwnedGalleryOrFail(
+        targetGalleryId,
+        userId,
+        'Target gallery not found',
+        galleriesRepository,
+      );
 
-    this.ensureImagesAreNotInGallery(images, targetGalleryId);
+      const images = await this.findOwnedImagesOrFail(
+        imageIds,
+        userId,
+        imagesRepository,
+      );
 
-    await this.ensureGalleryCanAcceptImages(targetGalleryId, images.length);
+      this.ensureImagesAreNotInGallery(images, targetGalleryId);
 
-    images.forEach((image) => {
-      image.galleryId = targetGalleryId;
+      await this.ensureGalleryCanAcceptImages(
+        targetGalleryId,
+        images.length,
+        imagesRepository,
+      );
+
+      images.forEach((image) => {
+        image.galleryId = targetGalleryId;
+      });
+
+      return imagesRepository.save(images);
     });
-
-    return this.imagesRepository.save(images);
   }
 
   async copyImages(
@@ -154,39 +184,51 @@ export class ImagesService {
     userId: number,
     targetGalleryId: number,
   ): Promise<GalleryImage[]> {
-    await this.findOwnedGalleryOrFail(
-      targetGalleryId,
-      userId,
-      'Target gallery not found',
-    );
-
-    const images = await this.findOwnedImagesOrFail(imageIds, userId);
-
-    this.ensureImagesAreNotInGallery(images, targetGalleryId);
-
-    await this.ensureGalleryCanAcceptImages(targetGalleryId, images.length);
-
     const copiedPaths: string[] = [];
 
     try {
-      const copiedImages = await Promise.all(
-        images.map(async (image) => {
-          const copiedPath = await copyStoredImageFile(image.path);
+      return await this.dataSource.transaction(async (manager) => {
+        const galleriesRepository = manager.getRepository(Gallery);
+        const imagesRepository = manager.getRepository(GalleryImage);
 
-          copiedPaths.push(copiedPath);
+        await this.findOwnedGalleryOrFail(
+          targetGalleryId,
+          userId,
+          'Target gallery not found',
+          galleriesRepository,
+        );
 
-          return this.imagesRepository.create({
-            path: copiedPath,
-            galleryId: targetGalleryId,
-            originalFilename: image.originalFilename,
-            metafields: {
-              ...(image.metafields ?? {}),
-            },
-          });
-        }),
-      );
+        const images = await this.findOwnedImagesOrFail(
+          imageIds,
+          userId,
+          imagesRepository,
+        );
 
-      return this.imagesRepository.save(copiedImages);
+        await this.ensureGalleryCanAcceptImages(
+          targetGalleryId,
+          images.length,
+          imagesRepository,
+        );
+
+        const copiedImages = await Promise.all(
+          images.map(async (image) => {
+            const copiedPath = await copyStoredImageFile(image.path);
+
+            copiedPaths.push(copiedPath);
+
+            return imagesRepository.create({
+              path: copiedPath,
+              galleryId: targetGalleryId,
+              originalFilename: image.originalFilename,
+              metafields: {
+                ...(image.metafields ?? {}),
+              },
+            });
+          }),
+        );
+
+        return imagesRepository.save(copiedImages);
+      });
     } catch (error) {
       await Promise.all(copiedPaths.map((path) => removeStoredImageFile(path)));
 
@@ -195,9 +237,19 @@ export class ImagesService {
   }
 
   async deleteImages(imageIds: number[], userId: number): Promise<void> {
-    const images = await this.findOwnedImagesOrFail(imageIds, userId);
+    const images = await this.dataSource.transaction(async (manager) => {
+      const imagesRepository = manager.getRepository(GalleryImage);
 
-    await this.imagesRepository.remove(images);
+      const ownedImages = await this.findOwnedImagesOrFail(
+        imageIds,
+        userId,
+        imagesRepository,
+      );
+
+      await imagesRepository.remove(ownedImages);
+
+      return ownedImages;
+    });
 
     await Promise.all(images.map((image) => removeStoredImageFile(image.path)));
   }
@@ -225,8 +277,9 @@ export class ImagesService {
   private async findOwnedImagesOrFail(
     imageIds: number[],
     userId: number,
+    imagesRepository = this.imagesRepository,
   ): Promise<GalleryImage[]> {
-    const images = await this.imagesRepository.find({
+    const images = await imagesRepository.find({
       where: {
         id: In(imageIds),
         gallery: {
@@ -246,8 +299,9 @@ export class ImagesService {
     galleryId: number,
     userId: number,
     message = 'Gallery not found',
+    galleriesRepository = this.galleriesRepository,
   ): Promise<Gallery> {
-    const gallery = await this.galleriesRepository.findOne({
+    const gallery = await galleriesRepository.findOne({
       where: {
         id: galleryId,
         userId,
@@ -261,8 +315,11 @@ export class ImagesService {
     return gallery;
   }
 
-  private async countImagesInGallery(galleryId: number): Promise<number> {
-    return this.imagesRepository.count({
+  private async countImagesInGallery(
+    galleryId: number,
+    imagesRepository = this.imagesRepository,
+  ): Promise<number> {
+    return imagesRepository.count({
       where: {
         galleryId,
       },
@@ -272,8 +329,12 @@ export class ImagesService {
   private async ensureGalleryCanAcceptImages(
     galleryId: number,
     imagesToAddCount: number,
+    imagesRepository = this.imagesRepository,
   ): Promise<void> {
-    const currentImagesCount = await this.countImagesInGallery(galleryId);
+    const currentImagesCount = await this.countImagesInGallery(
+      galleryId,
+      imagesRepository,
+    );
 
     if (currentImagesCount + imagesToAddCount > MAX_IMAGES_PER_GALLERY) {
       throw new BadRequestException(

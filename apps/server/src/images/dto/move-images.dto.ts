@@ -1,10 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  ArrayUnique,
+  IsArray,
+  IsInt,
+  Min,
+} from 'class-validator';
 
-import { BulkImagesDto } from './bulk-images.dto';
+export class MoveImagesDto {
+  @ApiProperty({ example: [1, 2, 3] })
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayUnique()
+  @Type(() => Number)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  imageIds!: number[];
 
-export class MoveImagesDto extends BulkImagesDto {
   @ApiProperty({ example: 2 })
   @Type(() => Number)
   @IsInt()
