@@ -5,16 +5,20 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Gallery } from './entities/gallery.entity';
-import { ILike, Repository } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
+import { GalleryImage } from '../images/entities/image.entity';
+import { removeStoredImageFile } from '../images/images-storage.utils';
 
 @Injectable()
 export class GalleriesService {
   constructor(
     @InjectRepository(Gallery)
     private readonly galleriesRepository: Repository<Gallery>,
+
+    private readonly dataSource: DataSource,
   ) {}
 
   async createGallery(userId: number, dto: CreateGalleryDto): Promise<Gallery> {
@@ -110,8 +114,34 @@ export class GalleriesService {
   }
 
   async removeGallery(id: number, userId: number): Promise<void> {
-    const gallery = await this.findById(id, userId);
+    const imagePaths = await this.dataSource.transaction(async (manager) => {
+      const galleriesRepository = manager.getRepository(Gallery);
+      const imagesRepository = manager.getRepository(GalleryImage);
 
-    await this.galleriesRepository.remove(gallery);
+      const gallery = await galleriesRepository
+        .createQueryBuilder('gallery')
+        .setLock('pessimistic_write')
+        .where('gallery.id = :id', { id })
+        .andWhere('gallery.userId = :userId', { userId })
+        .getOne();
+
+      if (!gallery) {
+        throw new NotFoundException('Gallery not found');
+      }
+
+      const images = await imagesRepository.find({
+        where: {
+          galleryId: id,
+        },
+      });
+
+      await galleriesRepository.remove(gallery);
+
+      return images.map((image) => image.path);
+    });
+
+    await Promise.all(
+      imagePaths.map((imagePath) => removeStoredImageFile(imagePath)),
+    );
   }
 }

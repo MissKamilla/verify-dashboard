@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
   ArrayNotEmpty,
   ArrayUnique,
   IsArray,
@@ -8,10 +9,13 @@ import {
   Min,
 } from 'class-validator';
 
+import { MAX_IMAGE_BULK_OPERATION_SIZE } from '../images.constants';
+
 export class MoveImagesDto {
-  @ApiProperty({ example: [1, 2, 3] })
+  @ApiProperty({ example: [1, 2, 3], maxItems: MAX_IMAGE_BULK_OPERATION_SIZE })
   @IsArray()
   @ArrayNotEmpty()
+  @ArrayMaxSize(MAX_IMAGE_BULK_OPERATION_SIZE)
   @ArrayUnique()
   @Type(() => Number)
   @IsInt({ each: true })
