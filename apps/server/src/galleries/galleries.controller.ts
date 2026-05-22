@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -18,6 +19,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
@@ -73,6 +75,12 @@ export class GalleriesController {
   }
 
   @ApiOperation({ summary: 'Get gallery by id' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+    description: 'Gallery id',
+  })
   @ApiOkResponse({
     description: 'Gallery details',
     type: GalleryResponseDto,
@@ -92,6 +100,12 @@ export class GalleriesController {
   }
 
   @ApiOperation({ summary: 'Update gallery' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+    description: 'Gallery id',
+  })
   @ApiOkResponse({
     description: 'Gallery updated',
     type: GalleryResponseDto,
@@ -118,6 +132,12 @@ export class GalleriesController {
   }
 
   @ApiOperation({ summary: 'Delete gallery' })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    example: 1,
+    description: 'Gallery id',
+  })
   @ApiNoContentResponse({
     description: 'Gallery deleted',
   })
@@ -127,7 +147,7 @@ export class GalleriesController {
   @ApiNotFoundResponse({
     description: 'Gallery not found',
   })
-  @HttpCode(204)
+  @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':id')
   remove(
     @CurrentUser('sub') userId: number,

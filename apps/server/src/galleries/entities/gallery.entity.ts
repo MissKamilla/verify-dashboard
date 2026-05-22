@@ -4,11 +4,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
 
 import { User } from '../../users/entities/user.entity';
+import { GalleryImage } from '../../images/entities/image.entity';
 
 @Entity('galleries')
 @Unique(['userId', 'title'])
@@ -25,10 +27,13 @@ export class Gallery {
   @Column({ name: 'user_id' })
   userId!: number;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.galleries, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
-  @CreateDateColumn()
+  @OneToMany(() => GalleryImage, (image) => image.gallery)
+  images!: GalleryImage[];
+
+  @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 }

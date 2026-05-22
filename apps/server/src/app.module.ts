@@ -7,6 +7,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { GalleriesModule } from './galleries/galleries.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -30,6 +31,8 @@ import { GalleriesModule } from './galleries/galleries.module';
     UsersModule,
 
     GalleriesModule,
+
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
