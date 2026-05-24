@@ -1,25 +1,84 @@
+import { useState, type FormEvent } from "react";
 import { useOutletContext, useParams } from "react-router";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
-import { GalleryUploadDropzonePlaceholder } from "@/features/gallery/components/GalleryUploadDropzonePlaceholder";
+import { ImageUploadDropzone } from "@/features/image/components/ImageUploadDropzone";
+import { validateImageFiles } from "@/features/image/validateImageFiles";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
+import { useUploadGalleryImagesMutation } from "@/features/image/imageQueries";
+import { GalleryStatusAlerts } from "@/features/gallery/components/GalleryStatusAlerts";
 
+import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
+import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
 
-{
-  /* This page is a temporary placeholder. Upload photos functionality and final layout will be implemented later. */
-}
 export function UploadPhotosPage() {
   const { galleryId } = useParams();
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState("");
+  const [apiError, setApiError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const uploadImagesMutation = useUploadGalleryImagesMutation();
 
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
     Number.isInteger(numericGalleryId) && numericGalleryId > 0;
+
+  const selectedFilesCount = selectedFiles.length;
+
+  const handleFilesSelect = (files: File[]) => {
+    const validationError = validateImageFiles(files);
+
+    setFileError(validationError);
+
+    if (validationError) {
+      setSelectedFiles([]);
+      return;
+    }
+
+    setSelectedFiles(files);
+  };
+
+  const handleUploadSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setApiError("");
+    setSuccessMessage("");
+
+    const validationError = validateImageFiles(selectedFiles);
+
+    setFileError(validationError);
+
+    if (validationError) {
+      return;
+    }
+
+    uploadImagesMutation.mutate(
+      {
+        galleryId: numericGalleryId,
+        files: selectedFiles,
+      },
+      {
+        onSuccess: () => {
+          setSelectedFiles([]);
+          setFileError("");
+          setSuccessMessage("Photos have been uploaded successfully.");
+        },
+        onError: (error) => {
+          setApiError(getApiErrorMessage(error));
+        },
+      },
+    );
+  };
+
+  const isSubmitDisabled =
+    !selectedFiles.length || !!fileError || uploadImagesMutation.isPending;
 
   if (!isValidGalleryId) {
     return (
@@ -60,6 +119,12 @@ export function UploadPhotosPage() {
       </header>
 
       <div className="flex flex-1 flex-col rounded-[30px] bg-white px-5 py-10 shadow-card sm:p-[30px]">
+        <GalleryStatusAlerts
+          successMessage={successMessage}
+          errorMessage={apiError}
+          onCloseSuccess={() => setSuccessMessage("")}
+          onCloseError={() => setApiError("")}
+        />
         <div className="mx-auto flex w-full max-w-[950px] flex-1 flex-col">
           <h2 className="text-2xl font-bold leading-normal text-text-main">
             Edit And Upload Photos
@@ -69,9 +134,34 @@ export function UploadPhotosPage() {
             You can edit and upload new photos.
           </p>
 
-          <div className="mt-[30px]">
-            <GalleryUploadDropzonePlaceholder />
-          </div>
+          <form onSubmit={handleUploadSubmit} noValidate className="mt-[30px]">
+            <ImageUploadDropzone
+              onFilesSelect={handleFilesSelect}
+              disabled={uploadImagesMutation.isPending}
+            />
+
+            {fileError && (
+              <p
+                className="mt-3 text-sm leading-normal text-error"
+                role="alert"
+              >
+                {fileError}
+              </p>
+            )}
+
+            {selectedFilesCount > 0 && !fileError && (
+              <p className="mt-3 text-sm leading-normal text-text-secondary">
+                Selected photos: {selectedFilesCount}
+              </p>
+            )}
+
+            <div className="mt-[30px] w-full max-w-[311px] sm:max-w-[330px]">
+              <FormSubmitButton
+                text="Upload photos"
+                disabled={isSubmitDisabled}
+              />
+            </div>
+          </form>
         </div>
       </div>
 
