@@ -1,33 +1,41 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import galleryPlaceholderIconUrl from "@/assets/gallery-placeholder.svg";
 import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
 import actionEditIconUrl from "@/assets/icons/action-edit.svg";
 import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
 
 import { Icon } from "@/shared/ui/Icon";
 
-type GalleryDetailsPhotoCardPlaceholderProps = {
-  name?: string;
-  description?: string;
+import { getImageSrc } from "../getImageSrc";
+import { usePopupDismiss } from "@/shared/lib/usePopupDismiss";
+
+import type { GalleryImage } from "../types";
+
+type ImageCardProps = {
+  image: GalleryImage;
 };
 
-export function GalleryDetailsPhotoCardPlaceholder({
-  name = "No photo name",
-  description,
-}: GalleryDetailsPhotoCardPlaceholderProps) {
+export function ImageCard({ image }: ImageCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
-  const descriptionText = description || "No description yet...";
+  const imageName = image.metafields.name?.trim() || "Gallery photo";
+
+  const descriptionText =
+    image.metafields.comment?.trim() || "No description yet...";
+
+  const closeMenu = () => setIsMenuOpen(false);
+
+  usePopupDismiss(cardRef, closeMenu, isMenuOpen);
 
   return (
-    <div className="relative w-full min-w-0 max-w-[150px]">
+    <div ref={cardRef} className="relative w-full min-w-0 max-w-[150px]">
       <div className="relative">
         <div className="flex aspect-square w-full min-w-[120px] max-w-[150px] items-center justify-center overflow-hidden rounded-2xl bg-gallery-preview">
           <img
-            src={galleryPlaceholderIconUrl}
-            alt=""
-            className="h-16 w-16 object-contain"
+            src={getImageSrc(image.path)}
+            alt={imageName}
+            className="h-full w-full object-cover"
           />
         </div>
 
@@ -36,7 +44,9 @@ export function GalleryDetailsPhotoCardPlaceholder({
             type="button"
             onClick={() => setIsMenuOpen((currentValue) => !currentValue)}
             className="flex h-6 w-6 cursor-pointer items-center justify-center"
-            aria-label="Open photo actions"
+            aria-label={
+              isMenuOpen ? "Close photo actions" : "Open photo actions"
+            }
             aria-expanded={isMenuOpen}
             aria-haspopup="menu"
           >
@@ -68,7 +78,7 @@ export function GalleryDetailsPhotoCardPlaceholder({
       </div>
 
       <h3 className="mt-2.5 h-6 truncate text-base font-bold leading-normal text-text-main">
-        {name}
+        {imageName}
       </h3>
 
       <p className="h-[21px] truncate text-sm leading-normal text-text-secondary">

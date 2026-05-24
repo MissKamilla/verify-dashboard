@@ -10,7 +10,6 @@ import {
   useGalleryQuery,
 } from "@/features/gallery/galleryQueries";
 import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
-import { GalleryDetailsPhotoCardPlaceholder } from "@/features/gallery/components/GalleryDetailsPhotoCardPlaceholder";
 import { useGalleryScrollThumb } from "@/features/gallery/hooks/useGalleryScrollThumb";
 import { GalleryDetailsEmptyState } from "@/features/gallery/components/GalleryDetailsEmptyState";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
@@ -18,9 +17,14 @@ import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
+import { useGalleryImagesQuery } from "@/features/image/imageQueries";
+import type { GetImagesParams } from "@/features/image/types";
+import { ImageCard } from "@/features/image/components/ImageCard";
 
-const MOCK_PHOTOS_COUNT = 10;
-const hasMockPhotos = MOCK_PHOTOS_COUNT > 0;
+const GALLERY_IMAGES_QUERY_PARAMS = {
+  page: 1,
+  limit: 50,
+} satisfies GetImagesParams;
 
 export function GalleryDetailsPage() {
   const { galleryId } = useParams();
@@ -32,9 +36,6 @@ export function GalleryDetailsPage() {
   const isValidGalleryId =
     Number.isInteger(numericGalleryId) && numericGalleryId > 0;
 
-  const { scrollContainerRef, scrollThumb, updateScrollThumb } =
-    useGalleryScrollThumb(MOCK_PHOTOS_COUNT, 70);
-
   const {
     data: gallery,
     error,
@@ -42,6 +43,24 @@ export function GalleryDetailsPage() {
     isError,
     isFetching,
   } = useGalleryQuery(numericGalleryId, isValidGalleryId);
+
+  const {
+    data: imagesData,
+    isPending: areImagesPending,
+    isError: areImagesError,
+  } = useGalleryImagesQuery(
+    numericGalleryId,
+    GALLERY_IMAGES_QUERY_PARAMS,
+    isValidGalleryId,
+  );
+  console.log(areImagesError);
+
+  const images = imagesData?.items ?? [];
+  const imagesCount = imagesData?.total ?? images.length;
+  const hasImages = images.length > 0;
+
+  const { scrollContainerRef, scrollThumb, updateScrollThumb } =
+    useGalleryScrollThumb(imagesCount, 70);
 
   const handleRetry = () => {
     void queryClient.invalidateQueries({
@@ -109,17 +128,24 @@ export function GalleryDetailsPage() {
             <p className="mt-3 px-2 text-base leading-normal text-text-secondary">
               {gallery.description || "No description yet..."}
             </p>
-            {!hasMockPhotos ? (
+
+            {areImagesPending ? (
+              <p className="mt-[30px] px-2 text-base text-text-secondary">
+                Loading photos...
+              </p>
+            ) : areImagesError ? (
+              <p className="mt-[30px] px-2 text-base text-error" role="alert">
+                Failed to load photos. Please try again.
+              </p>
+            ) : !hasImages ? (
               <GalleryDetailsEmptyState galleryId={numericGalleryId} />
             ) : (
               <>
                 <div className="mt-[30px]">
                   <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-5 gap-y-[30px] px-2 pt-2 lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
-                    {Array.from({ length: MOCK_PHOTOS_COUNT }).map(
-                      (_, index) => (
-                        <GalleryDetailsPhotoCardPlaceholder key={index} />
-                      ),
-                    )}
+                    {images.map((image) => (
+                      <ImageCard key={image.id} image={image} />
+                    ))}
                   </div>
                 </div>
 
@@ -127,7 +153,7 @@ export function GalleryDetailsPage() {
                   type="button"
                   className="relative z-20 ml-[8px] mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
                 >
-                  Delete All ({MOCK_PHOTOS_COUNT})
+                  Delete All ({imagesCount})
                 </button>
               </>
             )}
