@@ -18,9 +18,9 @@ import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
 import { validateGalleryForm } from "@/features/gallery/validateGalleryForm";
 import { GalleryStatusAlerts } from "@/features/gallery/components/GalleryStatusAlerts";
 import { GalleryEditPhotoCardPlaceholder } from "@/features/gallery/components/GalleryEditPhotoCardPlaceholder";
-import { useGalleryScrollThumb } from "@/features/gallery/hooks/useGalleryScrollThumb";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
+import { ScrollArea } from "@/shared/ui/ScrollArea";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
@@ -36,8 +36,6 @@ export function EditGalleryPage() {
 
   const queryClient = useQueryClient();
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
-  const { scrollContainerRef, scrollThumb, updateScrollThumb } =
-    useGalleryScrollThumb(EDIT_PHOTOS_PLACEHOLDER_COUNT, 166);
 
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
@@ -171,35 +169,20 @@ export function EditGalleryPage() {
                       <GalleryFields />
                     </div>
 
-                    <div className="relative min-[1360px]:min-h-0 min-[1360px]:overflow-hidden min-[1360px]:pr-[18px] min-[1536px]:pr-6">
-                      <div
-                        ref={scrollContainerRef}
-                        onScroll={updateScrollThumb}
-                        className="scrollbar-gallery min-[1360px]:h-full min-[1360px]:overflow-y-auto min-[1360px]:pb-[190px]"
-                      >
-                        <div className="flex w-full flex-col gap-5 pt-2 pr-[8px]">
-                          {Array.from({
-                            length: EDIT_PHOTOS_PLACEHOLDER_COUNT,
-                          }).map((_, index) => (
-                            <GalleryEditPhotoCardPlaceholder key={index} />
-                          ))}
-                        </div>
+                    <ScrollArea
+                      className="min-[1360px]:h-full"
+                      itemsCount={EDIT_PHOTOS_PLACEHOLDER_COUNT}
+                      trackBottomOffset={140}
+                      contentClassName=" min-[1360px]:h-full min-[1360px]:pb-[100px] pt-2 pr-[8px]"
+                    >
+                      <div className="flex w-full flex-col gap-5">
+                        {Array.from({
+                          length: EDIT_PHOTOS_PLACEHOLDER_COUNT,
+                        }).map((_, index) => (
+                          <GalleryEditPhotoCardPlaceholder key={index} />
+                        ))}
                       </div>
-
-                      {scrollThumb.isVisible && (
-                        <div className="pointer-events-none absolute bottom-[166px] right-0 top-0 z-20 hidden w-[3px] min-[1360px]:block">
-                          <div
-                            className="w-full rounded-sm bg-text-muted"
-                            style={{
-                              height: `${scrollThumb.height}px`,
-                              transform: `translateY(${scrollThumb.top}px)`,
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden h-[166px] bg-gradient-to-b from-white/0 via-white/95 to-white min-[1360px]:block" />
-                    </div>
+                    </ScrollArea>
                   </div>
                   <div className="z-30 mt-[30px] w-full max-w-[311px] min-[1360px]:absolute min-[1360px]:bottom-[30px] min-[1360px]:right-0 min-[1360px]:mt-0 min-[1360px]:w-[220px]">
                     <FormSubmitButton

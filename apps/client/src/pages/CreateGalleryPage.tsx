@@ -69,7 +69,7 @@ export function CreateGalleryPage() {
           onCloseError={() => setApiError("")}
         />
 
-        <div className="scrollbar-gallery h-full w-full overflow-y-auto p-[30px] pb-10 lg:pb-[50px]">
+        <div className="h-full w-full overflow-y-auto p-[30px] pb-10 lg:pb-[50px]">
           <div className="mx-auto flex min-h-full w-full max-w-[1200px] flex-col">
             <div className="mx-auto w-full max-w-[330px] min-[900px]:mx-0 min-[900px]:max-w-none">
               <h2 className="text-left text-2xl font-bold leading-normal text-text-main">

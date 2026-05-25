@@ -10,10 +10,10 @@ import {
   useGalleryQuery,
 } from "@/features/gallery/galleryQueries";
 import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
-import { useGalleryScrollThumb } from "@/features/gallery/hooks/useGalleryScrollThumb";
 import { GalleryDetailsEmptyState } from "@/features/gallery/components/GalleryDetailsEmptyState";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
+import { ScrollArea } from "@/shared/ui/ScrollArea";
 import { DeleteImagesModal } from "@/features/image/components/DeleteImagesModal";
 import { useDeleteImages } from "@/features/image/hooks/useDeleteImages";
 import { useGalleryImagesQuery } from "@/features/image/imageQueries";
@@ -71,9 +71,6 @@ export function GalleryDetailsPage() {
   const imagesCount = imagesData?.total ?? images.length;
   const hasImages = images.length > 0;
 
-  const { scrollContainerRef, scrollThumb, updateScrollThumb } =
-    useGalleryScrollThumb(imagesCount, 70);
-
   const handleRetry = () => {
     void queryClient.invalidateQueries({
       queryKey: galleryQueryKeys.detail(numericGalleryId),
@@ -126,72 +123,59 @@ export function GalleryDetailsPage() {
         className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-base leading-normal active:bg-brand-active lg:hidden"
       />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] bg-white shadow-card">
-        <div
-          ref={scrollContainerRef}
-          onScroll={updateScrollThumb}
-          className="scrollbar-gallery h-full overflow-y-auto p-[30px]"
-        >
-          <div className="mx-auto w-full max-w-[320px] lg:max-w-[1099px]">
-            <h2 className="px-2 text-2xl font-bold leading-normal text-text-main">
-              {gallery.title}
-            </h2>
+      <ScrollArea
+        itemsCount={imagesCount}
+        trackBottomOffset={70}
+        className="rounded-[30px] bg-white shadow-card"
+        contentClassName="p-[30px]"
+      >
+        <div className="mx-auto w-full max-w-[320px] lg:max-w-[1099px]">
+          <h2 className="px-2 text-2xl font-bold leading-normal text-text-main">
+            {gallery.title}
+          </h2>
 
-            <p className="mt-3 px-2 text-base leading-normal text-text-secondary">
-              {gallery.description || "No description yet..."}
+          <p className="mt-3 px-2 text-base leading-normal text-text-secondary">
+            {gallery.description || "No description yet..."}
+          </p>
+
+          {areImagesPending ? (
+            <p className="mt-[30px] px-2 text-base text-text-secondary">
+              Loading photos...
             </p>
-
-            {areImagesPending ? (
-              <p className="mt-[30px] px-2 text-base text-text-secondary">
-                Loading photos...
-              </p>
-            ) : areImagesError ? (
-              <p className="mt-[30px] px-2 text-base text-error" role="alert">
-                Failed to load photos. Please try again.
-              </p>
-            ) : !hasImages ? (
-              <GalleryDetailsEmptyState galleryId={numericGalleryId} />
-            ) : (
-              <>
-                <div className="mt-[30px]">
-                  <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-5 gap-y-[30px] px-2 pt-2 lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
-                    {images.map((image) => (
-                      <ImageCard
-                        key={image.id}
-                        image={image}
-                        onDeleteClick={openDeleteImageModal}
-                      />
-                    ))}
-                  </div>
+          ) : areImagesError ? (
+            <p className="mt-[30px] px-2 text-base text-error" role="alert">
+              Failed to load photos. Please try again.
+            </p>
+          ) : !hasImages ? (
+            <GalleryDetailsEmptyState galleryId={numericGalleryId} />
+          ) : (
+            <>
+              <div className="mt-[30px]">
+                <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-5 gap-y-[30px] px-2 pt-2 lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
+                  {images.map((image) => (
+                    <ImageCard
+                      key={image.id}
+                      image={image}
+                      onDeleteClick={openDeleteImageModal}
+                    />
+                  ))}
                 </div>
+              </div>
 
-                <button
-                  type="button"
-                  onClick={() => openDeleteAllImagesModal(images.map((image) => image.id))}
-                  disabled={isDeleting}
-                  className="relative z-20 ml-[8px] mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
-                >
-                  Delete All ({imagesCount})
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() =>
+                  openDeleteAllImagesModal(images.map((image) => image.id))
+                }
+                disabled={isDeleting}
+                className="relative z-20 ml-[8px] mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
+              >
+                Delete All ({imagesCount})
+              </button>
+            </>
+          )}
         </div>
-
-        {scrollThumb.isVisible && (
-          <div className="pointer-events-none absolute top-[30px] right-2.5 bottom-[30px] z-20 hidden w-[3px] lg:block">
-            <div
-              className="w-full rounded-sm bg-text-muted"
-              style={{
-                height: `${scrollThumb.height}px`,
-                transform: `translateY(${scrollThumb.top}px)`,
-              }}
-            />
-          </div>
-        )}
-
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 hidden h-[70px] bg-gradient-to-b from-white/0 via-white/95 to-white lg:block" />
-      </div>
+      </ScrollArea>
 
       <div className="mt-6 shrink-0 lg:flex lg:items-center lg:justify-between">
         <GalleryBackLink to="/galleries" />
