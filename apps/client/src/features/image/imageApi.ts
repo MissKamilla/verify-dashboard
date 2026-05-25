@@ -86,6 +86,9 @@ export const deleteImages = async (
   payload: DeleteImagesPayload,
 ): Promise<void> => {
   await httpClient.delete("/images", {
-    data: payload,
+    params: payload,
+    paramsSerializer: {
+      indexes: null,
+    },
   });
 };

@@ -14,12 +14,14 @@ import { useGalleryScrollThumb } from "@/features/gallery/hooks/useGalleryScroll
 import { GalleryDetailsEmptyState } from "@/features/gallery/components/GalleryDetailsEmptyState";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
+import { DeleteImagesModal } from "@/features/image/components/DeleteImagesModal";
+import { useDeleteImages } from "@/features/image/hooks/useDeleteImages";
+import { useGalleryImagesQuery } from "@/features/image/imageQueries";
+import { ImageCard } from "@/features/image/components/ImageCard";
+import type { GetImagesParams } from "@/features/image/types";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
-import { useGalleryImagesQuery } from "@/features/image/imageQueries";
-import type { GetImagesParams } from "@/features/image/types";
-import { ImageCard } from "@/features/image/components/ImageCard";
 
 const GALLERY_IMAGES_QUERY_PARAMS = {
   page: 1,
@@ -35,6 +37,17 @@ export function GalleryDetailsPage() {
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
     Number.isInteger(numericGalleryId) && numericGalleryId > 0;
+
+  const {
+    imageIdsToDelete,
+    isDeleteImagesModalOpen,
+    deleteError,
+    isDeleting,
+    openDeleteImageModal,
+    openDeleteAllImagesModal,
+    closeDeleteImagesModal,
+    confirmDeleteImages,
+  } = useDeleteImages({ galleryId: numericGalleryId });
 
   const {
     data: gallery,
@@ -53,7 +66,6 @@ export function GalleryDetailsPage() {
     GALLERY_IMAGES_QUERY_PARAMS,
     isValidGalleryId,
   );
-  console.log(areImagesError);
 
   const images = imagesData?.items ?? [];
   const imagesCount = imagesData?.total ?? images.length;
@@ -144,13 +156,19 @@ export function GalleryDetailsPage() {
                 <div className="mt-[30px]">
                   <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-5 gap-y-[30px] px-2 pt-2 lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
                     {images.map((image) => (
-                      <ImageCard key={image.id} image={image} />
+                      <ImageCard
+                        key={image.id}
+                        image={image}
+                        onDeleteClick={openDeleteImageModal}
+                      />
                     ))}
                   </div>
                 </div>
 
                 <button
                   type="button"
+                  onClick={() => openDeleteAllImagesModal(images.map((image) => image.id))}
+                  disabled={isDeleting}
                   className="relative z-20 ml-[8px] mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
                 >
                   Delete All ({imagesCount})
@@ -180,6 +198,15 @@ export function GalleryDetailsPage() {
 
         <CopyrightFooter className="lg:!mt-0 lg:!pt-0" />
       </div>
+
+      <DeleteImagesModal
+        isOpen={isDeleteImagesModalOpen}
+        imagesCount={imageIdsToDelete.length}
+        isDeleting={isDeleting}
+        error={deleteError}
+        onConfirm={confirmDeleteImages}
+        onClose={closeDeleteImagesModal}
+      />
     </section>
   );
 }

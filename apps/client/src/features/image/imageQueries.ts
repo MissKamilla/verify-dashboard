@@ -1,8 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { getGalleryImages, uploadGalleryImages } from "./imageApi";
+import {
+  copyImages,
+  deleteImages,
+  getGalleryImages,
+  moveImages,
+  updateImageMetafields,
+  uploadGalleryImages,
+} from "./imageApi";
 
-import type { GetImagesParams, UploadGalleryImagesPayload } from "./types";
+import type {
+  CopyImagesPayload,
+  DeleteImagesPayload,
+  GetImagesParams,
+  MoveImagesPayload,
+  UpdateImageMetafieldsPayload,
+  UploadGalleryImagesPayload,
+} from "./types";
 
 export const imageQueryKeys = {
   all: ["image"] as const,
@@ -38,6 +52,71 @@ export const useUploadGalleryImagesMutation = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: imageQueryKeys.galleryImages(variables.galleryId),
+      });
+    },
+  });
+};
+
+export const useUpdateImageMetafieldsMutation = (galleryId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: UpdateImageMetafieldsPayload) =>
+      updateImageMetafields(payload),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: imageQueryKeys.galleryImages(galleryId),
+      });
+    },
+  });
+};
+
+export const useMoveImagesMutation = (sourceGalleryId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: MoveImagesPayload) => moveImages(payload),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: imageQueryKeys.galleryImages(sourceGalleryId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: imageQueryKeys.galleryImages(variables.targetGalleryId),
+      });
+    },
+  });
+};
+
+export const useCopyImagesMutation = (sourceGalleryId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CopyImagesPayload) => copyImages(payload),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: imageQueryKeys.galleryImages(sourceGalleryId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: imageQueryKeys.galleryImages(variables.targetGalleryId),
+      });
+    },
+  });
+};
+
+export const useDeleteImagesMutation = (galleryId: number) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: DeleteImagesPayload) => deleteImages(payload),
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: imageQueryKeys.galleryImages(galleryId),
       });
     },
   });
