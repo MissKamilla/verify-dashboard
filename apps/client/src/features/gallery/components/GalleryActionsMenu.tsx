@@ -3,7 +3,7 @@ import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
 import actionEditIconUrl from "@/assets/icons/action-edit.svg";
 
 import type { Gallery } from "@/features/gallery/types";
-import { GalleryMenu, GalleryMenuItem } from "./GalleryMenu";
+import { DropdownMenu, DropdownMenuItem } from "@/shared/ui/Dropdown";
 
 type GalleryActionsMenuProps = {
   gallery: Gallery;
@@ -15,7 +15,7 @@ export function GalleryActionsMenu({
   onDeleteClick,
 }: GalleryActionsMenuProps) {
   return (
-    <GalleryMenu
+    <DropdownMenu
       menuClassName="right-[26px] top-[34px] z-10 h-[92px] w-[132px] rounded-3xl"
       trigger={({ isOpen, toggle }) => (
         <button
@@ -37,15 +37,15 @@ export function GalleryActionsMenu({
     >
       {({ close }) => (
         <>
-          <GalleryMenuItem
+          <DropdownMenuItem
             to={`/galleries/${gallery.id}/edit`}
             iconSrc={actionEditIconUrl}
             onClick={close}
           >
             Edit
-          </GalleryMenuItem>
+          </DropdownMenuItem>
 
-          <GalleryMenuItem
+          <DropdownMenuItem
             iconSrc={actionDeleteIconUrl}
             onClick={() => {
               close();
@@ -53,9 +53,9 @@ export function GalleryActionsMenu({
             }}
           >
             Delete
-          </GalleryMenuItem>
+          </DropdownMenuItem>
         </>
       )}
-    </GalleryMenu>
+    </DropdownMenu>
   );
 }

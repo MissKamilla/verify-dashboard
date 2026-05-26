@@ -65,6 +65,10 @@ export function GalleryDetailsPage() {
       isImageGalleryActionModalOpen,
     );
 
+  const targetGalleries = (galleriesData?.items ?? []).filter(
+    (targetGallery) => targetGallery.id !== numericGalleryId,
+  );
+
   const {
     imageToEdit,
     editImageError,
@@ -106,10 +110,6 @@ export function GalleryDetailsPage() {
   const images = imagesData?.items ?? [];
   const imagesCount = imagesData?.total ?? images.length;
   const hasImages = images.length > 0;
-
-  const targetGalleries = (galleriesData?.items ?? []).filter(
-    (targetGallery) => targetGallery.id !== numericGalleryId,
-  );
 
   const handleRetry = () => {
     void queryClient.invalidateQueries({

@@ -1,7 +1,6 @@
 import closeIconUrl from "@/assets/icons/close.svg";
 
-import { GalleryDropdown } from "@/features/gallery/components/GalleryDropdown";
-
+import { Dropdown } from "@/shared/ui/Dropdown";
 import { Icon } from "@/shared/ui/Icon";
 
 import type { Gallery } from "@/features/gallery/types";
@@ -99,7 +98,7 @@ export function ImageGalleryActionModal({
               Loading galleries...
             </p>
           ) : hasGalleryOptions ? (
-            <GalleryDropdown
+            <Dropdown
               value={selectedGalleryId}
               options={galleryOptions}
               ariaLabel="Select target gallery"

@@ -1,5 +1,5 @@
 import type { GetGalleriesParams } from "@/features/gallery/types";
-import { GalleryDropdown } from "./GalleryDropdown";
+import { Dropdown } from "@/shared/ui/Dropdown";
 
 export type GallerySortBy = NonNullable<GetGalleriesParams["sortBy"]>;
 export type GallerySortOrder = NonNullable<GetGalleriesParams["sortOrder"]>;
@@ -56,14 +56,14 @@ export function GalleriesFilters({
           aria-label="Search galleries"
         />
 
-        <GalleryDropdown
+        <Dropdown
           value={sortBy}
           options={sortByOptions}
           ariaLabel="Sort galleries by"
           onChange={onSortByChange}
         />
 
-        <GalleryDropdown
+        <Dropdown
           value={sortOrder}
           options={
             sortBy === "createdAt"

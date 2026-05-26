@@ -1,34 +1,30 @@
 import chevronDownIconUrl from "@/assets/icons/chevron-down.svg";
 
-import {
-  GalleryMenu,
-  GalleryMenuItem,
-} from "@/features/gallery/components/GalleryMenu";
-
+import { DropdownMenu, DropdownMenuItem } from "./DropdownMenu";
 import { Icon } from "@/shared/ui/Icon";
 
-export type GalleryDropdownOption<TValue extends string> = {
+export type DropdownOption<TValue extends string> = {
   value: TValue;
   label: string;
 };
 
-type GalleryDropdownProps<TValue extends string> = {
+type DropdownProps<TValue extends string> = {
   value: TValue;
-  options: GalleryDropdownOption<TValue>[];
+  options: DropdownOption<TValue>[];
   ariaLabel: string;
   onChange: (value: TValue) => void;
 };
 
-export function GalleryDropdown<TValue extends string>({
+export function Dropdown<TValue extends string>({
   value,
   options,
   ariaLabel,
   onChange,
-}: GalleryDropdownProps<TValue>) {
+}: DropdownProps<TValue>) {
   const selectedOption = options.find((option) => option.value === value);
 
   return (
-    <GalleryMenu
+    <DropdownMenu
       menuClassName="left-0 top-[58px] z-50 w-full rounded-3xl"
       trigger={({ isOpen, toggle }) => (
         <button
@@ -53,7 +49,7 @@ export function GalleryDropdown<TValue extends string>({
       {({ close }) => (
         <>
           {options.map((option) => (
-            <GalleryMenuItem
+            <DropdownMenuItem
               key={option.value}
               isSelected={option.value === value}
               onClick={() => {
@@ -62,10 +58,10 @@ export function GalleryDropdown<TValue extends string>({
               }}
             >
               {option.label}
-            </GalleryMenuItem>
+            </DropdownMenuItem>
           ))}
         </>
       )}
-    </GalleryMenu>
+    </DropdownMenu>
   );
 }

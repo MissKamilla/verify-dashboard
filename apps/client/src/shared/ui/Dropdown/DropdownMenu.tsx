@@ -4,20 +4,20 @@ import { Link } from "react-router";
 
 import { Icon } from "@/shared/ui/Icon";
 
-type GalleryMenuRenderProps = {
+type DropdownMenuRenderProps = {
   isOpen: boolean;
   toggle: () => void;
   close: () => void;
 };
 
-type GalleryMenuProps = {
-  trigger: (props: GalleryMenuRenderProps) => ReactNode;
+type DropdownMenuProps = {
+  trigger: (props: DropdownMenuRenderProps) => ReactNode;
   children: (props: { close: () => void }) => ReactNode;
   menuClassName: string;
   rootClassName?: string;
 };
 
-type GalleryMenuItemProps = {
+type DropdownMenuItemProps = {
   children: ReactNode;
   iconSrc?: string;
   to?: string;
@@ -29,12 +29,12 @@ type GalleryMenuItemProps = {
 const menuItemBaseClassName =
   "flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm font-normal leading-normal text-text-main hover:bg-gallery-preview";
 
-export function GalleryMenu({
+export function DropdownMenu({
   trigger,
   children,
   menuClassName,
   rootClassName = "relative",
-}: GalleryMenuProps) {
+}: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -82,14 +82,14 @@ export function GalleryMenu({
   );
 }
 
-export function GalleryMenuItem({
+export function DropdownMenuItem({
   children,
   iconSrc,
   to,
   isSelected = false,
   className = "",
   onClick,
-}: GalleryMenuItemProps) {
+}: DropdownMenuItemProps) {
   const itemClassName = `${menuItemBaseClassName} ${
     isSelected ? "bg-gallery-preview font-bold" : ""
   } ${className}`;
