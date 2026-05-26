@@ -19,9 +19,11 @@ import { useDeleteImages } from "@/features/image/hooks/useDeleteImages";
 import { useGalleryImagesQuery } from "@/features/image/imageQueries";
 import { ImageCard } from "@/features/image/components/ImageCard";
 import type { GetImagesParams } from "@/features/image/types";
+import { useUpdateImages } from "@/features/image/hooks/useUpdateImages";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
+import { EditImageDetailsModal } from "@/features/image/components/EditImageDetailsModal";
 
 const GALLERY_IMAGES_QUERY_PARAMS = {
   page: 1,
@@ -37,6 +39,15 @@ export function GalleryDetailsPage() {
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
     Number.isInteger(numericGalleryId) && numericGalleryId > 0;
+
+  const {
+    imageToEdit,
+    editImageError,
+    isSaving,
+    openEditImageModal,
+    closeEditImageModal,
+    saveImageDetails,
+  } = useUpdateImages({ galleryId: numericGalleryId });
 
   const {
     imageIdsToDelete,
@@ -156,6 +167,7 @@ export function GalleryDetailsPage() {
                     <ImageCard
                       key={image.id}
                       image={image}
+                      onEditClick={openEditImageModal}
                       onDeleteClick={openDeleteImageModal}
                     />
                   ))}
@@ -182,6 +194,15 @@ export function GalleryDetailsPage() {
 
         <CopyrightFooter className="lg:!mt-0 lg:!pt-0" />
       </div>
+
+      <EditImageDetailsModal
+        isOpen={Boolean(imageToEdit)}
+        image={imageToEdit}
+        isSaving={isSaving}
+        error={editImageError}
+        onSave={saveImageDetails}
+        onClose={closeEditImageModal}
+      />
 
       <DeleteImagesModal
         isOpen={isDeleteImagesModalOpen}

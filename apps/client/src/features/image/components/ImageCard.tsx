@@ -13,10 +13,15 @@ import type { GalleryImage } from "../types";
 
 type ImageCardProps = {
   image: GalleryImage;
+  onEditClick: (image: GalleryImage) => void;
   onDeleteClick: (image: GalleryImage) => void;
 };
 
-export function ImageCard({ image, onDeleteClick }: ImageCardProps) {
+export function ImageCard({
+  image,
+  onEditClick,
+  onDeleteClick,
+}: ImageCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -26,6 +31,11 @@ export function ImageCard({ image, onDeleteClick }: ImageCardProps) {
     image.metafields.comment?.trim() || "No description yet...";
 
   const closeMenu = () => setIsMenuOpen(false);
+
+  const handleEditClick = () => {
+    closeMenu();
+    onEditClick(image);
+  };
 
   const handleDeleteClick = () => {
     closeMenu();
@@ -64,6 +74,7 @@ export function ImageCard({ image, onDeleteClick }: ImageCardProps) {
               <button
                 role="menuitem"
                 type="button"
+                onClick={handleEditClick}
                 className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
               >
                 <Icon src={actionEditIconUrl} className="h-4 w-4" />
