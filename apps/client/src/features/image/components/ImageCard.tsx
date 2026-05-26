@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 
 import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
+import actionMoveIconUrl from "@/assets/icons/action-move.svg";
+import actionCopyIconUrl from "@/assets/icons/action-copy.svg";
 import actionEditIconUrl from "@/assets/icons/action-edit.svg";
 import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
 
@@ -14,12 +16,16 @@ import type { GalleryImage } from "../types";
 type ImageCardProps = {
   image: GalleryImage;
   onEditClick: (image: GalleryImage) => void;
+  onMoveClick: (image: GalleryImage) => void;
+  onCopyClick: (image: GalleryImage) => void;
   onDeleteClick: (image: GalleryImage) => void;
 };
 
 export function ImageCard({
   image,
   onEditClick,
+  onMoveClick,
+  onCopyClick,
   onDeleteClick,
 }: ImageCardProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -35,6 +41,16 @@ export function ImageCard({
   const handleEditClick = () => {
     closeMenu();
     onEditClick(image);
+  };
+
+  const handleMoveClick = () => {
+    closeMenu();
+    onMoveClick(image);
+  };
+
+  const handleCopyClick = () => {
+    closeMenu();
+    onCopyClick(image);
   };
 
   const handleDeleteClick = () => {
@@ -79,6 +95,26 @@ export function ImageCard({
               >
                 <Icon src={actionEditIconUrl} className="h-4 w-4" />
                 <span>Edit details</span>
+              </button>
+
+              <button
+                role="menuitem"
+                type="button"
+                onClick={handleMoveClick}
+                className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
+              >
+                <Icon src={actionMoveIconUrl} className="h-4 w-4" />
+                <span>Move</span>
+              </button>
+
+              <button
+                role="menuitem"
+                type="button"
+                onClick={handleCopyClick}
+                className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
+              >
+                <Icon src={actionCopyIconUrl} className="h-4 w-4" />
+                <span>Copy</span>
               </button>
 
               <button

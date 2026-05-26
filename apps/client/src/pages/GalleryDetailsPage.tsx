@@ -18,8 +18,11 @@ import { DeleteImagesModal } from "@/features/image/components/DeleteImagesModal
 import { useDeleteImages } from "@/features/image/hooks/useDeleteImages";
 import { useGalleryImagesQuery } from "@/features/image/imageQueries";
 import { ImageCard } from "@/features/image/components/ImageCard";
+import { ImageGalleryActionModal } from "@/features/image/components/ImageGalleryActionModal";
+import { useGalleriesQuery } from "@/features/gallery/galleryQueries";
 import type { GetImagesParams } from "@/features/image/types";
 import { useUpdateImages } from "@/features/image/hooks/useUpdateImages";
+import { useImageGalleryAction } from "@/features/image/hooks/useImageGalleryAction";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
@@ -39,6 +42,28 @@ export function GalleryDetailsPage() {
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
     Number.isInteger(numericGalleryId) && numericGalleryId > 0;
+
+  const {
+    activeImageGalleryAction,
+    isImageGalleryActionModalOpen,
+    selectedTargetGalleryId,
+    imageGalleryActionError,
+    isImageGalleryActionSubmitting,
+    setSelectedTargetGalleryId,
+    openMoveImageModal,
+    openCopyImageModal,
+    closeImageGalleryActionModal,
+    confirmImageGalleryAction,
+  } = useImageGalleryAction({ galleryId: numericGalleryId });
+
+  const { data: galleriesData, isPending: areGalleriesPending } =
+    useGalleriesQuery(
+      {
+        page: 1,
+        limit: 50,
+      },
+      isImageGalleryActionModalOpen,
+    );
 
   const {
     imageToEdit,
@@ -81,6 +106,10 @@ export function GalleryDetailsPage() {
   const images = imagesData?.items ?? [];
   const imagesCount = imagesData?.total ?? images.length;
   const hasImages = images.length > 0;
+
+  const targetGalleries = (galleriesData?.items ?? []).filter(
+    (targetGallery) => targetGallery.id !== numericGalleryId,
+  );
 
   const handleRetry = () => {
     void queryClient.invalidateQueries({
@@ -127,13 +156,11 @@ export function GalleryDetailsPage() {
           <Icon src={burgerIconUrl} className="h-6 w-6" />
         </button>
       </header>
-
       <GalleryActionLink
         to={`/galleries/${numericGalleryId}/upload-photos`}
         label="Upload photos"
         className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-base leading-normal active:bg-brand-active lg:hidden"
       />
-
       <ScrollArea
         itemsCount={imagesCount}
         trackBottomOffset={70}
@@ -168,6 +195,8 @@ export function GalleryDetailsPage() {
                       key={image.id}
                       image={image}
                       onEditClick={openEditImageModal}
+                      onMoveClick={openMoveImageModal}
+                      onCopyClick={openCopyImageModal}
                       onDeleteClick={openDeleteImageModal}
                     />
                   ))}
@@ -188,13 +217,11 @@ export function GalleryDetailsPage() {
           )}
         </div>
       </ScrollArea>
-
       <div className="mt-6 shrink-0 lg:flex lg:items-center lg:justify-between">
         <GalleryBackLink to="/galleries" />
 
         <CopyrightFooter className="lg:!mt-0 lg:!pt-0" />
       </div>
-
       <EditImageDetailsModal
         isOpen={Boolean(imageToEdit)}
         image={imageToEdit}
@@ -203,6 +230,21 @@ export function GalleryDetailsPage() {
         onSave={saveImageDetails}
         onClose={closeEditImageModal}
       />
+
+      {activeImageGalleryAction && (
+        <ImageGalleryActionModal
+          isOpen={isImageGalleryActionModalOpen}
+          action={activeImageGalleryAction}
+          galleries={targetGalleries}
+          selectedGalleryId={selectedTargetGalleryId}
+          isLoading={areGalleriesPending}
+          isSubmitting={isImageGalleryActionSubmitting}
+          error={imageGalleryActionError}
+          onGalleryChange={setSelectedTargetGalleryId}
+          onConfirm={confirmImageGalleryAction}
+          onClose={closeImageGalleryActionModal}
+        />
+      )}
 
       <DeleteImagesModal
         isOpen={isDeleteImagesModalOpen}

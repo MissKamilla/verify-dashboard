@@ -32,10 +32,14 @@ export const galleryQueryKeys = {
   detail: (id: number) => [...galleryQueryKeys.details(), id] as const,
 };
 
-export const useGalleriesQuery = (params?: GetGalleriesParams) =>
+export const useGalleriesQuery = (
+  params?: GetGalleriesParams,
+  enabled = true,
+) =>
   useQuery({
     queryKey: galleryQueryKeys.list(params),
     queryFn: () => getGalleries(params),
+    enabled,
   });
 
 export const useGalleryQuery = (id: number, enabled = true) =>
