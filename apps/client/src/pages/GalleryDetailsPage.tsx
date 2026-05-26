@@ -234,8 +234,9 @@ export function GalleryDetailsPage() {
       {activeImageGalleryAction && (
         <ImageGalleryActionModal
           isOpen={isImageGalleryActionModalOpen}
-          action={activeImageGalleryAction}
+          imageAction={activeImageGalleryAction}
           galleries={targetGalleries}
+          currentGalleryId={numericGalleryId}
           selectedGalleryId={selectedTargetGalleryId}
           isLoading={areGalleriesPending}
           isSubmitting={isImageGalleryActionSubmitting}

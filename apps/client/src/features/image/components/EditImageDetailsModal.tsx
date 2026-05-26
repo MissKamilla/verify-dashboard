@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Modal } from "@/shared/ui/Modal";
 import { EditImageDetailsForm } from "./EditImageDetailsForm";
 
 import type { GalleryImage, ImageMetafields } from "../types";
@@ -20,40 +20,17 @@ export function EditImageDetailsModal({
   onSave,
   onClose,
 }: EditImageDetailsModalProps) {
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || isSaving) {
-        return;
-      }
-
-      onClose();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen, isSaving, onClose]);
-
   if (!isOpen || !image) {
     return null;
   }
 
-  const handleOverlayClick = () => {
-    if (!isSaving) {
-      onClose();
-    }
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 px-6"
-      onClick={handleOverlayClick}
+    <Modal
+      isOpen={isOpen}
+      titleId="edit-image-details-title"
+      descriptionId="edit-image-details-description"
+      isDismissDisabled={isSaving}
+      onClose={onClose}
     >
       <EditImageDetailsForm
         image={image}
@@ -62,6 +39,6 @@ export function EditImageDetailsModal({
         onSave={onSave}
         onClose={onClose}
       />
-    </div>
+    </Modal>
   );
 }

@@ -1,10 +1,7 @@
 import { useState, type FormEvent } from "react";
 
-import closeIconUrl from "@/assets/icons/close.svg";
-
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormTextareaField } from "@/shared/ui/FormTextareaField";
-import { Icon } from "@/shared/ui/Icon";
 
 import type { GalleryImage, ImageMetafields } from "../types";
 
@@ -36,25 +33,7 @@ export function EditImageDetailsForm({
   };
 
   return (
-    <form
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="edit-image-details-title"
-      className="relative w-full max-w-[438px] rounded-2xl bg-white px-8 pb-8 pt-[46px]"
-      onClick={(event) => event.stopPropagation()}
-      onSubmit={handleSubmit}
-      noValidate
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        disabled={isSaving}
-        className="absolute right-6 top-6 flex h-6 w-6 cursor-pointer items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
-        aria-label="Close modal"
-      >
-        <Icon src={closeIconUrl} className="h-4 w-4 text-text-main" />
-      </button>
-
+    <form onSubmit={handleSubmit} noValidate>
       <h2
         id="edit-image-details-title"
         className="text-center text-[28px] font-bold leading-normal text-text-main"
@@ -62,7 +41,10 @@ export function EditImageDetailsForm({
         Edit details
       </h2>
 
-      <p className="mt-[18px] text-center text-lg font-normal leading-normal text-text-secondary">
+      <p
+        id="edit-image-details-description"
+        className="mt-[18px] text-center text-lg font-normal leading-normal text-text-secondary"
+      >
         Here you can add or change details.
       </p>
 
