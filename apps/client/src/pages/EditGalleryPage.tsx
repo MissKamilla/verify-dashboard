@@ -16,7 +16,7 @@ import {
 import type { GalleryFormValues } from "@/features/gallery/types";
 import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
 import { validateGalleryForm } from "@/features/gallery/validateGalleryForm";
-import { GalleryStatusAlerts } from "@/features/gallery/components/GalleryStatusAlerts";
+import { StatusAlerts } from "@/shared/ui/StatusAlerts";
 import { GalleryEditPhotoCardPlaceholder } from "@/features/gallery/components/GalleryEditPhotoCardPlaceholder";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
@@ -149,7 +149,7 @@ export function EditGalleryPage() {
               noValidate
               className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] bg-white shadow-card"
             >
-              <GalleryStatusAlerts
+              <StatusAlerts
                 successMessage={successMessage}
                 errorMessage={apiError}
                 onCloseSuccess={() => setSuccessMessage("")}

@@ -29,6 +29,7 @@ export const uploadGalleryImages = async ({
   galleryId,
   files,
   metafields,
+  onUploadProgress,
 }: UploadGalleryImagesPayload): Promise<GalleryImage[]> => {
   const formData = new FormData();
 
@@ -43,6 +44,23 @@ export const uploadGalleryImages = async ({
   const response = await httpClient.post<GalleryImage[]>(
     `/galleries/${galleryId}/images`,
     formData,
+    {
+      onUploadProgress: (progressEvent) => {
+        if (!onUploadProgress || !progressEvent.total) {
+          return;
+        }
+
+        const loadedBytes = progressEvent.loaded;
+        const totalBytes = progressEvent.total;
+        const percent = Math.round((loadedBytes / totalBytes) * 100);
+
+        onUploadProgress({
+          loadedBytes,
+          totalBytes,
+          percent,
+        });
+      },
+    },
   );
 
   return response.data;

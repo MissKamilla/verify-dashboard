@@ -3,7 +3,15 @@ import uploadIconUrl from "@/assets/icons/upload.svg";
 
 import { Icon } from "@/shared/ui/Icon";
 
-export function GalleryUploadDropzonePlaceholder() {
+type UploadDropzonePlaceholderProps = {
+  allowedImageFormatsLabel: string;
+  maxImageSizeLabel: string;
+};
+
+export function UploadDropzonePlaceholder({
+  allowedImageFormatsLabel,
+  maxImageSizeLabel,
+}: UploadDropzonePlaceholderProps) {
   return (
     <div className="relative flex h-[318px] w-full max-w-[311px] flex-col items-center rounded-[30px] bg-[#F6FFF7] p-[40px] text-center sm:h-[322px] sm:max-w-[330px] sm:p-9">
       <svg
@@ -37,7 +45,7 @@ export function GalleryUploadDropzonePlaceholder() {
       </p>
 
       <p className="mt-1.5 text-[10px] font-normal leading-normal text-text-muted lg:mt-2.5 lg:text-xs">
-        JPEG, PNG (max 5MB / picture)
+        {allowedImageFormatsLabel} (max {maxImageSizeLabel} / picture)
       </p>
 
       <div className="mt-5 hidden w-full items-center gap-4 lg:flex">

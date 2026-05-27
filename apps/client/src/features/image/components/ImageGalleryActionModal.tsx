@@ -94,6 +94,7 @@ export function ImageGalleryActionModal({
             value={selectedGalleryId}
             options={galleryOptions}
             ariaLabel="Select target gallery"
+            placeholder="Select gallery"
             onChange={onGalleryChange}
           />
         ) : (

@@ -12,6 +12,7 @@ type DropdownProps<TValue extends string> = {
   value: TValue;
   options: DropdownOption<TValue>[];
   ariaLabel: string;
+  placeholder?: string;
   onChange: (value: TValue) => void;
 };
 
@@ -19,6 +20,7 @@ export function Dropdown<TValue extends string>({
   value,
   options,
   ariaLabel,
+  placeholder = "",
   onChange,
 }: DropdownProps<TValue>) {
   const selectedOption = options.find((option) => option.value === value);
@@ -35,7 +37,9 @@ export function Dropdown<TValue extends string>({
           aria-expanded={isOpen}
           aria-haspopup="menu"
         >
-          <span>{selectedOption?.label}</span>
+          <span className={selectedOption ? "" : "text-text-muted"}>
+            {selectedOption?.label ?? placeholder}
+          </span>
 
           <Icon
             src={chevronDownIconUrl}

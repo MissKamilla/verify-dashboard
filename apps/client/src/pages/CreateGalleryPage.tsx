@@ -10,15 +10,20 @@ import { GalleryFields } from "@/features/gallery/components/GalleryFields";
 import { useCreateGalleryMutation } from "@/features/gallery/galleryQueries";
 import type { GalleryFormValues } from "@/features/gallery/types";
 import { validateGalleryForm } from "@/features/gallery/validateGalleryForm";
-import { GalleryStatusAlerts } from "@/features/gallery/components/GalleryStatusAlerts";
-import { GalleryUploadDropzonePlaceholder } from "@/features/gallery/components/GalleryUploadDropzonePlaceholder";
-import { GalleryPhotoPreviewPlaceholderGrid } from "@/features/gallery/components/GalleryPhotoPreviewPlaceholderGrid";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
+import {
+  ALLOWED_IMAGE_FORMATS_LABEL,
+  MAX_IMAGE_SIZE_LABEL,
+  MAX_IMAGES_PER_GALLERY,
+} from "@/features/image/constants";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { Icon } from "@/shared/ui/Icon";
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
+import { PhotoPreviewPlaceholderGrid } from "@/shared/ui/PhotoPreviewPlaceholderGrid";
+import { StatusAlerts } from "@/shared/ui/StatusAlerts";
+import { UploadDropzonePlaceholder } from "@/shared/ui/UploadDropzonePlaceholder";
 
 const createGalleryInitialValues: GalleryFormValues = {
   title: "",
@@ -62,7 +67,7 @@ export function CreateGalleryPage() {
       />
 
       <div className="relative min-h-0 flex-1 overflow-hidden rounded-[30px] bg-white shadow-card">
-        <GalleryStatusAlerts
+        <StatusAlerts
           successMessage={successMessage}
           errorMessage={apiError}
           onCloseSuccess={() => setSuccessMessage("")}
@@ -119,7 +124,10 @@ export function CreateGalleryPage() {
                   <Form noValidate className="mt-[30px] flex flex-1 flex-col">
                     <div className="mx-auto grid w-full max-w-[330px] gap-[30px] min-[900px]:mx-0 min-[900px]:max-w-none min-[900px]:grid-cols-[330px_minmax(242px,1fr)] min-[900px]:justify-between">
                       <div className="flex flex-col gap-[30px]">
-                        <GalleryUploadDropzonePlaceholder />
+                        <UploadDropzonePlaceholder
+                          allowedImageFormatsLabel={ALLOWED_IMAGE_FORMATS_LABEL}
+                          maxImageSizeLabel={MAX_IMAGE_SIZE_LABEL}
+                        />
 
                         <GalleryFields
                           descriptionLabel={
@@ -133,7 +141,10 @@ export function CreateGalleryPage() {
                         />
                       </div>
 
-                      <GalleryPhotoPreviewPlaceholderGrid />
+                      <PhotoPreviewPlaceholderGrid
+                        maxImages={MAX_IMAGES_PER_GALLERY}
+                        maxImageSizeLabel={MAX_IMAGE_SIZE_LABEL}
+                      />
                     </div>
 
                     <div className="mt-auto flex justify-center pt-[30px] min-[900px]:justify-end">

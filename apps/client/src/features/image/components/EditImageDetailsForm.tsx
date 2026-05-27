@@ -3,6 +3,10 @@ import { useState, type FormEvent } from "react";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormTextareaField } from "@/shared/ui/FormTextareaField";
 
+import {
+  MAX_IMAGE_COMMENT_LENGTH,
+  MAX_IMAGE_NAME_LENGTH,
+} from "../constants";
 import type { GalleryImage, ImageMetafields } from "../types";
 
 type EditImageDetailsFormProps = {
@@ -56,7 +60,7 @@ export function EditImageDetailsForm({
           value={name}
           onChange={(event) => setName(event.target.value)}
           disabled={isSaving}
-          maxLength={100}
+          maxLength={MAX_IMAGE_NAME_LENGTH}
           autoFocus
         />
 
@@ -67,7 +71,7 @@ export function EditImageDetailsForm({
           value={comment}
           onChange={(event) => setComment(event.target.value)}
           disabled={isSaving}
-          maxLength={500}
+          maxLength={MAX_IMAGE_COMMENT_LENGTH}
         />
       </div>
 

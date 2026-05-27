@@ -5,16 +5,22 @@ import uploadIconUrl from "@/assets/icons/upload.svg";
 
 import { Icon } from "@/shared/ui/Icon";
 
-import { ALLOWED_IMAGE_MIME_TYPES } from "../constants";
+import {
+  ALLOWED_IMAGE_FORMATS_LABEL,
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_IMAGE_SIZE_LABEL,
+} from "../constants";
 
 type ImageUploadDropzoneProps = {
   onFilesSelect: (files: File[]) => void;
   disabled?: boolean;
+  hasError?: boolean;
 };
 
 export function ImageUploadDropzone({
   onFilesSelect,
   disabled = false,
+  hasError = false,
 }: ImageUploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -59,7 +65,9 @@ export function ImageUploadDropzone({
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className="relative flex h-[318px] w-full max-w-[311px] flex-col items-center rounded-[30px] bg-[#F6FFF7] p-[40px] text-center sm:h-[322px] sm:max-w-[330px] sm:p-9"
+      className={`relative flex h-[318px] w-full max-w-[311px] flex-col items-center rounded-[30px] p-[40px] text-center sm:h-[322px] sm:max-w-[330px] sm:p-9 ${
+        hasError ? "bg-alert-error-bg" : "bg-image-preview"
+      }`}
     >
       <input
         ref={inputRef}
@@ -84,7 +92,7 @@ export function ImageUploadDropzone({
           height="321"
           rx="30"
           fill="none"
-          stroke="var(--color-brand)"
+          stroke={hasError ? "var(--color-error)" : "var(--color-brand)"}
           strokeWidth="1"
           strokeDasharray="8 8"
         />
@@ -101,7 +109,7 @@ export function ImageUploadDropzone({
       </p>
 
       <p className="mt-1.5 text-[10px] font-normal leading-normal text-text-muted lg:mt-2.5 lg:text-xs">
-        JPEG, PNG (max 5MB / picture)
+        {ALLOWED_IMAGE_FORMATS_LABEL} (max {MAX_IMAGE_SIZE_LABEL} / picture)
       </p>
 
       <div className="mt-5 hidden w-full items-center gap-4 lg:flex">
@@ -117,7 +125,11 @@ export function ImageUploadDropzone({
         onClick={handleUploadClick}
         disabled={disabled}
         aria-disabled={disabled}
-        className="mt-6 flex min-h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-brand text-sm font-bold leading-none text-white hover:bg-avatar active:bg-brand-active disabled:cursor-not-allowed disabled:bg-border-default disabled:text-text-secondary lg:mt-5"
+        className={`mt-6 flex min-h-[50px] w-full cursor-pointer items-center justify-center gap-2 rounded-2xl text-sm font-bold leading-none lg:mt-5 ${
+          hasError
+            ? "bg-border-default text-text-secondary hover:bg-border-default active:bg-border-default"
+            : "bg-brand text-white hover:bg-avatar active:bg-brand-active"
+        } disabled:cursor-not-allowed disabled:bg-border-default disabled:text-text-secondary disabled:hover:bg-border-default disabled:active:bg-border-default`}
       >
         <Icon src={uploadIconUrl} className="h-[19px] w-[19px]" />
         <span>Upload</span>

@@ -28,6 +28,7 @@ export type UploadGalleryImagesPayload = {
   galleryId: number;
   files: File[];
   metafields?: ImageMetafields[];
+  onUploadProgress?: (progress: UploadProgress) => void;
 };
 
 export type UpdateImageMetafieldsPayload = {
@@ -44,4 +45,10 @@ export type CopyImagesPayload = MoveImagesPayload;
 
 export type DeleteImagesPayload = {
   imageIds: number[];
+};
+
+export type UploadProgress = {
+  loadedBytes: number;
+  totalBytes: number;
+  percent: number;
 };

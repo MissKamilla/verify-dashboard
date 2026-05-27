@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { useUpdateImageMetafieldsMutation } from "@/features/image/imageQueries";
 import type { GalleryImage, ImageMetafields } from "@/features/image/types";
+import { validateImageMetafields } from "@/features/image/validateImageMetafields";
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
 type UseUpdateImagesProps = {
@@ -35,6 +36,13 @@ export function useUpdateImages({
 
   const saveImageDetails = (metafields: ImageMetafields) => {
     if (!imageToEdit) {
+      return;
+    }
+
+    const validationError = validateImageMetafields([metafields]);
+
+    if (validationError) {
+      setEditImageError(validationError);
       return;
     }
 
