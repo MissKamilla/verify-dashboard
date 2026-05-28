@@ -1,7 +1,4 @@
-import {
-  MAX_IMAGE_COMMENT_LENGTH,
-  MAX_IMAGE_NAME_LENGTH,
-} from "../constants";
+import { MAX_IMAGE_COMMENT_LENGTH, MAX_IMAGE_NAME_LENGTH } from "../constants";
 
 type ImageUploadPreviewCardProps = {
   id: string;
@@ -28,12 +25,12 @@ export function ImageUploadPreviewCard({
   const commentInputId = `upload-image-comment-${id}`;
 
   return (
-    <div className="ml-auto grid w-full max-w-[330px] gap-4 min-[1440px]:max-w-[580px] min-[1440px]:grid-cols-[232px_minmax(0,328px)] min-[1440px]:gap-5">
+    <div className="grid w-full max-w-[330px] gap-4 min-[900px]:max-w-none min-[1360px]:max-w-[680px] min-[1360px]:grid-cols-[280px_minmax(0,380px)] min-[1360px]:gap-5 2xl:max-w-[820px] 2xl:grid-cols-[320px_minmax(0,480px)]">
       <div className="w-full overflow-hidden rounded-2xl">
         <img
           src={previewUrl}
           alt={name.trim() || "Selected photo"}
-          className="aspect-square w-full object-cover"
+          className="aspect-square w-full object-cover overflow-hidden rounded-2xl"
         />
       </div>
 
@@ -71,7 +68,7 @@ export function ImageUploadPreviewCard({
             maxLength={MAX_IMAGE_COMMENT_LENGTH}
             disabled={disabled}
             placeholder="Type here..."
-            className="h-[114px] w-full resize-none rounded-2xl border border-border-default px-[18px] py-4 text-sm font-normal leading-normal text-text-main outline-none placeholder:text-text-muted focus:border-brand disabled:cursor-not-allowed disabled:bg-border-light disabled:text-text-secondary min-[1360px]:h-[104px] min-[1536px]:h-[114px]"
+            className="h-[114px] w-full resize-none rounded-2xl border border-border-default px-[18px] py-4 text-sm font-normal leading-normal text-text-main outline-none placeholder:text-text-muted focus:border-brand disabled:cursor-not-allowed disabled:bg-border-light disabled:text-text-secondary min-[1440px]:h-[154px] 2xl:h-[194px]"
           />
         </label>
       </div>

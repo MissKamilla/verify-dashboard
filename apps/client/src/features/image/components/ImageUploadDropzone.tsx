@@ -65,7 +65,7 @@ export function ImageUploadDropzone({
     <div
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      className={`relative flex h-[318px] w-full max-w-[311px] flex-col items-center rounded-[30px] p-[40px] text-center sm:h-[322px] sm:max-w-[330px] sm:p-9 ${
+      className={`relative flex h-[318px] w-full flex-col items-center rounded-[30px] p-[40px] text-center sm:h-[322px] sm:max-w-[330px] sm:p-9 ${
         hasError ? "bg-alert-error-bg" : "bg-image-preview"
       }`}
     >

@@ -51,21 +51,21 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
         onCloseWarning={closeWarning}
       />
 
-      <div className="scrollbar-gallery mx-auto flex w-full max-w-[950px] flex-1 flex-col overflow-y-auto min-[900px]:min-h-0 min-[900px]:overflow-hidden">
+      <div className="scrollbar-gallery mx-auto flex w-full max-w-7xl flex-1 flex-col overflow-y-auto md:min-h-0 md:overflow-hidden">
         <h2 className="text-2xl font-bold leading-normal text-text-main">
-          Edit And Upload Photos
+          Upload Photos
         </h2>
 
         <p className="mt-2 text-base leading-normal text-text-secondary">
-          You can edit and upload new photos.
+          You can upload one photo or a set of photos.
         </p>
 
         <form
           onSubmit={handleUploadSubmit}
           noValidate
-          className="mt-[30px] flex flex-col min-[900px]:min-h-0 min-[900px]:flex-1 min-[900px]:overflow-hidden"
+          className="mt-[30px] flex flex-col md:min-h-0 md:flex-1 md:overflow-hidden"
         >
-          <div className="mx-auto grid w-full max-w-[330px] gap-[30px] min-[900px]:mx-0 min-[900px]:min-h-0 min-[900px]:max-w-none min-[900px]:flex-1 min-[900px]:grid-cols-[330px_minmax(0,1fr)] min-[900px]:justify-between min-[900px]:overflow-hidden">
+          <div className="mx-auto grid w-full max-w-[330px] gap-[30px] md:mx-0 md:min-h-0 md:max-w-none md:flex-1 md:grid-cols-[330px_minmax(0,680px)] md:gap-[50px] md:overflow-hidden 2xl:grid-cols-[360px_minmax(0,780px)]">
             <div className="flex flex-col gap-[30px]">
               <ImageUploadDropzone
                 onFilesSelect={selectFiles}
@@ -81,7 +81,6 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
                 />
               )}
             </div>
-
             {selectedImages.length === 0 ? (
               <PhotoPreviewPlaceholderGrid
                 maxImages={MAX_IMAGES_PER_GALLERY}
@@ -91,7 +90,7 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
               <ScrollArea
                 itemsCount={selectedImages.length}
                 trackBottomOffset={120}
-                className="max-[899px]:flex-none max-[899px]:overflow-visible min-[900px]:ml-auto min-[900px]:h-full min-[900px]:w-full min-[900px]:max-w-[580px] 2xl:max-w-[780px]"
+                className="max-md:flex-none max-md:overflow-visible md:h-full md:w-full md:max-w-[680px] md:pr-8 md:pb-[120px] 2xl:max-w-[860px]"
                 contentClassName="max-[899px]:h-auto max-[899px]:overflow-visible min-[900px]:pr-8 min-[900px]:pb-[120px]"
                 thumbWrapperClassName="min-[900px]:block"
                 bottomOverlayClassName="hidden h-[120px] bg-gradient-to-b from-white/0 to-white min-[900px]:block"
@@ -114,7 +113,7 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
           </div>
 
           {selectedImages.length > 0 && (
-            <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] min-[900px]:justify-end">
+            <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] md:justify-end">
               <button
                 type="button"
                 onClick={clearSelectedImages}
@@ -125,7 +124,10 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
               </button>
 
               <div className="w-full max-w-[180px]">
-                <FormSubmitButton text="Upload All" disabled={isSubmitDisabled} />
+                <FormSubmitButton
+                  text="Upload All"
+                  disabled={isSubmitDisabled}
+                />
               </div>
             </div>
           )}

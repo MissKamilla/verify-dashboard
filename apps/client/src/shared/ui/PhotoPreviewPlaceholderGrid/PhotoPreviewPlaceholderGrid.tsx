@@ -10,11 +10,15 @@ const getPreviewCardVisibilityClassName = (index: number) => {
     return "";
   }
 
-  if (index < 8) {
+  if (index < 6) {
     return "hidden xl:flex";
   }
 
-  return "hidden xl:flex 2xl:hidden";
+  if (index < 8) {
+    return "hidden 2xl:flex";
+  }
+
+  return "hidden";
 };
 
 export function PhotoPreviewPlaceholderGrid({
@@ -22,8 +26,8 @@ export function PhotoPreviewPlaceholderGrid({
   maxImageSizeLabel,
 }: PhotoPreviewPlaceholderGridProps) {
   return (
-    <div className="w-full max-w-[311px] self-start justify-self-center sm:max-w-[330px] min-[900px]:ml-auto min-[900px]:max-w-[372px] xl:max-w-[580px] 2xl:max-w-[780px]">
-      <div className="grid w-full grid-cols-2 gap-3 min-[900px]:grid-cols-[repeat(2,minmax(115px,180px))] xl:grid-cols-[repeat(3,minmax(115px,180px))] xl:gap-5 2xl:grid-cols-[repeat(4,minmax(115px,180px))]">
+    <div className="w-full max-w-[311px] self-start justify-self-center sm:max-w-[330px] min-[900px]:max-w-[372px] xl:max-w-[580px] 2xl:max-w-[780px]">
+      <div className="grid w-full grid-cols-2 gap-3 min-[900px]:grid-cols-[repeat(2,minmax(115px,190px))] xl:grid-cols-[repeat(3,minmax(120px,190px))] xl:gap-5 2xl:grid-cols-[repeat(4,minmax(120px,190px))]">
         {Array.from({ length: 9 }).map((_, index) => (
           <PhotoPreviewCard
             key={index}
