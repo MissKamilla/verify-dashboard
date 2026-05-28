@@ -10,6 +10,7 @@ type ScrollThumb = {
 type ScrollAreaProps = {
   itemsCount?: number;
   trackBottomOffset?: number;
+  bottomOverlayBottomOffset?: number;
   onScroll?: () => void;
   children: ReactNode;
   className?: string;
@@ -23,12 +24,12 @@ const MIN_SCROLL_THUMB_HEIGHT = 70;
 export function ScrollArea({
   itemsCount = 0,
   trackBottomOffset = 0,
+  bottomOverlayBottomOffset = 0,
   onScroll,
   children,
   className = "",
   contentClassName = "",
   thumbWrapperClassName = "bottom-[30px]",
-
   bottomOverlayClassName = "h-[70px] via-white/95",
 }: ScrollAreaProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -78,12 +79,24 @@ export function ScrollArea({
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(updateScrollThumb);
+    const scrollElement = scrollContainerRef.current;
+    const contentElement = scrollElement?.firstElementChild;
+    const resizeObserver = new ResizeObserver(updateScrollThumb);
 
     window.addEventListener("resize", updateScrollThumb);
+
+    if (scrollElement) {
+      resizeObserver.observe(scrollElement);
+    }
+
+    if (contentElement) {
+      resizeObserver.observe(contentElement);
+    }
 
     return () => {
       window.cancelAnimationFrame(frameId);
       window.removeEventListener("resize", updateScrollThumb);
+      resizeObserver.disconnect();
     };
   }, [itemsCount, updateScrollThumb]);
 
@@ -117,7 +130,8 @@ export function ScrollArea({
       )}
 
       <div
-        className={`pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-b from-white/0 to-white ${scrollThumb.isVisible ? "block" : "hidden"} ${bottomOverlayClassName}`}
+        className={`pointer-events-none absolute inset-x-0 z-10 bg-gradient-to-b from-white/0 to-white ${scrollThumb.isVisible ? "block" : "hidden"} ${bottomOverlayClassName}`}
+        style={{ bottom: bottomOverlayBottomOffset }}
       />
     </div>
   );

@@ -1,28 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
 import { MAX_IMAGES_PER_GALLERY } from "../constants";
-import {
-  useGalleryImagesQuery,
-  useUploadGalleryImagesMutation,
-} from "../imageQueries";
+import { useGalleryImagesQuery } from "../imageQueries";
 import type { GetImagesParams, UploadProgress } from "../types";
-import { validateImageFiles } from "../validateImageFiles";
 import { validateImageMetafields } from "../validateImageMetafields";
+import { useImageUploadSelection } from "./useImageUploadSelection";
+import { useImageUploadSelectionWithMessages } from "./useImageUploadSelectionWithMessages";
+import { useUploadSelectedImagesToGallery } from "./useUploadSelectedImagesToGallery";
 
 type UseUploadImagesProps = {
   galleryId: number;
-};
-
-type SelectedUploadImage = {
-  id: string;
-  file: File;
-  previewUrl: string;
-  metafields: {
-    name: string;
-    comment: string;
-  };
 };
 
 const GALLERY_IMAGE_COUNT_QUERY_PARAMS = {
@@ -30,29 +19,7 @@ const GALLERY_IMAGE_COUNT_QUERY_PARAMS = {
   limit: 1,
 } satisfies GetImagesParams;
 
-const createSelectedUploadImages = (files: File[]): SelectedUploadImage[] =>
-  files.map((file) => ({
-    id: crypto.randomUUID(),
-    file,
-    previewUrl: URL.createObjectURL(file),
-    metafields: {
-      name: "",
-      comment: "",
-    },
-  }));
-
-const revokeSelectedUploadImageUrls = (images: SelectedUploadImage[]) => {
-  images.forEach((image) => {
-    URL.revokeObjectURL(image.previewUrl);
-  });
-};
-
 export function useUploadImages({ galleryId }: UseUploadImagesProps) {
-  const [selectedImages, setSelectedImages] = useState<SelectedUploadImage[]>(
-    [],
-  );
-  const selectedImagesRef = useRef<SelectedUploadImage[]>([]);
-  const [fileError, setFileError] = useState("");
   const [apiError, setApiError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [warningMessage, setWarningMessage] = useState("");
@@ -66,91 +33,45 @@ export function useUploadImages({ galleryId }: UseUploadImagesProps) {
     ? Math.max(MAX_IMAGES_PER_GALLERY - galleryImagesData.total, 0)
     : MAX_IMAGES_PER_GALLERY;
 
-  const uploadImagesMutation = useUploadGalleryImagesMutation();
+  const { uploadSelectedImagesToGallery, isUploading } =
+    useUploadSelectedImagesToGallery();
 
-  useEffect(() => {
-    return () => {
-      revokeSelectedUploadImageUrls(selectedImagesRef.current);
-    };
-  }, []);
-
-  const replaceSelectedImages = (nextImages: SelectedUploadImage[]) => {
-    revokeSelectedUploadImageUrls(selectedImagesRef.current);
-
-    selectedImagesRef.current = nextImages;
-    setSelectedImages(nextImages);
-  };
-
-  const updateMetafield = (
-    imageId: string,
-    field: "name" | "comment",
-    value: string,
-  ) => {
+  const clearMessages = () => {
+    setApiError("");
+    setSuccessMessage("");
     setWarningMessage("");
-
-    setSelectedImages((currentImages) => {
-      const nextImages = currentImages.map((image) =>
-        image.id === imageId
-          ? {
-              ...image,
-              metafields: {
-                ...image.metafields,
-                [field]: value,
-              },
-            }
-          : image,
-      );
-
-      selectedImagesRef.current = nextImages;
-
-      return nextImages;
-    });
   };
+
+  const imageSelection = useImageUploadSelection({ availableImagesCount });
+
+  const {
+    selectedImages,
+    fileError,
+    selectFiles,
+    updateMetafield,
+    validateSelectedFiles,
+    clearSelectedImages: clearImageSelection,
+    closeWarning,
+  } = useImageUploadSelectionWithMessages({
+    imageSelection,
+    clearMessages,
+    clearWarning: () => setWarningMessage(""),
+    setWarningMessage,
+    onSelectionChange: () => setUploadProgress(null),
+  });
 
   const clearSelectedImages = () => {
     setUploadProgress(null);
-    replaceSelectedImages([]);
-    setFileError("");
-    setApiError("");
-    setSuccessMessage("");
-    setWarningMessage("");
+    clearImageSelection();
+    clearMessages();
   };
 
-  const selectFiles = (files: File[]) => {
-    setUploadProgress(null);
-    setApiError("");
-    setSuccessMessage("");
-    setWarningMessage("");
-
-    const validationError = validateImageFiles(files, availableImagesCount);
-
-    setFileError(validationError);
-    if (validationError) {
-      replaceSelectedImages([]);
-      setWarningMessage(validationError);
-      return;
-    }
-
-    replaceSelectedImages(createSelectedUploadImages(files));
-  };
-
-  const closeWarning = () => {
-    setWarningMessage("");
-    setFileError("");
-  };
-
-  const uploadSelectedImages = () => {
+  const uploadSelectedImages = async () => {
     setApiError("");
     setWarningMessage("");
     setSuccessMessage("");
 
-    const selectedFiles = selectedImages.map((image) => image.file);
-    const validationError = validateImageFiles(
-      selectedFiles,
-      availableImagesCount,
-    );
-
-    setFileError(validationError);
+    const validationError = validateSelectedFiles();
 
     if (validationError) {
       setWarningMessage(validationError);
@@ -166,47 +87,21 @@ export function useUploadImages({ galleryId }: UseUploadImagesProps) {
       return;
     }
 
-    const totalUploadSize = selectedFiles.reduce(
-      (totalSize, file) => totalSize + file.size,
-      0,
-    );
-
-    setUploadProgress({
-      loadedBytes: 0,
-      totalBytes: totalUploadSize,
-      percent: 0,
-    });
-
-    uploadImagesMutation.mutate(
-      {
+    try {
+      await uploadSelectedImagesToGallery({
         galleryId,
-        files: selectedFiles,
-        metafields: selectedImages.map((image) => ({
-          name: image.metafields.name.trim(),
-          comment: image.metafields.comment.trim(),
-        })),
-        onUploadProgress: setUploadProgress,
-      },
-      {
-        onSuccess: () => {
-          setUploadProgress({
-            loadedBytes: totalUploadSize,
-            totalBytes: totalUploadSize,
-            percent: 100,
-          });
-          replaceSelectedImages([]);
-          setFileError("");
-          setSuccessMessage("Photos have been uploaded to your gallery.");
-        },
-        onError: (error) => {
-          setUploadProgress(null);
-          setApiError(getApiErrorMessage(error));
-        },
-      },
-    );
+        selectedImages,
+        onUploadProgressChange: setUploadProgress,
+      });
+
+      clearImageSelection();
+      setSuccessMessage("Photos have been uploaded to your gallery.");
+    } catch (error) {
+      setUploadProgress(null);
+      setApiError(getApiErrorMessage(error));
+    }
   };
 
-  const isUploading = uploadImagesMutation.isPending;
   const isFilesSelectDisabled = isGalleryImagesPending || isUploading;
   const isSubmitDisabled =
     !selectedImages.length ||
