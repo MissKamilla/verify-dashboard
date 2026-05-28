@@ -86,7 +86,7 @@ export function useCreateGalleryWithImages({
         description: values.description.trim(),
       });
 
-      const hasUploadedImages = await uploadSelectedImagesToGallery({
+      await uploadSelectedImagesToGallery({
         galleryId: gallery.id,
         selectedImages,
         onUploadProgressChange: setUploadProgress,
@@ -95,9 +95,7 @@ export function useCreateGalleryWithImages({
       resetForm();
       clearSelectedImages();
       setSuccessMessage(
-        hasUploadedImages
-          ? "A new gallery has been created and photos have been uploaded."
-          : "A new gallery has been created in the gallery list.",
+        "Success. A new gallery has been created in the gallery list.",
       );
     } catch (error) {
       setUploadProgress(null);

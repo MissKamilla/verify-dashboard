@@ -27,8 +27,15 @@ export function useUploadImages({ galleryId }: UseUploadImagesProps) {
     null,
   );
 
-  const { data: galleryImagesData, isPending: isGalleryImagesPending } =
-    useGalleryImagesQuery(galleryId, GALLERY_IMAGE_COUNT_QUERY_PARAMS);
+  const {
+    data: galleryImagesData,
+    isPending: isGalleryImagesPending,
+    isFetching: isGalleryImagesFetching,
+  } = useGalleryImagesQuery(galleryId, GALLERY_IMAGE_COUNT_QUERY_PARAMS);
+
+  const isGalleryImagesLoading =
+    isGalleryImagesPending || isGalleryImagesFetching;
+
   const availableImagesCount = galleryImagesData
     ? Math.max(MAX_IMAGES_PER_GALLERY - galleryImagesData.total, 0)
     : MAX_IMAGES_PER_GALLERY;
@@ -102,11 +109,11 @@ export function useUploadImages({ galleryId }: UseUploadImagesProps) {
     }
   };
 
-  const isFilesSelectDisabled = isGalleryImagesPending || isUploading;
+  const isFilesSelectDisabled = isGalleryImagesLoading || isUploading;
   const isSubmitDisabled =
     !selectedImages.length ||
     !!fileError ||
-    isGalleryImagesPending ||
+    isGalleryImagesLoading ||
     isUploading;
 
   const closeSuccess = () => {

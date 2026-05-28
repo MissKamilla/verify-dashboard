@@ -27,11 +27,8 @@ export function CreateGalleryForm() {
     availableImagesCount: MAX_IMAGES_PER_GALLERY,
   });
 
-  const {
-    selectedImages,
-    validateSelectedFiles,
-    clearSelectedImages,
-  } = imageSelection;
+  const { selectedImages, validateSelectedFiles, clearSelectedImages } =
+    imageSelection;
 
   const {
     apiError,
@@ -130,7 +127,7 @@ export function CreateGalleryForm() {
                   />
                 </ImageUploadFormGrid>
 
-                <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] md:justify-end">
+                <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] max-md:flex-col-reverse max-md:items-center max-md:gap-4 md:justify-end">
                   {selectedImages.length > 0 && (
                     <button
                       type="button"
