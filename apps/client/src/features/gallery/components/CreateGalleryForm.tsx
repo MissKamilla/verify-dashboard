@@ -39,6 +39,7 @@ export function CreateGalleryForm() {
     submitCreateGallery,
     deleteSelectedImages,
     clearMessages,
+    clearUploadProgress,
     closeSuccess,
     closeError,
     closeWarning: closeCreateGalleryWarning,
@@ -59,6 +60,7 @@ export function CreateGalleryForm() {
     clearMessages,
     clearWarning: closeCreateGalleryWarning,
     setWarningMessage,
+    onSelectionChange: clearUploadProgress,
   });
 
   return (

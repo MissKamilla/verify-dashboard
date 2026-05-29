@@ -10,8 +10,8 @@ import { validateImageMetafields } from "@/features/image/validateImageMetafield
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
-import { useCreateGalleryMutation } from "../galleryQueries";
-import type { GalleryFormValues } from "../types";
+import { useCreateGalleryMutation } from "@/features/gallery/galleryQueries";
+import type { GalleryFormValues } from "@/features/gallery/types";
 
 type UseCreateGalleryWithImagesProps = {
   selectedImages: SelectedUploadImage[];
@@ -46,6 +46,10 @@ export function useCreateGalleryWithImages({
     setApiError("");
     setSuccessMessage("");
     setWarningMessage("");
+  };
+
+  const clearUploadProgress = () => {
+    setUploadProgress(null);
   };
 
   const deleteSelectedImages = () => {
@@ -86,17 +90,38 @@ export function useCreateGalleryWithImages({
         description: values.description.trim(),
       });
 
-      await uploadSelectedImagesToGallery({
-        galleryId: gallery.id,
-        selectedImages,
-        onUploadProgressChange: setUploadProgress,
-      });
+      if (!hasSelectedImages) {
+        resetForm();
+        clearSelectedImages();
+        setSuccessMessage(
+          "Success. A new gallery has been created in the gallery list.",
+        );
+        return;
+      }
 
-      resetForm();
-      clearSelectedImages();
-      setSuccessMessage(
-        "Success. A new gallery has been created in the gallery list.",
-      );
+      try {
+        await uploadSelectedImagesToGallery({
+          galleryId: gallery.id,
+          selectedImages,
+          onUploadProgressChange: setUploadProgress,
+        });
+
+        resetForm();
+        clearSelectedImages();
+        setSuccessMessage(
+          "Success. A new gallery has been created in the gallery list.",
+        );
+      } catch (error) {
+        setUploadProgress(null);
+        resetForm();
+        clearSelectedImages();
+
+        setWarningMessage(
+          `Gallery was created, but photos were not uploaded. ${getApiErrorMessage(
+            error,
+          )}`,
+        );
+      }
     } catch (error) {
       setUploadProgress(null);
       setApiError(getApiErrorMessage(error));
@@ -117,6 +142,7 @@ export function useCreateGalleryWithImages({
     submitCreateGallery,
     deleteSelectedImages,
     clearMessages,
+    clearUploadProgress,
     closeSuccess,
     closeError: () => setApiError(""),
     closeWarning: () => setWarningMessage(""),

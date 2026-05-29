@@ -6,7 +6,7 @@ import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
 type UseDeleteImagesProps = {
   galleryId: number;
-  onDeleteSuccess?: () => void;
+  onDeleteSuccess?: (deletedImageIds: number[]) => void;
 };
 
 export function useDeleteImages({
@@ -46,16 +46,18 @@ export function useDeleteImages({
       return;
     }
 
+    const deletedImageIds = [...imageIdsToDelete];
+
     setDeleteError("");
 
     deleteImagesMutation.mutate(
       {
-        imageIds: imageIdsToDelete,
+        imageIds: deletedImageIds,
       },
       {
         onSuccess: () => {
           setImageIdsToDelete([]);
-          onDeleteSuccess?.();
+          onDeleteSuccess?.(deletedImageIds);
         },
         onError: (error) => {
           setDeleteError(getApiErrorMessage(error));

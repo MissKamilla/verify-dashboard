@@ -3,10 +3,7 @@ import { useState, type FormEvent } from "react";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormTextareaField } from "@/shared/ui/FormTextareaField";
 
-import {
-  MAX_IMAGE_COMMENT_LENGTH,
-  MAX_IMAGE_NAME_LENGTH,
-} from "../constants";
+import { MAX_IMAGE_COMMENT_LENGTH, MAX_IMAGE_NAME_LENGTH } from "../constants";
 import type { GalleryImage, ImageMetafields } from "../types";
 
 type EditImageDetailsFormProps = {
@@ -91,7 +88,7 @@ export function EditImageDetailsForm({
           disabled={isSaving}
           className="h-[50px] w-full rounded-2xl bg-brand text-base font-bold leading-none text-white hover:bg-avatar active:bg-brand-active disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSaving ? "Saving..." : "Save changes"}
+          Save changes
         </button>
 
         <button
