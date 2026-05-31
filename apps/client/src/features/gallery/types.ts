@@ -6,8 +6,18 @@ export type Gallery = {
   createdAt: string;
 };
 
+export type GalleryPreviewImage = {
+  id: number;
+  path: string;
+};
+
+export type GalleryListItem = Gallery & {
+  photosCount: number;
+  previewImages: GalleryPreviewImage[];
+};
+
 export type GalleriesListResponse = {
-  items: Gallery[];
+  items: GalleryListItem[];
   total: number;
   page: number;
   limit: number;

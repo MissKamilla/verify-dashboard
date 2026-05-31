@@ -1,11 +1,11 @@
 import { ScrollArea } from "@/shared/ui/ScrollArea";
-import type { Gallery } from "@/features/gallery/types";
+import type { Gallery, GalleryListItem } from "@/features/gallery/types";
 
 import { GalleriesPagination } from "./GalleriesPagination";
 import { GalleryCard } from "./GalleryCard";
 
 type GalleriesListProps = {
-  galleries: Gallery[];
+  galleries: GalleryListItem[];
   totalGalleries: number;
   currentPage: number;
   totalPages: number;
@@ -13,8 +13,6 @@ type GalleriesListProps = {
   onPageChange: (page: number) => void;
   onDeleteClick: (gallery: Gallery) => void;
 };
-
-const MOCK_PHOTOS_COUNT = 16;
 
 export function GalleriesList({
   galleries,
@@ -40,7 +38,6 @@ export function GalleriesList({
             <GalleryCard
               key={gallery.id}
               gallery={gallery}
-              photosCount={MOCK_PHOTOS_COUNT}
               onDeleteClick={onDeleteClick}
             />
           ))}
