@@ -1,11 +1,12 @@
+import { useState } from "react";
 import { Modal } from "@/shared/ui/Modal";
 import { EditImageDetailsForm } from "./EditImageDetailsForm";
+import { DiscardImageChangesModal } from "./DiscardImageChangesModal";
 
 import type { GalleryImage, ImageMetafields } from "../types";
 
 type EditImageDetailsModalProps = {
-  isOpen: boolean;
-  image: GalleryImage | null;
+  image: GalleryImage;
   isSaving: boolean;
   error?: string;
   onSave: (metafields: ImageMetafields) => void;
@@ -13,32 +14,57 @@ type EditImageDetailsModalProps = {
 };
 
 export function EditImageDetailsModal({
-  isOpen,
   image,
   isSaving,
   error,
   onSave,
   onClose,
 }: EditImageDetailsModalProps) {
-  if (!isOpen || !image) {
-    return null;
-  }
+  const [isDirty, setIsDirty] = useState(false);
+  const [isDiscardChangesModalOpen, setIsDiscardChangesModalOpen] =
+    useState(false);
+
+  const handleCloseRequest = () => {
+    if (isDirty) {
+      setIsDiscardChangesModalOpen(true);
+      return;
+    }
+
+    onClose();
+  };
+
+  const handleDiscardChanges = () => {
+    setIsDirty(false);
+    setIsDiscardChangesModalOpen(false);
+    onClose();
+  };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      titleId="edit-image-details-title"
-      descriptionId="edit-image-details-description"
-      isDismissDisabled={isSaving}
-      onClose={onClose}
-    >
-      <EditImageDetailsForm
-        image={image}
-        isSaving={isSaving}
-        error={error}
-        onSave={onSave}
-        onClose={onClose}
+    <>
+      <div className={isDiscardChangesModalOpen ? "hidden" : undefined}>
+        <Modal
+          isOpen
+          titleId="edit-image-details-title"
+          descriptionId="edit-image-details-description"
+          isDismissDisabled={isSaving || isDiscardChangesModalOpen}
+          onClose={handleCloseRequest}
+        >
+          <EditImageDetailsForm
+            image={image}
+            isSaving={isSaving}
+            error={error}
+            onSave={onSave}
+            onClose={handleCloseRequest}
+            onDirtyChange={setIsDirty}
+          />
+        </Modal>
+      </div>
+
+      <DiscardImageChangesModal
+        isOpen={isDiscardChangesModalOpen}
+        onConfirm={handleDiscardChanges}
+        onClose={() => setIsDiscardChangesModalOpen(false)}
       />
-    </Modal>
+    </>
   );
 }

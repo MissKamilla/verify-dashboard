@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useOutletContext, useParams } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -19,6 +20,7 @@ import { useDeleteImages } from "@/features/image/hooks/useDeleteImages";
 import { useGalleryImagesQuery } from "@/features/image/imageQueries";
 import { ImageCard } from "@/features/image/components/ImageCard";
 import { ImageGalleryActionModal } from "@/features/image/components/ImageGalleryActionModal";
+import { EditImageDetailsModal } from "@/features/image/components/EditImageDetailsModal";
 import { useGalleriesQuery } from "@/features/gallery/galleryQueries";
 import type { GetImagesParams } from "@/features/image/types";
 import { useUpdateImages } from "@/features/image/hooks/useUpdateImages";
@@ -26,7 +28,7 @@ import { useImageGalleryAction } from "@/features/image/hooks/useImageGalleryAct
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
 import { Icon } from "@/shared/ui/Icon";
-import { EditImageDetailsModal } from "@/features/image/components/EditImageDetailsModal";
+import { SuccessModal } from "@/shared/ui/SuccessModal";
 
 const GALLERY_IMAGES_QUERY_PARAMS = {
   page: 1,
@@ -38,6 +40,10 @@ export function GalleryDetailsPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
 
   const queryClient = useQueryClient();
+
+  const [successModalDescription, setSuccessModalDescription] = useState<
+    string | null
+  >(null);
 
   const numericGalleryId = Number(galleryId);
   const isValidGalleryId =
@@ -76,7 +82,11 @@ export function GalleryDetailsPage() {
     openEditImageModal,
     closeEditImageModal,
     saveImageDetails,
-  } = useUpdateImages({ galleryId: numericGalleryId });
+  } = useUpdateImages({
+    galleryId: numericGalleryId,
+    onUpdateSuccess: () =>
+      setSuccessModalDescription("The changes were successfully saved."),
+  });
 
   const {
     imageIdsToDelete,
@@ -87,7 +97,13 @@ export function GalleryDetailsPage() {
     openDeleteAllImagesModal,
     closeDeleteImagesModal,
     confirmDeleteImages,
-  } = useDeleteImages({ galleryId: numericGalleryId });
+  } = useDeleteImages({
+    galleryId: numericGalleryId,
+    onDeleteSuccess: () =>
+      setSuccessModalDescription(
+        "Photos have been successfully deleted from the gallery.",
+      ),
+  });
 
   const {
     data: gallery,
@@ -138,7 +154,7 @@ export function GalleryDetailsPage() {
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
       <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-4 rounded-2xl bg-page-bg/50 backdrop-blur-[20px]">
         <h1 className="text-[32px] font-bold leading-normal text-text-main">
-          {gallery.title}
+          Gallery
         </h1>
 
         <GalleryActionLink
@@ -222,14 +238,16 @@ export function GalleryDetailsPage() {
 
         <CopyrightFooter className="lg:!mt-0 lg:!pt-0" />
       </div>
-      <EditImageDetailsModal
-        isOpen={Boolean(imageToEdit)}
-        image={imageToEdit}
-        isSaving={isSaving}
-        error={editImageError}
-        onSave={saveImageDetails}
-        onClose={closeEditImageModal}
-      />
+      {imageToEdit && (
+        <EditImageDetailsModal
+          key={imageToEdit.id}
+          image={imageToEdit}
+          isSaving={isSaving}
+          error={editImageError}
+          onSave={saveImageDetails}
+          onClose={closeEditImageModal}
+        />
+      )}
 
       {activeImageGalleryAction && (
         <ImageGalleryActionModal
@@ -254,6 +272,13 @@ export function GalleryDetailsPage() {
         error={deleteError}
         onConfirm={confirmDeleteImages}
         onClose={closeDeleteImagesModal}
+      />
+
+      <SuccessModal
+        isOpen={Boolean(successModalDescription)}
+        title="Success"
+        description={successModalDescription ?? ""}
+        onClose={() => setSuccessModalDescription(null)}
       />
     </section>
   );

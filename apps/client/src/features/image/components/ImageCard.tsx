@@ -31,10 +31,10 @@ export function ImageCard({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const imageName = image.metafields.name?.trim() || "Gallery photo";
+  const imageName = image.metafields.name?.trim();
+  const imageComment = image.metafields.comment?.trim();
 
-  const descriptionText =
-    image.metafields.comment?.trim() || "No description yet...";
+  const imageAlt = imageName || "Gallery photo";
 
   const closeMenu = () => setIsMenuOpen(false);
 
@@ -66,7 +66,7 @@ export function ImageCard({
         <div className="flex aspect-square w-full min-w-[120px] max-w-[150px] items-center justify-center overflow-hidden rounded-2xl bg-gallery-preview">
           <img
             src={getImageSrc(image.path)}
-            alt={imageName}
+            alt={imageAlt}
             className="h-full w-full object-cover"
           />
         </div>
@@ -131,13 +131,25 @@ export function ImageCard({
         </div>
       </div>
 
-      <h3 className="mt-2.5 h-6 truncate text-base font-bold leading-normal text-text-main">
-        {imageName}
-      </h3>
+      {imageName && (
+        <h3 className="mt-2.5 h-6 truncate text-base font-bold leading-normal text-text-main">
+          {imageName}
+        </h3>
+      )}
 
-      <p className="h-[21px] truncate text-sm leading-normal text-text-secondary">
-        {descriptionText}
-      </p>
+      {imageComment && (
+        <p
+          className={`${imageName ? "" : "mt-2.5"} h-[21px] truncate text-sm leading-normal text-text-secondary`}
+        >
+          {imageComment}
+        </p>
+      )}
+
+      {!imageName && !imageComment && (
+        <p className="mt-2.5 h-[21px] truncate text-sm leading-normal text-text-secondary">
+          No description yet...
+        </p>
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormTextareaField } from "@/shared/ui/FormTextareaField";
@@ -12,6 +12,7 @@ type EditImageDetailsFormProps = {
   error?: string;
   onSave: (metafields: ImageMetafields) => void;
   onClose: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 };
 
 export function EditImageDetailsForm({
@@ -20,9 +21,20 @@ export function EditImageDetailsForm({
   error,
   onSave,
   onClose,
+  onDirtyChange,
 }: EditImageDetailsFormProps) {
   const [name, setName] = useState(image.metafields.name ?? "");
   const [comment, setComment] = useState(image.metafields.comment ?? "");
+
+  const initialName = image.metafields.name?.trim() ?? "";
+  const initialComment = image.metafields.comment?.trim() ?? "";
+
+  const isDirty =
+    name.trim() !== initialName || comment.trim() !== initialComment;
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
