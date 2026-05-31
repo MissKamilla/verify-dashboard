@@ -27,7 +27,7 @@ export function Dropdown<TValue extends string>({
 
   return (
     <DropdownMenu
-      menuClassName="left-0 top-[58px] z-50 w-full rounded-3xl"
+      menuClassName="scrollbar-gallery left-0 top-[58px] z-50 max-h-[300px] w-full overflow-y-auto rounded-3xl"
       trigger={({ isOpen, toggle }) => (
         <button
           type="button"

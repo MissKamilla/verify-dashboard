@@ -1,10 +1,14 @@
 import { useEffect, type RefObject } from "react";
 
+import { useEscapeKey } from "./useEscapeKey";
+
 export const usePopupDismiss = <T extends HTMLElement>(
   popupRef: RefObject<T | null>,
   onClose: () => void,
   enabled = true,
 ) => {
+  useEscapeKey(onClose, enabled, document);
+
   useEffect(() => {
     if (!enabled) {
       return;
@@ -16,18 +20,10 @@ export const usePopupDismiss = <T extends HTMLElement>(
       }
     };
 
-    const handleDocumentKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
     document.addEventListener("mousedown", handleDocumentClick);
-    document.addEventListener("keydown", handleDocumentKeyDown);
 
     return () => {
       document.removeEventListener("mousedown", handleDocumentClick);
-      document.removeEventListener("keydown", handleDocumentKeyDown);
     };
   }, [enabled, onClose, popupRef]);
 };

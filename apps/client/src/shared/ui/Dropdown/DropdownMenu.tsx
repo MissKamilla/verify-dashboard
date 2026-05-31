@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router";
 
+import { usePopupDismiss } from "@/shared/lib/usePopupDismiss";
 import { Icon } from "@/shared/ui/Icon";
 
 type DropdownMenuRenderProps = {
@@ -41,31 +42,7 @@ export function DropdownMenu({
   const close = () => setIsOpen(false);
   const toggle = () => setIsOpen((currentValue) => !currentValue);
 
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-
-    const handleDocumentClick = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        close();
-      }
-    };
-
-    const handleEscapePress = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        close();
-      }
-    };
-
-    document.addEventListener("mousedown", handleDocumentClick);
-    document.addEventListener("keydown", handleEscapePress);
-
-    return () => {
-      document.removeEventListener("mousedown", handleDocumentClick);
-      document.removeEventListener("keydown", handleEscapePress);
-    };
-  }, [isOpen]);
+  usePopupDismiss(rootRef, close, isOpen);
 
   return (
     <div ref={rootRef} className={rootClassName}>

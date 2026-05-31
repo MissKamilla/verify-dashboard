@@ -1,7 +1,8 @@
-import { useEffect, type ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import closeIconUrl from "@/assets/icons/close.svg";
 
+import { useEscapeKey } from "@/shared/lib/useEscapeKey";
 import { Icon } from "@/shared/ui/Icon";
 
 type ModalProps = {
@@ -23,23 +24,7 @@ export function Modal({
   children,
   onClose,
 }: ModalProps) {
-  useEffect(() => {
-    if (!isOpen || isDismissDisabled) {
-      return;
-    }
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen, isDismissDisabled, onClose]);
+  useEscapeKey(onClose, isOpen && !isDismissDisabled);
 
   if (!isOpen) {
     return null;

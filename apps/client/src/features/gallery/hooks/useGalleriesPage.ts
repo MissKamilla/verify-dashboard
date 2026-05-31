@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useDebouncedValue } from "@/shared/lib/useDebouncedValue";
@@ -29,9 +29,14 @@ export function useGalleriesPage() {
   const [sortOrder, setSortOrder] =
     useState<GallerySortOrder>(DEFAULT_SORT_ORDER);
 
+  const resetPageAfterSearchDebounce = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
+
   const debouncedSearchValue = useDebouncedValue(
     searchValue,
     SEARCH_DEBOUNCE_DELAY_MS,
+    resetPageAfterSearchDebounce,
   );
 
   const normalizedSearch = searchValue.trim();
@@ -78,7 +83,6 @@ export function useGalleriesPage() {
 
   const handleSearchChange = (value: string) => {
     setSearchValue(value);
-    setCurrentPage(1);
   };
 
   const handleSortByChange = (value: GallerySortBy) => {

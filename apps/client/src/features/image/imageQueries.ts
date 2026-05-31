@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
+import { galleryQueryKeys } from "@/features/gallery/galleryQueries";
+
 import {
   copyImages,
   deleteImages,
@@ -53,6 +55,10 @@ export const useUploadGalleryImagesMutation = () => {
       queryClient.invalidateQueries({
         queryKey: imageQueryKeys.galleryImages(variables.galleryId),
       });
+
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.lists(),
+      });
     },
   });
 };
@@ -86,6 +92,10 @@ export const useMoveImagesMutation = (sourceGalleryId: number) => {
       queryClient.invalidateQueries({
         queryKey: imageQueryKeys.galleryImages(variables.targetGalleryId),
       });
+
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.lists(),
+      });
     },
   });
 };
@@ -104,6 +114,10 @@ export const useCopyImagesMutation = (sourceGalleryId: number) => {
       queryClient.invalidateQueries({
         queryKey: imageQueryKeys.galleryImages(variables.targetGalleryId),
       });
+
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.lists(),
+      });
     },
   });
 };
@@ -117,6 +131,10 @@ export const useDeleteImagesMutation = (galleryId: number) => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: imageQueryKeys.galleryImages(galleryId),
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.lists(),
       });
     },
   });

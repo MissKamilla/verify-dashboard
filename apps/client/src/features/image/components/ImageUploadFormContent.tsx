@@ -37,7 +37,7 @@ export function ImageUploadFormContent({
       </ImageUploadFormGrid>
 
       {actions && (
-        <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] max-md:flex-col-reverse max-md:items-center max-md:gap-4 md:justify-end">
+        <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] max-md:mx-auto max-md:w-full max-md:max-w-[330px] max-md:flex-col-reverse max-md:items-center max-md:gap-4 md:justify-end">
           {actions}
         </div>
       )}

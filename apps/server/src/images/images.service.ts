@@ -56,6 +56,7 @@ export class ImagesService {
       },
       order: {
         createdAt: 'DESC',
+        id: 'DESC',
       },
       skip: (page - 1) * limit,
       take: limit,

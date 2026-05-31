@@ -1,8 +1,6 @@
-import type { GetGalleriesParams } from "@/features/gallery/types";
 import { Dropdown } from "@/shared/ui/Dropdown";
 
-export type GallerySortBy = NonNullable<GetGalleriesParams["sortBy"]>;
-export type GallerySortOrder = NonNullable<GetGalleriesParams["sortOrder"]>;
+import type { GallerySortBy, GallerySortOrder } from "@/features/gallery/types";
 
 type GalleriesFiltersProps = {
   searchValue: string;

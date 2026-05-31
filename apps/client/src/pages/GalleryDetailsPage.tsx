@@ -1,19 +1,15 @@
 import { useState } from "react";
-import { useOutletContext, useParams } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useOutletContext } from "react-router";
 
 import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
-import {
-  galleryQueryKeys,
-  useGalleryQuery,
-} from "@/features/gallery/galleryQueries";
-import { getGalleryPageState } from "@/features/gallery/getGalleryPageState";
+import { useAllGalleriesQuery } from "@/features/gallery/galleryQueries";
 import { GalleryDetailsEmptyState } from "@/features/gallery/components/GalleryDetailsEmptyState";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
+import { useGalleryRouteGallery } from "@/features/gallery/hooks/useGalleryRouteGallery";
 import { ScrollArea } from "@/shared/ui/ScrollArea";
 import { DeleteImagesModal } from "@/features/image/components/DeleteImagesModal";
 import { useDeleteImages } from "@/features/image/hooks/useDeleteImages";
@@ -21,7 +17,6 @@ import { useGalleryImagesQuery } from "@/features/image/imageQueries";
 import { ImageCard } from "@/features/image/components/ImageCard";
 import { ImageGalleryActionModal } from "@/features/image/components/ImageGalleryActionModal";
 import { EditImageDetailsModal } from "@/features/image/components/EditImageDetailsModal";
-import { useGalleriesQuery } from "@/features/gallery/galleryQueries";
 import type { GetImagesParams } from "@/features/image/types";
 import { useUpdateImages } from "@/features/image/hooks/useUpdateImages";
 import { useImageGalleryAction } from "@/features/image/hooks/useImageGalleryAction";
@@ -36,18 +31,14 @@ const GALLERY_IMAGES_QUERY_PARAMS = {
 } satisfies GetImagesParams;
 
 export function GalleryDetailsPage() {
-  const { galleryId } = useParams();
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
-
-  const queryClient = useQueryClient();
 
   const [successModalDescription, setSuccessModalDescription] = useState<
     string | null
   >(null);
 
-  const numericGalleryId = Number(galleryId);
-  const isValidGalleryId =
-    Number.isInteger(numericGalleryId) && numericGalleryId > 0;
+  const { gallery, numericGalleryId, isValidGalleryId, galleryPageState } =
+    useGalleryRouteGallery();
 
   const {
     activeImageGalleryAction,
@@ -60,20 +51,25 @@ export function GalleryDetailsPage() {
     openCopyImageModal,
     closeImageGalleryActionModal,
     confirmImageGalleryAction,
-  } = useImageGalleryAction({ galleryId: numericGalleryId });
+  } = useImageGalleryAction({
+    galleryId: numericGalleryId,
+    onActionSuccess: (action) => {
+      setSuccessModalDescription(
+        action === "move"
+          ? "Photos have been successfully moved to another gallery."
+          : "Photos have been successfully copied to another gallery.",
+      );
+    },
+  });
 
-  const { data: galleriesData, isPending: areGalleriesPending } =
-    useGalleriesQuery(
+  const { data: galleries = [], isPending: areGalleriesPending } =
+    useAllGalleriesQuery(
       {
-        page: 1,
-        limit: 50,
+        sortBy: "title",
+        sortOrder: "ASC",
       },
       isImageGalleryActionModalOpen,
     );
-
-  const targetGalleries = (galleriesData?.items ?? []).filter(
-    (targetGallery) => targetGallery.id !== numericGalleryId,
-  );
 
   const {
     imageToEdit,
@@ -106,14 +102,6 @@ export function GalleryDetailsPage() {
   });
 
   const {
-    data: gallery,
-    error,
-    isPending,
-    isError,
-    isFetching,
-  } = useGalleryQuery(numericGalleryId, isValidGalleryId);
-
-  const {
     data: imagesData,
     isPending: areImagesPending,
     isError: areImagesError,
@@ -126,21 +114,6 @@ export function GalleryDetailsPage() {
   const images = imagesData?.items ?? [];
   const imagesCount = imagesData?.total ?? images.length;
   const hasImages = images.length > 0;
-
-  const handleRetry = () => {
-    void queryClient.invalidateQueries({
-      queryKey: galleryQueryKeys.detail(numericGalleryId),
-    });
-  };
-
-  const galleryPageState = getGalleryPageState({
-    isValidGalleryId,
-    isPending,
-    isError: isError || !gallery,
-    error,
-    isFetching,
-    onRetry: handleRetry,
-  });
 
   if (galleryPageState) {
     return galleryPageState;
@@ -259,7 +232,7 @@ export function GalleryDetailsPage() {
         <ImageGalleryActionModal
           isOpen={isImageGalleryActionModalOpen}
           imageAction={activeImageGalleryAction}
-          galleries={targetGalleries}
+          galleries={galleries}
           currentGalleryId={numericGalleryId}
           selectedGalleryId={selectedTargetGalleryId}
           isLoading={areGalleriesPending}

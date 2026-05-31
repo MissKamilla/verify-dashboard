@@ -7,12 +7,12 @@ import { EditGalleryPage } from "@/pages/EditGalleryPage";
 import { GalleriesPage } from "@/pages/GalleriesPage";
 import { GalleryDetailsPage } from "@/pages/GalleryDetailsPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { UploadPhotosPage } from "@/pages/UploadPhotosPage";
 
 import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
-import { NotFoundPage } from "@/pages/NotFoundPage";
 
 export function AppRouter() {
   return (
@@ -27,10 +27,6 @@ export function AppRouter() {
         <Route element={<AuthenticatedLayout />}>
           <Route path="/galleries" element={<GalleriesPage />} />
           <Route path="/galleries/list" element={<GalleriesPage />} />
-          <Route
-            path="/galleries/search"
-            element={<Navigate to="/galleries" replace />}
-          />
 
           <Route path="/galleries/create" element={<CreateGalleryPage />} />
           <Route

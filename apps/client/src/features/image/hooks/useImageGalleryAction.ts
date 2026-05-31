@@ -16,10 +16,12 @@ type ActiveImageGalleryAction = {
 
 type UseImageGalleryActionProps = {
   galleryId: number;
+  onActionSuccess?: (action: ImageGalleryAction) => void;
 };
 
 export function useImageGalleryAction({
   galleryId,
+  onActionSuccess,
 }: UseImageGalleryActionProps) {
   const [activeAction, setActiveAction] =
     useState<ActiveImageGalleryAction | null>(null);
@@ -78,10 +80,13 @@ export function useImageGalleryAction({
       targetGalleryId,
     };
 
+    const actionType = activeAction.type;
+
     const mutationOptions = {
       onSuccess: () => {
         setSelectedTargetGalleryId("");
         setActiveAction(null);
+        onActionSuccess?.(actionType);
       },
       onError: (error: unknown) => {
         setImageGalleryActionError(getApiErrorMessage(error));

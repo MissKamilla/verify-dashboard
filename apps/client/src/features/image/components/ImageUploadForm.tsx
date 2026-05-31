@@ -86,12 +86,12 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
                     type="button"
                     onClick={clearSelectedImages}
                     disabled={isUploading}
-                    className="h-[50px] w-full max-w-[160px] rounded-2xl text-sm font-bold leading-none text-brand disabled:cursor-not-allowed disabled:text-text-secondary"
+                    className="h-[50px] w-full rounded-2xl text-sm font-bold leading-none text-brand disabled:cursor-not-allowed disabled:text-text-secondary md:max-w-[160px]"
                   >
                     Delete All
                   </button>
 
-                  <div className="w-full max-w-[180px]">
+                  <div className="w-full md:max-w-[180px]">
                     <FormSubmitButton
                       text="Upload All"
                       disabled={isSubmitDisabled}

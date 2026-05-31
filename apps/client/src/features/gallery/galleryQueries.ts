@@ -10,6 +10,7 @@ import {
 
 import type {
   CreateGalleryPayload,
+  GalleryListItem,
   GetGalleriesParams,
   UpdateGalleryPayload,
 } from "./types";
@@ -27,9 +28,40 @@ export const galleryQueryKeys = {
     params
       ? ([...galleryQueryKeys.lists(), params] as const)
       : galleryQueryKeys.lists(),
+  allList: (params?: Omit<GetGalleriesParams, "page" | "limit">) =>
+    params
+      ? ([...galleryQueryKeys.lists(), "all", params] as const)
+      : ([...galleryQueryKeys.lists(), "all"] as const),
 
   details: () => [...galleryQueryKeys.all, "detail"] as const,
   detail: (id: number) => [...galleryQueryKeys.details(), id] as const,
+};
+
+const ALL_GALLERIES_PAGE_LIMIT = 50;
+
+const getAllGalleries = async (
+  params?: Omit<GetGalleriesParams, "page" | "limit">,
+): Promise<GalleryListItem[]> => {
+  const items: GalleryListItem[] = [];
+  let page = 1;
+
+  while (true) {
+    const response = await getGalleries({
+      ...params,
+      page,
+      limit: ALL_GALLERIES_PAGE_LIMIT,
+    });
+
+    items.push(...response.items);
+
+    if (response.items.length === 0 || items.length >= response.total) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return items;
 };
 
 export const useGalleriesQuery = (
@@ -39,6 +71,16 @@ export const useGalleriesQuery = (
   useQuery({
     queryKey: galleryQueryKeys.list(params),
     queryFn: () => getGalleries(params),
+    enabled,
+  });
+
+export const useAllGalleriesQuery = (
+  params?: Omit<GetGalleriesParams, "page" | "limit">,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: galleryQueryKeys.allList(params),
+    queryFn: () => getAllGalleries(params),
     enabled,
   });
 
