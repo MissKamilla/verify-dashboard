@@ -2,7 +2,10 @@ import closeIconUrl from "@/assets/icons/close.svg";
 
 import { Icon } from "@/shared/ui/Icon";
 
-import { MAX_IMAGE_COMMENT_LENGTH, MAX_IMAGE_NAME_LENGTH } from "../constants";
+import {
+  MAX_IMAGE_COMMENT_LENGTH,
+  MAX_IMAGE_NAME_LENGTH,
+} from "@/features/image/constants";
 
 type ImageMetafieldsCardProps = {
   id: string;

@@ -3,10 +3,10 @@ import type { FormEvent } from "react";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { StatusAlerts } from "@/shared/ui/StatusAlerts";
 
-import { useUploadImages } from "../hooks/useUploadImages";
+import { useUploadImages } from "@/features/image/hooks/useUploadImages";
+
 import { ImageUploadDropzone } from "./ImageUploadDropzone";
-import { ImageUploadFormGrid } from "./ImageUploadFormGrid";
-import { ImageUploadPreviewPanel } from "./ImageUploadPreviewPanel";
+import { ImageUploadFormContent } from "./ImageUploadFormContent";
 import { ImageUploadProgress } from "./ImageUploadProgress";
 import { ImageUploadSectionHeader } from "./ImageUploadSectionHeader";
 
@@ -58,49 +58,49 @@ export function ImageUploadForm({ galleryId }: ImageUploadFormProps) {
           noValidate
           className="mt-[30px] flex flex-col md:min-h-0 md:flex-1 md:overflow-hidden"
         >
-          <ImageUploadFormGrid>
-            <div className="flex flex-col gap-[30px]">
-              <ImageUploadDropzone
-                onFilesSelect={selectFiles}
-                disabled={isFilesSelectDisabled}
-                hasError={!!fileError}
-              />
-
-              {uploadProgress && (
-                <ImageUploadProgress
-                  loadedBytes={uploadProgress.loadedBytes}
-                  percent={uploadProgress.percent}
-                  isCompleted={!!successMessage}
+          <ImageUploadFormContent
+            selectedImages={selectedImages}
+            previewDisabled={isUploading}
+            onMetafieldChange={updateMetafield}
+            sideContent={
+              <>
+                <ImageUploadDropzone
+                  onFilesSelect={selectFiles}
+                  disabled={isFilesSelectDisabled}
+                  hasError={!!fileError}
                 />
-              )}
-            </div>
 
-            <ImageUploadPreviewPanel
-              selectedImages={selectedImages}
-              disabled={isUploading}
-              onMetafieldChange={updateMetafield}
-            />
-          </ImageUploadFormGrid>
+                {uploadProgress && (
+                  <ImageUploadProgress
+                    loadedBytes={uploadProgress.loadedBytes}
+                    percent={uploadProgress.percent}
+                    isCompleted={!!successMessage}
+                  />
+                )}
+              </>
+            }
+            actions={
+              selectedImages.length > 0 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={clearSelectedImages}
+                    disabled={isUploading}
+                    className="h-[50px] w-full max-w-[160px] rounded-2xl text-sm font-bold leading-none text-brand disabled:cursor-not-allowed disabled:text-text-secondary"
+                  >
+                    Delete All
+                  </button>
 
-          {selectedImages.length > 0 && (
-            <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] max-md:flex-col-reverse max-md:items-center max-md:gap-4 md:justify-end">
-              <button
-                type="button"
-                onClick={clearSelectedImages}
-                disabled={isUploading}
-                className="h-[50px] w-full max-w-[160px] rounded-2xl text-sm font-bold leading-none text-brand disabled:cursor-not-allowed disabled:text-text-secondary"
-              >
-                Delete All
-              </button>
-
-              <div className="w-full max-w-[180px]">
-                <FormSubmitButton
-                  text="Upload All"
-                  disabled={isSubmitDisabled}
-                />
-              </div>
-            </div>
-          )}
+                  <div className="w-full max-w-[180px]">
+                    <FormSubmitButton
+                      text="Upload All"
+                      disabled={isSubmitDisabled}
+                    />
+                  </div>
+                </>
+              ) : undefined
+            }
+          />
         </form>
       </div>
     </>

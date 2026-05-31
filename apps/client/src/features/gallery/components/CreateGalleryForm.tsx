@@ -1,9 +1,8 @@
 import { Form, Formik } from "formik";
 
-import { ImageUploadFormGrid } from "@/features/image/components/ImageUploadFormGrid";
 import { ImageUploadDropzone } from "@/features/image/components/ImageUploadDropzone";
+import { ImageUploadFormContent } from "@/features/image/components/ImageUploadFormContent";
 import { ImageUploadProgress } from "@/features/image/components/ImageUploadProgress";
-import { ImageUploadPreviewPanel } from "@/features/image/components/ImageUploadPreviewPanel";
 import { ImageUploadSectionHeader } from "@/features/image/components/ImageUploadSectionHeader";
 import { MAX_IMAGES_PER_GALLERY } from "@/features/image/constants";
 import { useImageUploadSelection } from "@/features/image/hooks/useImageUploadSelection";
@@ -12,9 +11,9 @@ import { useImageUploadSelectionWithMessages } from "@/features/image/hooks/useI
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
 import { StatusAlerts } from "@/shared/ui/StatusAlerts";
 
-import { useCreateGalleryWithImages } from "../hooks/useCreateGalleryWithImages";
-import type { GalleryFormValues } from "../types";
-import { validateGalleryForm } from "../validateGalleryForm";
+import { useCreateGalleryWithImages } from "@/features/gallery/hooks/useCreateGalleryWithImages";
+import type { GalleryFormValues } from "@/features/gallery/types";
+import { validateGalleryForm } from "@/features/gallery/validateGalleryForm";
 import { GalleryFields } from "./GalleryFields";
 
 const createGalleryInitialValues: GalleryFormValues = {
@@ -94,60 +93,60 @@ export function CreateGalleryForm() {
                 noValidate
                 className="mt-[30px] flex flex-col md:min-h-0 md:flex-1 md:overflow-hidden"
               >
-                <ImageUploadFormGrid>
-                  <div className="flex flex-col gap-[30px]">
-                    <ImageUploadDropzone
-                      onFilesSelect={selectFiles}
-                      disabled={isSubmitting}
-                      hasError={!!fileError}
-                    />
-
-                    {uploadProgress && (
-                      <ImageUploadProgress
-                        loadedBytes={uploadProgress.loadedBytes}
-                        percent={uploadProgress.percent}
-                        isCompleted={!!successMessage}
+                <ImageUploadFormContent
+                  selectedImages={selectedImages}
+                  previewDisabled={isSubmitting}
+                  onMetafieldChange={updateMetafield}
+                  sideContent={
+                    <>
+                      <ImageUploadDropzone
+                        onFilesSelect={selectFiles}
+                        disabled={isSubmitting}
+                        hasError={!!fileError}
                       />
-                    )}
 
-                    <GalleryFields
-                      descriptionLabel={
-                        <>
-                          Description{" "}
-                          <span className="text-text-secondary">
-                            (optional)
-                          </span>
-                        </>
-                      }
-                    />
-                  </div>
+                      {uploadProgress && (
+                        <ImageUploadProgress
+                          loadedBytes={uploadProgress.loadedBytes}
+                          percent={uploadProgress.percent}
+                          isCompleted={!!successMessage}
+                        />
+                      )}
 
-                  <ImageUploadPreviewPanel
-                    selectedImages={selectedImages}
-                    disabled={isSubmitting}
-                    onMetafieldChange={updateMetafield}
-                  />
-                </ImageUploadFormGrid>
+                      <GalleryFields
+                        descriptionLabel={
+                          <>
+                            Description{" "}
+                            <span className="text-text-secondary">
+                              (optional)
+                            </span>
+                          </>
+                        }
+                      />
+                    </>
+                  }
+                  actions={
+                    <>
+                      {selectedImages.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={deleteSelectedImages}
+                          disabled={isSubmitting}
+                          className="h-[50px] w-full max-w-[160px] rounded-2xl text-sm font-bold leading-none text-brand disabled:cursor-not-allowed disabled:text-text-secondary"
+                        >
+                          Delete All
+                        </button>
+                      )}
 
-                <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] max-md:flex-col-reverse max-md:items-center max-md:gap-4 md:justify-end">
-                  {selectedImages.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={deleteSelectedImages}
-                      disabled={isSubmitting}
-                      className="h-[50px] w-full max-w-[160px] rounded-2xl text-sm font-bold leading-none text-brand disabled:cursor-not-allowed disabled:text-text-secondary"
-                    >
-                      Delete All
-                    </button>
-                  )}
-
-                  <div className="w-full max-w-[311px] sm:max-w-[330px] min-[900px]:max-w-[300px]">
-                    <FormSubmitButton
-                      text="Create a new gallery"
-                      disabled={isSubmitDisabled}
-                    />
-                  </div>
-                </div>
+                      <div className="w-full max-w-[311px] sm:max-w-[330px] min-[900px]:max-w-[300px]">
+                        <FormSubmitButton
+                          text="Create a new gallery"
+                          disabled={isSubmitDisabled}
+                        />
+                      </div>
+                    </>
+                  }
+                />
               </Form>
             );
           }}

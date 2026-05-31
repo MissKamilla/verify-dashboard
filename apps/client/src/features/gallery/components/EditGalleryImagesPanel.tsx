@@ -1,4 +1,5 @@
 import { ImageMetafieldsCard } from "@/features/image/components/ImageMetafieldsCard";
+import { IMAGE_PREVIEW_BOTTOM_FADE_OFFSET } from "@/features/image/constants";
 import { getImageSrc } from "@/features/image/getImageSrc";
 import type { GalleryImage, ImageMetafields } from "@/features/image/types";
 import { ScrollArea } from "@/shared/ui/ScrollArea";
@@ -32,12 +33,11 @@ export function EditGalleryImagesPanel({
   return (
     <ScrollArea
       itemsCount={images.length}
-      trackBottomOffset={120}
-      bottomOverlayBottomOffset={119}
-      className="max-md:flex-none max-md:overflow-visible md:h-full md:w-full md:max-w-[680px] md:pr-8 md:pb-[120px] 2xl:max-w-[860px]"
-      contentClassName="max-md:h-auto max-md:overflow-visible pt-3 md:pr-8 md:pb-[140px]"
+      trackBottomOffset={IMAGE_PREVIEW_BOTTOM_FADE_OFFSET}
+      className="max-md:flex-none max-md:overflow-visible md:h-full md:w-full md:max-w-[680px] md:pr-8 2xl:max-w-[860px]"
+      contentClassName="max-md:h-auto max-md:overflow-visible pt-3 md:pr-8"
       thumbWrapperClassName="md:block"
-      bottomOverlayClassName="h-[120px] bg-gradient-to-b from-white/0 to-white"
+      bottomOverlayClassName="h-[79px] bg-gradient-to-b from-white/0 via-white/80 to-white"
     >
       {areImagesPending ? (
         <p className="text-base leading-normal text-text-secondary">
@@ -52,7 +52,10 @@ export function EditGalleryImagesPanel({
           No photos yet. You can upload photos to this gallery.
         </p>
       ) : (
-        <div className="flex w-full flex-col gap-[30px]">
+        <div
+          className="flex w-full flex-col gap-[30px]"
+          style={{ paddingBottom: IMAGE_PREVIEW_BOTTOM_FADE_OFFSET }}
+        >
           {images.map((image) => {
             const metafields = getImageMetafields(image.id, image.metafields);
 

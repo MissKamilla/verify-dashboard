@@ -1,17 +1,19 @@
 import { useState } from "react";
 
-import { useUploadGalleryImagesMutation } from "../imageQueries";
-import type { ImageMetafields, UploadProgress } from "../types";
+import {
+  UPLOAD_IMAGES_CHUNK_SIZE,
+  UPLOAD_IMAGES_CONCURRENCY,
+} from "@/features/image/constants";
+import { useUploadGalleryImagesMutation } from "@/features/image/imageQueries";
+
 import type { SelectedUploadImage } from "./useImageUploadSelection";
+import type { ImageMetafields, UploadProgress } from "@/features/image/types";
 
 type UploadSelectedImagesToGalleryParams = {
   galleryId: number;
   selectedImages: SelectedUploadImage[];
   onUploadProgressChange: (uploadProgress: UploadProgress) => void;
 };
-
-const UPLOAD_IMAGES_CHUNK_SIZE = 5;
-const UPLOAD_IMAGES_CONCURRENCY = 3;
 
 const chunkArray = <T>(items: T[], chunkSize: number): T[][] => {
   const chunks: T[][] = [];

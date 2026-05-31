@@ -3,7 +3,7 @@ import { Modal } from "@/shared/ui/Modal";
 import { EditImageDetailsForm } from "./EditImageDetailsForm";
 import { DiscardImageChangesModal } from "./DiscardImageChangesModal";
 
-import type { GalleryImage, ImageMetafields } from "../types";
+import type { GalleryImage, ImageMetafields } from "@/features/image/types";
 
 type EditImageDetailsModalProps = {
   image: GalleryImage;
@@ -50,6 +50,7 @@ export function EditImageDetailsModal({
           onClose={handleCloseRequest}
         >
           <EditImageDetailsForm
+            key={image.id}
             image={image}
             isSaving={isSaving}
             error={error}

@@ -73,6 +73,7 @@ export function DropdownMenu({
 
       {isOpen && (
         <div
+          role="menu"
           className={`absolute overflow-hidden bg-white shadow-card ${menuClassName}`}
         >
           {children({ close })}
@@ -103,14 +104,19 @@ export function DropdownMenuItem({
 
   if (to) {
     return (
-      <Link to={to} onClick={onClick} className={itemClassName}>
+      <Link to={to} onClick={onClick} role="menuitem" className={itemClassName}>
         {content}
       </Link>
     );
   }
 
   return (
-    <button type="button" onClick={onClick} className={itemClassName}>
+    <button
+      type="button"
+      role="menuitem"
+      onClick={onClick}
+      className={itemClassName}
+    >
       {content}
     </button>
   );

@@ -1,8 +1,12 @@
 import { PhotoPreviewPlaceholderGrid } from "@/shared/ui/PhotoPreviewPlaceholderGrid";
 import { ScrollArea } from "@/shared/ui/ScrollArea";
 
-import { MAX_IMAGE_SIZE_LABEL, MAX_IMAGES_PER_GALLERY } from "../constants";
-import type { SelectedUploadImage } from "../hooks/useImageUploadSelection";
+import {
+  IMAGE_PREVIEW_BOTTOM_FADE_OFFSET,
+  MAX_IMAGE_SIZE_LABEL,
+  MAX_IMAGES_PER_GALLERY,
+} from "@/features/image/constants";
+import type { SelectedUploadImage } from "@/features/image/hooks/useImageUploadSelection";
 import { ImageUploadPreviewCard } from "./ImageUploadPreviewCard";
 
 type ImageUploadPreviewPanelProps = {
@@ -32,14 +36,16 @@ export function ImageUploadPreviewPanel({
   return (
     <ScrollArea
       itemsCount={selectedImages.length}
-      trackBottomOffset={120}
-      bottomOverlayBottomOffset={119}
-      className="max-md:flex-none max-md:overflow-visible md:h-full md:w-full md:max-w-[680px] md:pr-8 md:pb-[120px] 2xl:max-w-[860px]"
-      contentClassName="max-md:h-auto max-md:overflow-visible md:pr-8 md:pb-[120px]"
+      trackBottomOffset={IMAGE_PREVIEW_BOTTOM_FADE_OFFSET}
+      className="max-md:flex-none max-md:overflow-visible md:h-full md:w-full md:max-w-[680px] md:pr-8 2xl:max-w-[860px]"
+      contentClassName="max-md:h-auto max-md:overflow-visible md:pr-8"
       thumbWrapperClassName="md:block"
-      bottomOverlayClassName="h-[120px] bg-gradient-to-b from-white/0 to-white"
+      bottomOverlayClassName="h-[79px] bg-gradient-to-b from-white/0 via-white/80 to-white"
     >
-      <div className="flex w-full flex-col gap-[30px]">
+      <div
+        className="flex w-full flex-col gap-[30px]"
+        style={{ paddingBottom: IMAGE_PREVIEW_BOTTOM_FADE_OFFSET }}
+      >
         {selectedImages.map((image) => (
           <ImageUploadPreviewCard
             key={image.id}

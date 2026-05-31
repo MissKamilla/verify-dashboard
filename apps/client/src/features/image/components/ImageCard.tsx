@@ -1,17 +1,14 @@
-import { useRef, useState } from "react";
-
 import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
 import actionMoveIconUrl from "@/assets/icons/action-move.svg";
 import actionCopyIconUrl from "@/assets/icons/action-copy.svg";
 import actionEditIconUrl from "@/assets/icons/action-edit.svg";
 import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
 
-import { Icon } from "@/shared/ui/Icon";
+import { DropdownMenu, DropdownMenuItem } from "@/shared/ui/Dropdown";
 
-import { getImageSrc } from "../getImageSrc";
-import { usePopupDismiss } from "@/shared/lib/usePopupDismiss";
+import { getImageSrc } from "@/features/image/getImageSrc";
 
-import type { GalleryImage } from "../types";
+import type { GalleryImage } from "@/features/image/types";
 
 type ImageCardProps = {
   image: GalleryImage;
@@ -28,40 +25,13 @@ export function ImageCard({
   onCopyClick,
   onDeleteClick,
 }: ImageCardProps) {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-
   const imageName = image.metafields.name?.trim();
   const imageComment = image.metafields.comment?.trim();
 
   const imageAlt = imageName || "Gallery photo";
 
-  const closeMenu = () => setIsMenuOpen(false);
-
-  const handleEditClick = () => {
-    closeMenu();
-    onEditClick(image);
-  };
-
-  const handleMoveClick = () => {
-    closeMenu();
-    onMoveClick(image);
-  };
-
-  const handleCopyClick = () => {
-    closeMenu();
-    onCopyClick(image);
-  };
-
-  const handleDeleteClick = () => {
-    closeMenu();
-    onDeleteClick(image);
-  };
-
-  usePopupDismiss(cardRef, closeMenu, isMenuOpen);
-
   return (
-    <div ref={cardRef} className="relative w-full min-w-0 max-w-[150px]">
+    <div className="relative w-full min-w-0 max-w-[150px]">
       <div className="relative">
         <div className="flex aspect-square w-full min-w-[120px] max-w-[150px] items-center justify-center overflow-hidden rounded-2xl bg-gallery-preview">
           <img
@@ -71,68 +41,75 @@ export function ImageCard({
           />
         </div>
 
-        <div className="absolute -right-2 -top-2 z-20">
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen((currentValue) => !currentValue)}
-            className="flex h-6 w-6 cursor-pointer items-center justify-center"
-            aria-label={
-              isMenuOpen ? "Close photo actions" : "Open photo actions"
-            }
-            aria-expanded={isMenuOpen}
-            aria-haspopup="menu"
-          >
-            <img src={dotsVerticalIconUrl} alt="" className="h-6 w-6" />
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute right-0 top-8 z-30 w-[132px] overflow-hidden rounded-2xl bg-white shadow-card">
-              <button
-                role="menuitem"
-                type="button"
-                onClick={handleEditClick}
-                className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
-              >
-                <Icon src={actionEditIconUrl} className="h-4 w-4" />
-                <span>Edit details</span>
-              </button>
-
-              <button
-                role="menuitem"
-                type="button"
-                onClick={handleMoveClick}
-                className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
-              >
-                <Icon src={actionMoveIconUrl} className="h-4 w-4" />
-                <span>Move</span>
-              </button>
-
-              <button
-                role="menuitem"
-                type="button"
-                onClick={handleCopyClick}
-                className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
-              >
-                <Icon src={actionCopyIconUrl} className="h-4 w-4" />
-                <span>Copy</span>
-              </button>
-
-              <button
-                role="menuitem"
-                type="button"
-                onClick={handleDeleteClick}
-                className="flex h-[46px] w-full cursor-pointer items-center gap-2 px-4 text-left text-sm leading-normal text-text-main hover:bg-gallery-preview"
-              >
-                <Icon src={actionDeleteIconUrl} className="h-4 w-4" />
-                <span>Delete</span>
-              </button>
-            </div>
+        <DropdownMenu
+          rootClassName="absolute -right-2 -top-2 z-20"
+          menuClassName="right-0 top-8 z-30 w-[132px] rounded-2xl"
+          trigger={({ isOpen, toggle }) => (
+            <button
+              type="button"
+              onClick={toggle}
+              className="flex h-6 w-6 cursor-pointer items-center justify-center"
+              aria-label={
+                isOpen ? "Close photo actions" : "Open photo actions"
+              }
+              aria-expanded={isOpen}
+              aria-haspopup="menu"
+            >
+              <img src={dotsVerticalIconUrl} alt="" className="h-6 w-6" />
+            </button>
           )}
-        </div>
+        >
+          {({ close }) => (
+            <>
+              <DropdownMenuItem
+                iconSrc={actionEditIconUrl}
+                onClick={() => {
+                  close();
+                  onEditClick(image);
+                }}
+              >
+                Edit details
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                iconSrc={actionMoveIconUrl}
+                onClick={() => {
+                  close();
+                  onMoveClick(image);
+                }}
+              >
+                Move
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                iconSrc={actionCopyIconUrl}
+                onClick={() => {
+                  close();
+                  onCopyClick(image);
+                }}
+              >
+                Copy
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                iconSrc={actionDeleteIconUrl}
+                onClick={() => {
+                  close();
+                  onDeleteClick(image);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenu>
       </div>
 
       {imageName && (
-        <h3 className="mt-2.5 h-6 truncate text-base font-bold leading-normal text-text-main">
+        <h3
+          className="mt-2.5 h-6 truncate text-base font-bold leading-normal text-text-main"
+          title={imageName}
+        >
           {imageName}
         </h3>
       )}
@@ -140,6 +117,7 @@ export function ImageCard({
       {imageComment && (
         <p
           className={`${imageName ? "" : "mt-2.5"} h-[21px] truncate text-sm leading-normal text-text-secondary`}
+          title={imageComment}
         >
           {imageComment}
         </p>

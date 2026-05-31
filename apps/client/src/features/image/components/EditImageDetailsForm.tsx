@@ -3,8 +3,11 @@ import { useEffect, useState, type FormEvent } from "react";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormTextareaField } from "@/shared/ui/FormTextareaField";
 
-import { MAX_IMAGE_COMMENT_LENGTH, MAX_IMAGE_NAME_LENGTH } from "../constants";
-import type { GalleryImage, ImageMetafields } from "../types";
+import {
+  MAX_IMAGE_COMMENT_LENGTH,
+  MAX_IMAGE_NAME_LENGTH,
+} from "@/features/image/constants";
+import type { GalleryImage, ImageMetafields } from "@/features/image/types";
 
 type EditImageDetailsFormProps = {
   image: GalleryImage;

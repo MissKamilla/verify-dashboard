@@ -9,7 +9,7 @@ import {
   ALLOWED_IMAGE_FORMATS_LABEL,
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_IMAGE_SIZE_LABEL,
-} from "../constants";
+} from "@/features/image/constants";
 
 type ImageUploadDropzoneProps = {
   onFilesSelect: (files: File[]) => void;
@@ -48,7 +48,7 @@ export function ImageUploadDropzone({
 
   const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "copy";
+    event.dataTransfer.dropEffect = disabled ? "none" : "copy";
   };
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
@@ -75,6 +75,7 @@ export function ImageUploadDropzone({
         multiple
         accept={ALLOWED_IMAGE_MIME_TYPES.join(",")}
         onChange={handleInputChange}
+        disabled={disabled}
         className="hidden"
       />
 

@@ -2,10 +2,11 @@ import { useState } from "react";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
-import { MAX_IMAGES_PER_GALLERY } from "../constants";
-import { useGalleryImagesQuery } from "../imageQueries";
-import type { GetImagesParams, UploadProgress } from "../types";
-import { validateImageMetafields } from "../validateImageMetafields";
+import { MAX_IMAGES_PER_GALLERY } from "@/features/image/constants";
+import { useGalleryImagesQuery } from "@/features/image/imageQueries";
+import type { GetImagesParams, UploadProgress } from "@/features/image/types";
+import { validateImageMetafields } from "@/features/image/validateImageMetafields";
+
 import { useImageUploadSelection } from "./useImageUploadSelection";
 import { useImageUploadSelectionWithMessages } from "./useImageUploadSelectionWithMessages";
 import { useUploadSelectedImagesToGallery } from "./useUploadSelectedImagesToGallery";

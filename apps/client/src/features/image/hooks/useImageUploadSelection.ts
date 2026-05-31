@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { validateImageFiles } from "../validateImageFiles";
+import { validateImageFiles } from "@/features/image/validateImageFiles";
 
 type UseImageUploadSelectionProps = {
   availableImagesCount: number;
