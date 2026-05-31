@@ -31,9 +31,9 @@ export function ImageCard({
   const imageAlt = imageName || "Gallery photo";
 
   return (
-    <div className="relative w-full min-w-0 max-w-[150px]">
+    <div className="relative w-full min-w-0">
       <div className="relative">
-        <div className="flex aspect-square w-full min-w-[120px] max-w-[150px] items-center justify-center overflow-hidden rounded-2xl bg-gallery-preview">
+        <div className="flex aspect-square w-full min-w-[120px] items-center justify-center overflow-hidden rounded-2xl bg-gallery-preview">
           <img
             src={getImageSrc(image.path)}
             alt={imageAlt}

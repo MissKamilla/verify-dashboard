@@ -183,12 +183,12 @@ export function GalleryDetailsPage() {
         className="rounded-[30px] bg-white shadow-card"
         contentClassName="p-[30px]"
       >
-        <div className="mx-auto w-full max-w-[320px] lg:max-w-[1099px]">
-          <h2 className="px-2 text-2xl font-bold leading-normal text-text-main">
+        <div className="w-full">
+          <h2 className="text-2xl font-bold leading-normal text-text-main">
             {gallery.title}
           </h2>
 
-          <p className="mt-3 px-2 text-base leading-normal text-text-secondary">
+          <p className="mt-3 text-base leading-normal text-text-secondary">
             {gallery.description || "No description yet..."}
           </p>
 
@@ -205,7 +205,13 @@ export function GalleryDetailsPage() {
           ) : (
             <>
               <div className="mt-[30px]">
-                <div className="grid grid-cols-[repeat(2,minmax(120px,1fr))] gap-x-5 gap-y-[30px] px-2 pt-2 lg:grid-cols-[repeat(auto-fit,minmax(120px,1fr))]">
+                <div
+                  className="grid gap-5 pt-2"
+                  style={{
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(max(120px, calc((100% - 120px) / 7)), 1fr))",
+                  }}
+                >
                   {images.map((image) => (
                     <ImageCard
                       key={image.id}
@@ -225,7 +231,7 @@ export function GalleryDetailsPage() {
                   openDeleteAllImagesModal(images.map((image) => image.id))
                 }
                 disabled={isDeleting}
-                className="relative z-20 ml-[8px] mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
+                className="relative z-20 mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
               >
                 Delete All ({imagesCount})
               </button>
