@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { useDebouncedValue } from "@/shared/lib/useDebouncedValue";
+
 import {
   galleryQueryKeys,
   useGalleriesQuery,
 } from "@/features/gallery/galleryQueries";
-
 import type {
   GalleriesListResponse,
   GallerySortBy,
@@ -14,6 +15,7 @@ import type {
 } from "@/features/gallery/types";
 
 const GALLERIES_PAGE_LIMIT = 10;
+const SEARCH_DEBOUNCE_DELAY_MS = 500;
 
 const DEFAULT_SORT_BY: GallerySortBy = "createdAt";
 const DEFAULT_SORT_ORDER: GallerySortOrder = "DESC";
@@ -27,7 +29,13 @@ export function useGalleriesPage() {
   const [sortOrder, setSortOrder] =
     useState<GallerySortOrder>(DEFAULT_SORT_ORDER);
 
+  const debouncedSearchValue = useDebouncedValue(
+    searchValue,
+    SEARCH_DEBOUNCE_DELAY_MS,
+  );
+
   const normalizedSearch = searchValue.trim();
+  const normalizedDebouncedSearch = debouncedSearchValue.trim();
 
   const galleriesParams = useMemo<GetGalleriesParams>(
     () => ({
@@ -35,9 +43,11 @@ export function useGalleriesPage() {
       limit: GALLERIES_PAGE_LIMIT,
       sortBy,
       sortOrder,
-      ...(normalizedSearch ? { search: normalizedSearch } : {}),
+      ...(normalizedDebouncedSearch
+        ? { search: normalizedDebouncedSearch }
+        : {}),
     }),
-    [currentPage, normalizedSearch, sortBy, sortOrder],
+    [currentPage, normalizedDebouncedSearch, sortBy, sortOrder],
   );
 
   const query = useGalleriesQuery(galleriesParams);
