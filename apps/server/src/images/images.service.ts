@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { GalleryImage } from './entities/image.entity';
@@ -56,6 +56,7 @@ export class ImagesService {
       },
       order: {
         createdAt: 'DESC',
+        id: 'DESC',
       },
       skip: (page - 1) * limit,
       take: limit,
@@ -77,15 +78,9 @@ export class ImagesService {
   ): Promise<GalleryImage[]> {
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const galleriesRepository = manager.getRepository(Gallery);
         const imagesRepository = manager.getRepository(GalleryImage);
 
-        await this.findOwnedGalleryOrFail(
-          galleryId,
-          userId,
-          'Gallery not found',
-          galleriesRepository,
-        );
+        await this.findOwnedGalleryForUpdateOrFail(galleryId, userId, manager);
 
         await this.ensureGalleryCanAcceptImages(
           galleryId,
@@ -147,14 +142,12 @@ export class ImagesService {
     targetGalleryId: number,
   ): Promise<GalleryImage[]> {
     return this.dataSource.transaction(async (manager) => {
-      const galleriesRepository = manager.getRepository(Gallery);
       const imagesRepository = manager.getRepository(GalleryImage);
 
-      await this.findOwnedGalleryOrFail(
+      await this.findOwnedGalleryForUpdateOrFail(
         targetGalleryId,
         userId,
-        'Target gallery not found',
-        galleriesRepository,
+        manager,
       );
 
       const images = await this.findOwnedImagesOrFail(
@@ -188,14 +181,12 @@ export class ImagesService {
 
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const galleriesRepository = manager.getRepository(Gallery);
         const imagesRepository = manager.getRepository(GalleryImage);
 
-        await this.findOwnedGalleryOrFail(
+        await this.findOwnedGalleryForUpdateOrFail(
           targetGalleryId,
           userId,
-          'Target gallery not found',
-          galleriesRepository,
+          manager,
         );
 
         const images = await this.findOwnedImagesOrFail(
@@ -307,6 +298,27 @@ export class ImagesService {
         userId,
       },
     });
+
+    if (!gallery) {
+      throw new NotFoundException(message);
+    }
+
+    return gallery;
+  }
+
+  private async findOwnedGalleryForUpdateOrFail(
+    galleryId: number,
+    userId: number,
+    manager: EntityManager,
+    message = 'Gallery not found',
+  ): Promise<Gallery> {
+    const gallery = await manager
+      .getRepository(Gallery)
+      .createQueryBuilder('gallery')
+      .setLock('pessimistic_write')
+      .where('gallery.id = :galleryId', { galleryId })
+      .andWhere('gallery.userId = :userId', { userId })
+      .getOne();
 
     if (!gallery) {
       throw new NotFoundException(message);

@@ -1,4 +1,4 @@
-import type { Gallery } from "@/features/gallery/types";
+import type { GalleryListItem } from "@/features/gallery/types";
 import { useGalleryDelete } from "@/features/gallery/useGalleryDelete";
 
 import { isUnauthorizedError } from "@/shared/api/isUnauthorizedError";
@@ -10,7 +10,7 @@ import { GalleriesList } from "./GalleriesList";
 import { GalleryDeleteDialogs } from "./GalleryDeleteDialogs";
 
 type GalleriesContentProps = {
-  galleries: Gallery[];
+  galleries: GalleryListItem[];
   totalGalleries: number;
   currentPage: number;
   totalPages: number;

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-import { GalleryResponseDto } from './gallery-response.dto';
+import { GalleryListItemResponseDto } from './gallery-list-item-response.dto';
 
 export class GalleriesListResponseDto {
-  @ApiProperty({ type: [GalleryResponseDto] })
-  items!: GalleryResponseDto[];
+  @ApiProperty({ type: [GalleryListItemResponseDto] })
+  items!: GalleryListItemResponseDto[];
 
   @ApiProperty({ example: 25 })
   total!: number;

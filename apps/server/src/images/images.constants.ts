@@ -1,4 +1,5 @@
 export const MAX_IMAGES_PER_GALLERY = 50;
+export const MAX_IMAGE_BULK_OPERATION_SIZE = 50;
 
 export const MAX_IMAGE_SIZE_IN_BYTES = 5 * 1024 * 1024;
 

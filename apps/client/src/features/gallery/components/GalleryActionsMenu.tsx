@@ -1,9 +1,13 @@
+import { useState } from "react";
 import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
 import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
 import actionEditIconUrl from "@/assets/icons/action-edit.svg";
 
+import { DropdownMenu, DropdownMenuItem } from "@/shared/ui/Dropdown";
+
 import type { Gallery } from "@/features/gallery/types";
-import { GalleryMenu, GalleryMenuItem } from "./GalleryMenu";
+
+import { GalleryMobileActionsSheet } from "./GalleryMobileActionsSheet";
 
 type GalleryActionsMenuProps = {
   gallery: Gallery;
@@ -14,48 +18,76 @@ export function GalleryActionsMenu({
   gallery,
   onDeleteClick,
 }: GalleryActionsMenuProps) {
-  return (
-    <GalleryMenu
-      menuClassName="right-[26px] top-[34px] z-10 h-[92px] w-[132px] rounded-3xl"
-      trigger={({ isOpen, toggle }) => (
-        <button
-          type="button"
-          onClick={toggle}
-          className="flex h-6 w-6 cursor-pointer items-center justify-center"
-          aria-label="Open gallery actions"
-          aria-expanded={isOpen}
-          aria-haspopup="menu"
-        >
-          <img
-            src={dotsVerticalIconUrl}
-            alt=""
-            className="h-6 w-6"
-            aria-hidden="true"
-          />
-        </button>
-      )}
-    >
-      {({ close }) => (
-        <>
-          <GalleryMenuItem
-            to={`/galleries/${gallery.id}/edit`}
-            iconSrc={actionEditIconUrl}
-            onClick={close}
-          >
-            Edit
-          </GalleryMenuItem>
+  const [isMobileActionsOpen, setIsMobileActionsOpen] = useState(false);
 
-          <GalleryMenuItem
-            iconSrc={actionDeleteIconUrl}
-            onClick={() => {
-              close();
-              onDeleteClick(gallery);
-            }}
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setIsMobileActionsOpen(true)}
+        className="flex h-6 w-6 cursor-pointer items-center justify-center sm:hidden"
+        aria-label="Open gallery actions"
+        aria-expanded={isMobileActionsOpen}
+        aria-haspopup="dialog"
+      >
+        <img
+          src={dotsVerticalIconUrl}
+          alt=""
+          className="h-6 w-6"
+          aria-hidden="true"
+        />
+      </button>
+
+      <DropdownMenu
+        rootClassName="hidden sm:block"
+        menuClassName="right-[26px] top-[34px] z-10 h-[92px] w-[132px] rounded-3xl"
+        trigger={({ isOpen, toggle }) => (
+          <button
+            type="button"
+            onClick={toggle}
+            className="flex h-6 w-6 cursor-pointer items-center justify-center"
+            aria-label="Open gallery actions"
+            aria-expanded={isOpen}
+            aria-haspopup="menu"
           >
-            Delete
-          </GalleryMenuItem>
-        </>
-      )}
-    </GalleryMenu>
+            <img
+              src={dotsVerticalIconUrl}
+              alt=""
+              className="h-6 w-6"
+              aria-hidden="true"
+            />
+          </button>
+        )}
+      >
+        {({ close }) => (
+          <>
+            <DropdownMenuItem
+              to={`/galleries/${gallery.id}/edit`}
+              iconSrc={actionEditIconUrl}
+              onClick={close}
+            >
+              Edit
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
+              iconSrc={actionDeleteIconUrl}
+              onClick={() => {
+                close();
+                onDeleteClick(gallery);
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenu>
+
+      <GalleryMobileActionsSheet
+        galleryId={gallery.id}
+        isOpen={isMobileActionsOpen}
+        onClose={() => setIsMobileActionsOpen(false)}
+        onDeleteClick={() => onDeleteClick(gallery)}
+      />
+    </>
   );
 }

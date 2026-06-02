@@ -240,8 +240,11 @@ export class ImagesController {
     required: true,
     isArray: true,
     type: Number,
+    style: 'form',
+    explode: true,
     example: [1, 2],
-    description: 'Image ids to delete.',
+    description:
+      'Image ids to delete. Use repeated query params: ?imageIds=1&imageIds=2.',
   })
   @ApiNoContentResponse({
     description: 'Images deleted successfully',

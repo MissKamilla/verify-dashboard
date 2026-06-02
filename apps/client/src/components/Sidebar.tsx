@@ -101,7 +101,9 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => toggleSection("galleries")}
-            className="flex w-full cursor-pointer items-center"
+            className={`w-full cursor-pointer ${getSectionLinkClassName(
+              "/galleries",
+            )}`}
             aria-label={
               isSectionOpen("galleries")
                 ? "Collapse gallery menu"
@@ -109,17 +111,11 @@ export function Sidebar({
             }
             aria-expanded={isSectionOpen("galleries")}
           >
-            <NavLink
-              to="/galleries"
-              onClick={onNavigate}
-              className={() => getSectionLinkClassName("/galleries")}
-            >
-              <Icon
-                src={galleryIconUrl}
-                className={`h-6 w-6 ${getSectionIconClassName("/galleries")}`}
-              />
-              Gallery
-            </NavLink>
+            <Icon
+              src={galleryIconUrl}
+              className={`h-6 w-6 ${getSectionIconClassName("/galleries")}`}
+            />
+            <span>Gallery</span>
             <Icon
               src={chevronDownIconUrl}
               className={`ml-auto h-[5px] w-[10px] transition-transform ${getSectionChevronClassName(

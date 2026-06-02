@@ -1,18 +1,22 @@
 import { StatusAlert } from "@/shared/ui/StatusAlert";
 
-type GalleryStatusAlertsProps = {
+type StatusAlertsProps = {
   successMessage: string;
   errorMessage: string;
+  warningMessage?: string;
   onCloseSuccess: () => void;
   onCloseError: () => void;
+  onCloseWarning?: () => void;
 };
 
-export function GalleryStatusAlerts({
+export function StatusAlerts({
   successMessage,
   errorMessage,
+  warningMessage,
   onCloseSuccess,
   onCloseError,
-}: GalleryStatusAlertsProps) {
+  onCloseWarning,
+}: StatusAlertsProps) {
   return (
     <>
       {successMessage && (
@@ -25,6 +29,20 @@ export function GalleryStatusAlerts({
             tooltipText={successMessage}
           >
             {successMessage}
+          </StatusAlert>
+        </div>
+      )}
+
+      {warningMessage && (
+        <div className="absolute top-[30px] right-[30px] left-[30px] z-40 min-[900px]:left-auto min-[900px]:w-[550px]">
+          <StatusAlert
+            variant="warning"
+            title="Warning"
+            onClose={onCloseWarning}
+            autoCloseMs={3000}
+            tooltipText={warningMessage}
+          >
+            {warningMessage}
           </StatusAlert>
         </div>
       )}

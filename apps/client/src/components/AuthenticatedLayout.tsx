@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Outlet, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -10,6 +10,7 @@ import { removeAuthToken } from "@/features/auth/authToken";
 import { useRedirectOnUnauthorized } from "@/features/auth/useRedirectOnUnauthorized";
 import { useProfileQuery } from "@/features/profile/profileQueries";
 
+import { useEscapeKey } from "@/shared/lib/useEscapeKey";
 import { Icon } from "@/shared/ui/Icon";
 
 export type AuthenticatedLayoutContext = {
@@ -25,6 +26,12 @@ export function AuthenticatedLayout() {
   const { data: profile, error, isError, isPending } = useProfileQuery();
 
   useRedirectOnUnauthorized({ isError, error });
+
+  const closeMobileSidebar = useCallback(() => {
+    setIsMobileSidebarOpen(false);
+  }, []);
+
+  useEscapeKey(closeMobileSidebar, isMobileSidebarOpen);
 
   const handleLogout = () => {
     removeAuthToken();
@@ -60,7 +67,7 @@ export function AuthenticatedLayout() {
         {isMobileSidebarOpen && (
           <div
             className="fixed inset-0 z-50 bg-black/70 lg:hidden"
-            onClick={() => setIsMobileSidebarOpen(false)}
+            onClick={closeMobileSidebar}
           >
             <div
               className="fixed bottom-4 left-4 top-4 z-50 w-[290px]"
@@ -68,7 +75,7 @@ export function AuthenticatedLayout() {
             >
               <button
                 type="button"
-                onClick={() => setIsMobileSidebarOpen(false)}
+                onClick={closeMobileSidebar}
                 className="absolute right-5 top-5 z-10 flex h-4 w-4 cursor-pointer items-center justify-center"
                 aria-label="Close menu"
               >
@@ -77,7 +84,7 @@ export function AuthenticatedLayout() {
 
               <Sidebar
                 {...sidebarProps}
-                onNavigate={() => setIsMobileSidebarOpen(false)}
+                onNavigate={closeMobileSidebar}
                 className="h-full overflow-y-auto"
               />
             </div>
