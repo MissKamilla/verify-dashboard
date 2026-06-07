@@ -46,6 +46,7 @@ import {
 import { ImagesService } from './images.service';
 import { getImagesUploadOptions } from './images-upload.config';
 import { DeleteImagesQueryDto } from './dto/delete-images-query.dto';
+import { UploadedFilesCleanupInterceptor } from './uploaded-files-cleanup.interceptor';
 
 @Auth()
 @ApiTags('Images')
@@ -132,6 +133,7 @@ export class ImagesController {
       MAX_IMAGES_PER_GALLERY,
       getImagesUploadOptions(),
     ),
+    UploadedFilesCleanupInterceptor,
   )
   uploadToGallery(
     @CurrentUser('sub') userId: number,
