@@ -12,5 +12,15 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: verify_postgres_test
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: verify_test_user
+      POSTGRES_PASSWORD: verify_test_password
+      POSTGRES_DB: verify_dashboard_test
+
 volumes:
   postgres_data:
