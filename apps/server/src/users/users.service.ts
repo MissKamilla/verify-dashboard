@@ -40,6 +40,7 @@ export class UsersService {
 
     return query.getOne();
   }
+
   async findById(id: number): Promise<UserProfileResponseDto> {
     const user = await this.usersRepository.findOne({ where: { id } });
 

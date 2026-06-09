@@ -1,0 +1,11 @@
+process.env.DATABASE_HOST = 'localhost';
+process.env.DATABASE_PORT = '5433';
+process.env.DATABASE_USER = 'verify_test_user';
+process.env.DATABASE_PASSWORD = 'verify_test_password';
+process.env.DATABASE_NAME = 'verify_dashboard_test';
+
+process.env.JWT_SECRET = 'test_secret';
+process.env.JWT_EXPIRES_IN = '1d';
+
+process.env.UPLOAD_IMAGES_DIR = 'uploads/test-images';
+process.env.UPLOAD_IMAGES_PUBLIC_PATH = '/uploads/test-images';
