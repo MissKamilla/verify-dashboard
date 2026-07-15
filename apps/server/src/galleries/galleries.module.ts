@@ -6,9 +6,12 @@ import { GalleryAccess } from './entities/gallery-access.entity';
 import { Gallery } from './entities/gallery.entity';
 import { GalleriesController } from './galleries.controller';
 import { GalleriesService } from './galleries.service';
+import { User } from '../users/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Gallery, GalleryImage, GalleryAccess])],
+  imports: [
+    TypeOrmModule.forFeature([Gallery, GalleryImage, GalleryAccess, User]),
+  ],
   controllers: [GalleriesController],
   providers: [GalleriesService],
 })
