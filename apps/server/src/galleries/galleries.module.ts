@@ -1,13 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { GalleriesService } from './galleries.service';
-import { GalleriesController } from './galleries.controller';
-import { Gallery } from './entities/gallery.entity';
 import { GalleryImage } from '../images/entities/image.entity';
+import { GalleryAccess } from './entities/gallery-access.entity';
+import { Gallery } from './entities/gallery.entity';
+import { GalleriesController } from './galleries.controller';
+import { GalleriesService } from './galleries.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Gallery, GalleryImage])],
+  imports: [TypeOrmModule.forFeature([Gallery, GalleryImage, GalleryAccess])],
   controllers: [GalleriesController],
   providers: [GalleriesService],
 })
