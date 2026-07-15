@@ -8,11 +8,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Gallery } from './entities/gallery.entity';
 import { DataSource, ILike, In, Repository } from 'typeorm';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
-import { CreateGalleryAccessDto } from './dto/create-gallery-access.dto';
+import {
+  CreateGalleryAccessDto,
+  UpdateGalleryAccessDto,
+} from './dto/gallery-access.dto';
 import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
 import { GalleryListItemResponseDto } from './dto/gallery-list-item-response.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
-import { UpdateGalleryAccessDto } from './dto/update-gallery-access.dto';
 import { GalleryAccess } from './entities/gallery-access.entity';
 import { GalleryImage } from '../images/entities/image.entity';
 import { removeStoredImageFile } from '../images/images-storage.utils';
@@ -222,7 +224,7 @@ export class GalleriesService {
       throw new NotFoundException('User not found');
     }
 
-    if (targetUser.id === currentUserId) {
+    if (targetUser.id === Number(currentUserId)) {
       throw new BadRequestException('You cannot share a gallery with yourself');
     }
 

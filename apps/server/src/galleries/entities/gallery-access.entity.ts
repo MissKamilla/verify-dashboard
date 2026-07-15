@@ -8,9 +8,10 @@ import {
   Unique,
 } from 'typeorm';
 
-import { User } from '../../users/entities/user.entity';
-import { GalleryRole } from '../enums/gallery-role.enum';
 import { Gallery } from './gallery.entity';
+import { User } from '../../users/entities/user.entity';
+import { GALLERY_ACCESS_ROLES } from '../enums/gallery-role.enum';
+import type { GalleryAccessRole } from '../enums/gallery-role.enum';
 
 @Entity('gallery_access')
 @Unique(['galleryId', 'userId'])
@@ -26,9 +27,9 @@ export class GalleryAccess {
 
   @Column({
     type: 'enum',
-    enum: GalleryRole,
+    enum: [...GALLERY_ACCESS_ROLES],
   })
-  role!: GalleryRole;
+  role!: GalleryAccessRole;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
