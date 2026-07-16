@@ -14,5 +14,6 @@ import { User } from '../users/entities/user.entity';
   ],
   controllers: [GalleriesController],
   providers: [GalleriesService],
+  exports: [GalleriesService],
 })
 export class GalleriesModule {}
