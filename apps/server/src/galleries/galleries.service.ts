@@ -323,6 +323,24 @@ export class GalleriesService {
     };
   }
 
+  async getEditableGalleryOrThrow(
+    galleryId: number,
+    userId: number,
+  ): Promise<AccessibleGalleryData> {
+    const accessibleGallery = await this.getAccessibleGalleryOrThrow(
+      galleryId,
+      userId,
+    );
+
+    if (accessibleGallery.role === GalleryRole.VIEWER) {
+      throw new ForbiddenException(
+        'You do not have permission to edit this gallery',
+      );
+    }
+
+    return accessibleGallery;
+  }
+
   private async getGalleryAccessData(
     userId: number,
   ): Promise<GalleryAccessData> {
@@ -458,24 +476,6 @@ export class GalleriesService {
           path,
         })),
     };
-  }
-
-  private async getEditableGalleryOrThrow(
-    galleryId: number,
-    userId: number,
-  ): Promise<AccessibleGalleryData> {
-    const accessibleGallery = await this.getAccessibleGalleryOrThrow(
-      galleryId,
-      userId,
-    );
-
-    if (accessibleGallery.role === GalleryRole.VIEWER) {
-      throw new ForbiddenException(
-        'You do not have permission to edit this gallery',
-      );
-    }
-
-    return accessibleGallery;
   }
 
   private toGalleryResponse(
