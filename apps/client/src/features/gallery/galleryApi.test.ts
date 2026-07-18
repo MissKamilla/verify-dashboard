@@ -25,6 +25,7 @@ describe("galleryApi", () => {
     title: "Nature",
     description: "Summer photos",
     userId: 1,
+    role: "owner",
     createdAt: "2026-06-08T10:00:00.000Z",
   };
 

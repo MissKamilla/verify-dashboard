@@ -229,6 +229,7 @@ const gallery: Gallery = {
   title: "Vacation photos",
   description: "Summer trip",
   userId: 3,
+  role: "owner",
   createdAt: "2026-06-01T10:00:00.000Z",
 };
 

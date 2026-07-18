@@ -2,9 +2,13 @@ import { httpClient } from "@/shared/api/httpClient";
 
 import type {
   CreateGalleryPayload,
+  CreateGalleryAccessPayload,
+  GalleryAccess,
+  GalleryAccessListItem,
   GalleriesListResponse,
   Gallery,
   GetGalleriesParams,
+  UpdateGalleryAccessPayload,
   UpdateGalleryPayload,
 } from "./types";
 
@@ -43,4 +47,46 @@ export const updateGallery = async (
 
 export const deleteGallery = async (id: number): Promise<void> => {
   await httpClient.delete(`/galleries/${id}`);
+};
+
+export const getGalleryAccesses = async (
+  galleryId: number,
+): Promise<GalleryAccessListItem[]> => {
+  const response = await httpClient.get<GalleryAccessListItem[]>(
+    `/galleries/${galleryId}/access`,
+  );
+
+  return response.data;
+};
+
+export const createGalleryAccess = async (
+  galleryId: number,
+  payload: CreateGalleryAccessPayload,
+): Promise<GalleryAccess> => {
+  const response = await httpClient.post<GalleryAccess>(
+    `/galleries/${galleryId}/access`,
+    payload,
+  );
+
+  return response.data;
+};
+
+export const updateGalleryAccess = async (
+  galleryId: number,
+  userId: number,
+  payload: UpdateGalleryAccessPayload,
+): Promise<GalleryAccess> => {
+  const response = await httpClient.patch<GalleryAccess>(
+    `/galleries/${galleryId}/access/${userId}`,
+    payload,
+  );
+
+  return response.data;
+};
+
+export const deleteGalleryAccess = async (
+  galleryId: number,
+  userId: number,
+): Promise<void> => {
+  await httpClient.delete(`/galleries/${galleryId}/access/${userId}`);
 };

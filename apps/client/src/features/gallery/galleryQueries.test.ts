@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
+  CreateGalleryAccessPayload,
   CreateGalleryPayload,
   GetGalleriesParams,
+  UpdateGalleryAccessPayload,
   UpdateGalleryPayload,
 } from "./types";
 
@@ -13,10 +15,14 @@ const {
   invalidateQueriesMock,
   removeQueriesMock,
   createGalleryMock,
+  createGalleryAccessMock,
   deleteGalleryMock,
+  deleteGalleryAccessMock,
   getGalleriesMock,
+  getGalleryAccessesMock,
   getGalleryByIdMock,
   updateGalleryMock,
+  updateGalleryAccessMock,
 } = vi.hoisted(() => ({
   useMutationMock: vi.fn(),
   useQueryClientMock: vi.fn(),
@@ -24,10 +30,14 @@ const {
   invalidateQueriesMock: vi.fn(),
   removeQueriesMock: vi.fn(),
   createGalleryMock: vi.fn(),
+  createGalleryAccessMock: vi.fn(),
   deleteGalleryMock: vi.fn(),
+  deleteGalleryAccessMock: vi.fn(),
   getGalleriesMock: vi.fn(),
+  getGalleryAccessesMock: vi.fn(),
   getGalleryByIdMock: vi.fn(),
   updateGalleryMock: vi.fn(),
+  updateGalleryAccessMock: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -38,19 +48,27 @@ vi.mock("@tanstack/react-query", () => ({
 
 vi.mock("./galleryApi", () => ({
   createGallery: createGalleryMock,
+  createGalleryAccess: createGalleryAccessMock,
   deleteGallery: deleteGalleryMock,
+  deleteGalleryAccess: deleteGalleryAccessMock,
   getGalleries: getGalleriesMock,
+  getGalleryAccesses: getGalleryAccessesMock,
   getGalleryById: getGalleryByIdMock,
   updateGallery: updateGalleryMock,
+  updateGalleryAccess: updateGalleryAccessMock,
 }));
 
 import {
   galleryQueryKeys,
   useAllGalleriesQuery,
+  useCreateGalleryAccessMutation,
   useCreateGalleryMutation,
+  useDeleteGalleryAccessMutation,
   useDeleteGalleryMutation,
   useGalleriesQuery,
+  useGalleryAccessesQuery,
   useGalleryQuery,
+  useUpdateGalleryAccessMutation,
   useUpdateGalleryMutation,
 } from "./galleryQueries";
 
@@ -65,6 +83,7 @@ describe("galleryQueries", () => {
     title: "Nature",
     description: "Summer photos",
     userId: 1,
+    role: "owner" as const,
     createdAt: "2026-06-08T10:00:00.000Z",
     photosCount: 0,
     previewImages: [],
@@ -97,6 +116,12 @@ describe("galleryQueries", () => {
     expect(galleryQueryKeys.allList()).toEqual(["gallery", "list", "all"]);
 
     expect(galleryQueryKeys.detail(10)).toEqual(["gallery", "detail", 10]);
+
+    expect(galleryQueryKeys.accessList(10)).toEqual([
+      "gallery",
+      "access",
+      10,
+    ]);
   });
 
   it("configures galleries query", async () => {
@@ -284,6 +309,154 @@ describe("galleryQueries", () => {
 
     expect(removeQueriesMock).toHaveBeenCalledWith({
       queryKey: galleryQueryKeys.detail(10),
+    });
+  });
+
+  it("configures gallery accesses query", async () => {
+    const accessList = [
+      {
+        id: 1,
+        galleryId: 10,
+        userId: 20,
+        role: "viewer",
+        createdAt: "2026-06-09T10:00:00.000Z",
+        user: {
+          id: 20,
+          firstname: "Alex",
+          lastname: "Stone",
+          email: "alex@example.com",
+          createdAt: "2026-06-01T10:00:00.000Z",
+        },
+      },
+    ];
+
+    getGalleryAccessesMock.mockResolvedValue(accessList);
+
+    useGalleryAccessesQuery(10, false);
+
+    const options = useQueryMock.mock.calls[0]?.[0] as {
+      queryKey: readonly unknown[];
+      queryFn: () => Promise<unknown>;
+      enabled: boolean;
+      retry: boolean;
+    };
+
+    expect(options.queryKey).toEqual(galleryQueryKeys.accessList(10));
+    expect(options.enabled).toBe(false);
+    expect(options.retry).toBe(false);
+
+    await expect(options.queryFn()).resolves.toEqual(accessList);
+
+    expect(getGalleryAccessesMock).toHaveBeenCalledWith(10);
+  });
+
+  it("invalidates gallery access list after granting access", async () => {
+    const variables: {
+      galleryId: number;
+      payload: CreateGalleryAccessPayload;
+    } = {
+      galleryId: 10,
+      payload: {
+        email: "alex@example.com",
+        role: "editor",
+      },
+    };
+
+    createGalleryAccessMock.mockResolvedValue({
+      id: 1,
+      galleryId: variables.galleryId,
+      userId: 20,
+      role: variables.payload.role,
+      createdAt: "2026-06-09T10:00:00.000Z",
+    });
+
+    useCreateGalleryAccessMutation();
+
+    const options = useMutationMock.mock.calls[0]?.[0] as MutationOptions<
+      typeof variables
+    >;
+
+    await options.mutationFn(variables);
+
+    options.onSuccess(undefined, variables);
+
+    expect(createGalleryAccessMock).toHaveBeenCalledWith(
+      variables.galleryId,
+      variables.payload,
+    );
+
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: galleryQueryKeys.accessList(variables.galleryId),
+    });
+  });
+
+  it("invalidates gallery access list after updating access role", async () => {
+    const variables: {
+      galleryId: number;
+      userId: number;
+      payload: UpdateGalleryAccessPayload;
+    } = {
+      galleryId: 10,
+      userId: 20,
+      payload: {
+        role: "viewer",
+      },
+    };
+
+    updateGalleryAccessMock.mockResolvedValue({
+      id: 1,
+      galleryId: variables.galleryId,
+      userId: variables.userId,
+      role: variables.payload.role,
+      createdAt: "2026-06-09T10:00:00.000Z",
+    });
+
+    useUpdateGalleryAccessMutation();
+
+    const options = useMutationMock.mock.calls[0]?.[0] as MutationOptions<
+      typeof variables
+    >;
+
+    await options.mutationFn(variables);
+
+    options.onSuccess(undefined, variables);
+
+    expect(updateGalleryAccessMock).toHaveBeenCalledWith(
+      variables.galleryId,
+      variables.userId,
+      variables.payload,
+    );
+
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: galleryQueryKeys.accessList(variables.galleryId),
+    });
+  });
+
+  it("invalidates gallery access list after revoking access", async () => {
+    const variables = {
+      galleryId: 10,
+      userId: 20,
+    };
+
+    deleteGalleryAccessMock.mockResolvedValue(undefined);
+
+    useDeleteGalleryAccessMutation();
+
+    const options = useMutationMock.mock.calls[0]?.[0] as MutationOptions<
+      typeof variables
+    >;
+
+    await options.mutationFn(variables);
+
+    options.onSuccess(undefined, variables);
+
+    expect(deleteGalleryAccessMock).toHaveBeenCalledWith(
+      variables.galleryId,
+      variables.userId,
+    );
+
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: galleryQueryKeys.accessList(variables.galleryId),
     });
   });
 });
