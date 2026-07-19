@@ -5,6 +5,7 @@ import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
+import { GalleryAccessForm } from "@/features/gallery/components/GalleryAccessForm";
 import { GalleryAccessList } from "@/features/gallery/components/GalleryAccessList";
 import { useAllGalleriesQuery } from "@/features/gallery/galleryQueries";
 
@@ -80,24 +81,28 @@ export function UserManagementPage() {
           </p>
         </div>
       ) : (
-        <SettingsCard
-          title="Select gallery"
-          description="Choose a gallery whose access you want to manage."
-        >
-          <Dropdown
-            value={selectedGalleryId}
-            options={galleryOptions}
-            placeholder="Select a gallery"
-            ariaLabel="Select gallery"
-            onChange={setSelectedGalleryId}
-          />
+        <>
+          <SettingsCard
+            title="Select gallery"
+            description="Choose a gallery whose access you want to manage."
+          >
+            <Dropdown
+              value={selectedGalleryId}
+              options={galleryOptions}
+              placeholder="Select a gallery"
+              ariaLabel="Select gallery"
+              onChange={setSelectedGalleryId}
+            />
+          </SettingsCard>
 
           {selectedGalleryId && (
-            <div className="mt-5">
+            <div className="mt-[30px] grid gap-[30px] xl:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.4fr)]">
+              <GalleryAccessForm galleryId={Number(selectedGalleryId)} />
+
               <GalleryAccessList galleryId={Number(selectedGalleryId)} />
             </div>
           )}
-        </SettingsCard>
+        </>
       )}
 
       <CopyrightFooter />

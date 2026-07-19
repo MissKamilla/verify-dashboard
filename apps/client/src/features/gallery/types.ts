@@ -83,3 +83,12 @@ export type GalleryFormErrors = Partial<
 export type GallerySortBy = NonNullable<GetGalleriesParams["sortBy"]>;
 
 export type GallerySortOrder = NonNullable<GetGalleriesParams["sortOrder"]>;
+
+export type GalleryAccessFormValues = {
+  email: string;
+  role: GalleryAccessRole | "";
+};
+
+export type GalleryAccessFormErrors = Partial<
+  Record<keyof GalleryAccessFormValues, string>
+>;
