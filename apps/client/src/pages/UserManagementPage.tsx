@@ -5,6 +5,7 @@ import burgerIconUrl from "@/assets/icons/burger.svg";
 
 import type { AuthenticatedLayoutContext } from "@/components/AuthenticatedLayout";
 
+import { GalleryAccessList } from "@/features/gallery/components/GalleryAccessList";
 import { useAllGalleriesQuery } from "@/features/gallery/galleryQueries";
 
 import { CopyrightFooter } from "@/shared/ui/CopyrightFooter";
@@ -92,9 +93,9 @@ export function UserManagementPage() {
           />
 
           {selectedGalleryId && (
-            <p className="mt-5 text-base text-text-secondary">
-              Access management will be displayed here.
-            </p>
+            <div className="mt-5">
+              <GalleryAccessList galleryId={Number(selectedGalleryId)} />
+            </div>
           )}
         </SettingsCard>
       )}
