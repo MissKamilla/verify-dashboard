@@ -1,3 +1,4 @@
+import { GalleryAccessRow } from "./GalleryAccessRow";
 import { useGalleryAccessesQuery } from "@/features/gallery/galleryQueries";
 
 import { PageError } from "@/shared/ui/PageError";
@@ -33,7 +34,7 @@ export function GalleryAccessList({ galleryId }: GalleryAccessListProps) {
 
   if (accesses.length === 0) {
     return (
-      <section className="rounded-[30px] bg-white p-[30px] text-center shadow-card">
+      <section className="rounded-[30px] bg-white p-5 shadow-card md:p-[30px]">
         <h2 className="text-2xl font-bold text-text-main">No shared access</h2>
 
         <p className="mt-2 text-base text-text-secondary">
@@ -48,52 +49,17 @@ export function GalleryAccessList({ galleryId }: GalleryAccessListProps) {
       <h2 className="text-2xl font-bold text-text-main">Users with access</h2>
 
       <div className="mt-6">
-        <div className="hidden grid-cols-[1fr_1.4fr_120px] gap-4 border-b border-border-default px-4 pb-3 text-sm font-bold text-text-secondary md:grid">
+        <div className="hidden grid-cols-[1fr_1.4fr_140px_48px] gap-4 border-b border-border-default px-4 pb-3 text-sm font-bold text-text-secondary md:grid">
           <span>User</span>
           <span>Email</span>
           <span>Role</span>
+          <span>Action</span>
         </div>
 
         <div>
-          {accesses.map((access) => {
-            const fullName =
-              `${access.user.firstname} ${access.user.lastname}`.trim();
-
-            return (
-              <div
-                key={access.id}
-                className="grid gap-2 border-b border-border-default px-4 py-4 last:border-b-0 md:grid-cols-[1fr_1.4fr_120px] md:items-center md:gap-4"
-              >
-                <div>
-                  <span className="text-xs font-bold text-text-secondary md:hidden">
-                    User
-                  </span>
-
-                  <p className="text-sm text-text-main">{fullName}</p>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold text-text-secondary md:hidden">
-                    Email
-                  </span>
-
-                  <p className="break-all text-sm text-text-main">
-                    {access.user.email}
-                  </p>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold text-text-secondary md:hidden">
-                    Role
-                  </span>
-
-                  <p className="text-sm capitalize text-text-main">
-                    {access.role}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
+          {accesses.map((access) => (
+            <GalleryAccessRow key={access.id} access={access} />
+          ))}
         </div>
       </div>
     </section>
