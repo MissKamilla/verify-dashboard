@@ -26,15 +26,17 @@ export function ImageUploadFormContent({
 }: ImageUploadFormContentProps) {
   return (
     <>
-      <ImageUploadFormGrid>
-        <div className="flex flex-col gap-[30px]">{sideContent}</div>
+      <div className="scrollbar-gallery min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <ImageUploadFormGrid>
+          <div className="flex flex-col gap-[30px]">{sideContent}</div>
 
-        <ImageUploadPreviewPanel
-          selectedImages={selectedImages}
-          disabled={previewDisabled}
-          onMetafieldChange={onMetafieldChange}
-        />
-      </ImageUploadFormGrid>
+          <ImageUploadPreviewPanel
+            selectedImages={selectedImages}
+            disabled={previewDisabled}
+            onMetafieldChange={onMetafieldChange}
+          />
+        </ImageUploadFormGrid>
+      </div>
 
       {actions && (
         <div className="mt-auto flex shrink-0 justify-center gap-[30px] pt-[30px] max-md:mx-auto max-md:w-full max-md:max-w-[330px] max-md:flex-col-reverse max-md:items-center max-md:gap-4 md:justify-end">
