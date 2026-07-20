@@ -140,10 +140,7 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
               )}
 
               <div className="ml-auto w-full lg:w-[180px]">
-                <FormSubmitButton
-                  text={isDisabled ? "Granting..." : "Grant access"}
-                  disabled={isDisabled}
-                />
+                <FormSubmitButton text="Grant access" disabled={isDisabled} />
               </div>
             </Form>
           );

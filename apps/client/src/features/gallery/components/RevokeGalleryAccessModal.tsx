@@ -62,7 +62,7 @@ export function RevokeGalleryAccessModal({
           disabled={isRevoking}
           className="h-[50px] w-full rounded-2xl bg-error text-base font-bold leading-none text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isRevoking ? "Revoking..." : "Revoke"}
+          Revoke
         </button>
 
         <button
