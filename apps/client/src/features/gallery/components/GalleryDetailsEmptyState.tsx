@@ -4,10 +4,12 @@ import { GalleryTextLink } from "./GalleryTextLink";
 
 type GalleryDetailsEmptyStateProps = {
   galleryId: number;
+  canUpload: boolean;
 };
 
 export function GalleryDetailsEmptyState({
   galleryId,
+  canUpload,
 }: GalleryDetailsEmptyStateProps) {
   return (
     <div className="flex min-h-[620px] flex-1 items-center justify-center">
@@ -17,8 +19,9 @@ export function GalleryDetailsEmptyState({
         </h2>
 
         <p className="mt-2 text-lg font-normal leading-normal text-text-secondary">
-          You don&apos;t have any uploaded photos. Please, click on the &quot;Go
-          to upload photos&quot; and upload your photos.
+          {canUpload
+            ? 'You don\'t have any uploaded photos. Please, click on the "Go to upload photos" and upload your photos.'
+            : "There are no photos in this gallery yet."}
         </p>
 
         <img
@@ -27,11 +30,13 @@ export function GalleryDetailsEmptyState({
           className="mt-10 h-[274px] w-[308px] object-contain"
         />
 
-        <GalleryTextLink
-          to={`/galleries/${galleryId}/upload-photos`}
-          label="GO TO UPLOAD PHOTOS"
-          className="mt-7 uppercase"
-        />
+        {canUpload && (
+          <GalleryTextLink
+            to={`/galleries/${galleryId}/upload-photos`}
+            label="GO TO UPLOAD PHOTOS"
+            className="mt-7 uppercase"
+          />
+        )}
       </div>
     </div>
   );

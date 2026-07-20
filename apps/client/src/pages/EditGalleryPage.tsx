@@ -3,6 +3,8 @@ import { EditGalleryForm } from "@/features/gallery/components/EditGalleryForm";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
 import { useGalleryRouteGallery } from "@/features/gallery/hooks/useGalleryRouteGallery";
 
+import { PageError } from "@/shared/ui/PageError";
+
 export function EditGalleryPage() {
   const { gallery, numericGalleryId, galleryPageState } =
     useGalleryRouteGallery();
@@ -12,6 +14,15 @@ export function EditGalleryPage() {
   }
   if (!gallery) {
     return null;
+  }
+
+  if (gallery.role === "viewer") {
+    return (
+      <PageError
+        title="Access denied"
+        description="You don’t have permission to edit this gallery."
+      />
+    );
   }
 
   return (

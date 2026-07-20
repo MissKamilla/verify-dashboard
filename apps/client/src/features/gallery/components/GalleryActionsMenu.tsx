@@ -40,7 +40,7 @@ export function GalleryActionsMenu({
 
       <DropdownMenu
         rootClassName="hidden sm:block"
-        menuClassName="right-[26px] top-[34px] z-10 h-[92px] w-[132px] rounded-3xl"
+        menuClassName="right-[26px] top-[34px] z-10 w-[132px] rounded-3xl"
         trigger={({ isOpen, toggle }) => (
           <button
             type="button"
@@ -69,15 +69,17 @@ export function GalleryActionsMenu({
               Edit
             </DropdownMenuItem>
 
-            <DropdownMenuItem
-              iconSrc={actionDeleteIconUrl}
-              onClick={() => {
-                close();
-                onDeleteClick(gallery);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
+            {gallery.role === "owner" && (
+              <DropdownMenuItem
+                iconSrc={actionDeleteIconUrl}
+                onClick={() => {
+                  close();
+                  onDeleteClick(gallery);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            )}
           </>
         )}
       </DropdownMenu>
@@ -85,6 +87,7 @@ export function GalleryActionsMenu({
       <GalleryMobileActionsSheet
         galleryId={gallery.id}
         isOpen={isMobileActionsOpen}
+        canDelete={gallery.role === "owner"}
         onClose={() => setIsMobileActionsOpen(false)}
         onDeleteClick={() => onDeleteClick(gallery)}
       />
