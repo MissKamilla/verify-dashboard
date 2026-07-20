@@ -14,6 +14,7 @@ import { ImageMobileActionsSheet } from "./ImageMobileActionsSheet";
 
 type ImageCardProps = {
   image: GalleryImage;
+  canManage: boolean;
   onEditClick: (image: GalleryImage) => void;
   onMoveClick: (image: GalleryImage) => void;
   onCopyClick: (image: GalleryImage) => void;
@@ -22,6 +23,7 @@ type ImageCardProps = {
 
 export function ImageCard({
   image,
+  canManage,
   onEditClick,
   onMoveClick,
   onCopyClick,
@@ -45,86 +47,92 @@ export function ImageCard({
           />
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsMobileActionsOpen(true)}
-          className="absolute -right-2 -top-2 z-20 flex h-6 w-6 cursor-pointer items-center justify-center sm:hidden"
-          aria-label="Open photo actions"
-          aria-expanded={isMobileActionsOpen}
-          aria-haspopup="dialog"
-        >
-          <img src={dotsVerticalIconUrl} alt="" className="h-6 w-6" />
-        </button>
-
-        <DropdownMenu
-          rootClassName="absolute -right-2 -top-2 z-20 hidden sm:block"
-          menuClassName="right-0 top-8 z-30 w-[132px] rounded-2xl"
-          trigger={({ isOpen, toggle }) => (
+        {canManage && (
+          <>
             <button
               type="button"
-              onClick={toggle}
-              className="flex h-6 w-6 cursor-pointer items-center justify-center"
-              aria-label={isOpen ? "Close photo actions" : "Open photo actions"}
-              aria-expanded={isOpen}
-              aria-haspopup="menu"
+              onClick={() => setIsMobileActionsOpen(true)}
+              className="absolute -right-2 -top-2 z-20 flex h-6 w-6 cursor-pointer items-center justify-center sm:hidden"
+              aria-label="Open photo actions"
+              aria-expanded={isMobileActionsOpen}
+              aria-haspopup="dialog"
             >
               <img src={dotsVerticalIconUrl} alt="" className="h-6 w-6" />
             </button>
-          )}
-        >
-          {({ close }) => (
-            <>
-              <DropdownMenuItem
-                iconSrc={actionEditIconUrl}
-                onClick={() => {
-                  close();
-                  onEditClick(image);
-                }}
-              >
-                Edit details
-              </DropdownMenuItem>
 
-              <DropdownMenuItem
-                iconSrc={actionMoveIconUrl}
-                onClick={() => {
-                  close();
-                  onMoveClick(image);
-                }}
-              >
-                Move
-              </DropdownMenuItem>
+            <DropdownMenu
+              rootClassName="absolute -right-2 -top-2 z-20 hidden sm:block"
+              menuClassName="right-0 top-8 z-30 w-[132px] rounded-2xl"
+              trigger={({ isOpen, toggle }) => (
+                <button
+                  type="button"
+                  onClick={toggle}
+                  className="flex h-6 w-6 cursor-pointer items-center justify-center"
+                  aria-label={
+                    isOpen ? "Close photo actions" : "Open photo actions"
+                  }
+                  aria-expanded={isOpen}
+                  aria-haspopup="menu"
+                >
+                  <img src={dotsVerticalIconUrl} alt="" className="h-6 w-6" />
+                </button>
+              )}
+            >
+              {({ close }) => (
+                <>
+                  <DropdownMenuItem
+                    iconSrc={actionEditIconUrl}
+                    onClick={() => {
+                      close();
+                      onEditClick(image);
+                    }}
+                  >
+                    Edit details
+                  </DropdownMenuItem>
 
-              <DropdownMenuItem
-                iconSrc={actionCopyIconUrl}
-                onClick={() => {
-                  close();
-                  onCopyClick(image);
-                }}
-              >
-                Copy
-              </DropdownMenuItem>
+                  <DropdownMenuItem
+                    iconSrc={actionMoveIconUrl}
+                    onClick={() => {
+                      close();
+                      onMoveClick(image);
+                    }}
+                  >
+                    Move
+                  </DropdownMenuItem>
 
-              <DropdownMenuItem
-                iconSrc={actionDeleteIconUrl}
-                onClick={() => {
-                  close();
-                  onDeleteClick(image);
-                }}
-              >
-                Delete
-              </DropdownMenuItem>
-            </>
-          )}
-        </DropdownMenu>
+                  <DropdownMenuItem
+                    iconSrc={actionCopyIconUrl}
+                    onClick={() => {
+                      close();
+                      onCopyClick(image);
+                    }}
+                  >
+                    Copy
+                  </DropdownMenuItem>
 
-        <ImageMobileActionsSheet
-          isOpen={isMobileActionsOpen}
-          onClose={() => setIsMobileActionsOpen(false)}
-          onEditClick={() => onEditClick(image)}
-          onMoveClick={() => onMoveClick(image)}
-          onCopyClick={() => onCopyClick(image)}
-          onDeleteClick={() => onDeleteClick(image)}
-        />
+                  <DropdownMenuItem
+                    iconSrc={actionDeleteIconUrl}
+                    onClick={() => {
+                      close();
+                      onDeleteClick(image);
+                    }}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenu>
+
+            <ImageMobileActionsSheet
+              isOpen={isMobileActionsOpen}
+              onClose={() => setIsMobileActionsOpen(false)}
+              onEditClick={() => onEditClick(image)}
+              onMoveClick={() => onMoveClick(image)}
+              onCopyClick={() => onCopyClick(image)}
+              onDeleteClick={() => onDeleteClick(image)}
+            />
+          </>
+        )}
       </div>
 
       {imageName && (

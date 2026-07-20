@@ -27,12 +27,6 @@ export class GalleryImage {
   @Column({ name: 'gallery_id' })
   galleryId!: number;
 
-  @ManyToOne(() => Gallery, (gallery) => gallery.images, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'gallery_id' })
-  gallery!: Gallery;
-
   @Column({ name: 'original_filename', length: 255 })
   originalFilename!: string;
 
@@ -44,4 +38,11 @@ export class GalleryImage {
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
+
+  // relations
+  @ManyToOne(() => Gallery, (gallery) => gallery.images, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'gallery_id' })
+  gallery!: Gallery;
 }

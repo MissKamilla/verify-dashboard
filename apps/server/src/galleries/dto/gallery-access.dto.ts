@@ -1,0 +1,23 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsIn } from 'class-validator';
+
+import { GalleryRole, GALLERY_ACCESS_ROLES } from '../enums/gallery-role.enum';
+
+import type { GalleryAccessRole } from '../enums/gallery-role.enum';
+
+export class UpdateGalleryAccessDto {
+  @ApiProperty({
+    enum: [...GALLERY_ACCESS_ROLES],
+    example: GalleryRole.VIEWER,
+  })
+  @IsIn([GalleryRole.EDITOR, GalleryRole.VIEWER])
+  role!: GalleryAccessRole;
+}
+
+export class CreateGalleryAccessDto extends UpdateGalleryAccessDto {
+  @ApiProperty({
+    example: 'user@example.com',
+  })
+  @IsEmail()
+  email!: string;
+}

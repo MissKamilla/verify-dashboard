@@ -8,6 +8,7 @@ import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { Gallery } from '../galleries/entities/gallery.entity';
 import { GalleryImage } from './entities/image.entity';
+import { GalleriesService } from '../galleries/galleries.service';
 import { GetImagesQueryDto } from './dto/get-images-query.dto';
 import { UpdateImageMetafieldsDto } from './dto/update-image-metafields.dto';
 import {
@@ -29,9 +30,7 @@ export class ImagesService {
     @InjectRepository(GalleryImage)
     private readonly imagesRepository: Repository<GalleryImage>,
 
-    @InjectRepository(Gallery)
-    private readonly galleriesRepository: Repository<Gallery>,
-
+    private readonly galleriesService: GalleriesService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -45,7 +44,7 @@ export class ImagesService {
     page: number;
     limit: number;
   }> {
-    await this.findOwnedGalleryOrFail(galleryId, userId);
+    await this.galleriesService.getAccessibleGalleryOrThrow(galleryId, userId);
 
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
@@ -77,10 +76,12 @@ export class ImagesService {
     metafields?: UpdateImageMetafieldsDto[],
   ): Promise<GalleryImage[]> {
     try {
+      await this.galleriesService.getEditableGalleryOrThrow(galleryId, userId);
+
       return await this.dataSource.transaction(async (manager) => {
         const imagesRepository = manager.getRepository(GalleryImage);
 
-        await this.findOwnedGalleryForUpdateOrFail(galleryId, userId, manager);
+        await this.findGalleryForUpdateOrFail(galleryId, manager);
 
         await this.ensureGalleryCanAcceptImages(
           galleryId,
@@ -117,7 +118,12 @@ export class ImagesService {
     userId: number,
     dto: UpdateImageMetafieldsDto,
   ): Promise<GalleryImage> {
-    const image = await this.findOwnedImageOrFail(imageId, userId);
+    const image = await this.findImageOrFail(imageId);
+
+    await this.galleriesService.getEditableGalleryOrThrow(
+      image.galleryId,
+      userId,
+    );
 
     const nextMetafields = {
       ...(image.metafields ?? {}),
@@ -141,20 +147,19 @@ export class ImagesService {
     userId: number,
     targetGalleryId: number,
   ): Promise<GalleryImage[]> {
+    await this.galleriesService.getEditableGalleryOrThrow(
+      targetGalleryId,
+      userId,
+    );
+
     return this.dataSource.transaction(async (manager) => {
       const imagesRepository = manager.getRepository(GalleryImage);
 
-      await this.findOwnedGalleryForUpdateOrFail(
-        targetGalleryId,
-        userId,
-        manager,
-      );
+      await this.findGalleryForUpdateOrFail(targetGalleryId, manager);
 
-      const images = await this.findOwnedImagesOrFail(
-        imageIds,
-        userId,
-        imagesRepository,
-      );
+      const images = await this.findImagesOrFail(imageIds, imagesRepository);
+
+      await this.ensureCanEditImages(images, userId);
 
       this.ensureImagesAreNotInGallery(images, targetGalleryId);
 
@@ -177,23 +182,22 @@ export class ImagesService {
     userId: number,
     targetGalleryId: number,
   ): Promise<GalleryImage[]> {
+    await this.galleriesService.getEditableGalleryOrThrow(
+      targetGalleryId,
+      userId,
+    );
+
     const copiedPaths: string[] = [];
 
     try {
       return await this.dataSource.transaction(async (manager) => {
         const imagesRepository = manager.getRepository(GalleryImage);
 
-        await this.findOwnedGalleryForUpdateOrFail(
-          targetGalleryId,
-          userId,
-          manager,
-        );
+        await this.findGalleryForUpdateOrFail(targetGalleryId, manager);
 
-        const images = await this.findOwnedImagesOrFail(
-          imageIds,
-          userId,
-          imagesRepository,
-        );
+        const images = await this.findImagesOrFail(imageIds, imagesRepository);
+
+        await this.ensureCanEditImages(images, userId);
 
         await this.ensureGalleryCanAcceptImages(
           targetGalleryId,
@@ -231,30 +235,25 @@ export class ImagesService {
     const images = await this.dataSource.transaction(async (manager) => {
       const imagesRepository = manager.getRepository(GalleryImage);
 
-      const ownedImages = await this.findOwnedImagesOrFail(
+      const imagesToDelete = await this.findImagesOrFail(
         imageIds,
-        userId,
         imagesRepository,
       );
 
-      await imagesRepository.remove(ownedImages);
+      await this.ensureCanEditImages(imagesToDelete, userId);
 
-      return ownedImages;
+      await imagesRepository.remove(imagesToDelete);
+
+      return imagesToDelete;
     });
 
     await Promise.all(images.map((image) => removeStoredImageFile(image.path)));
   }
 
-  private async findOwnedImageOrFail(
-    imageId: number,
-    userId: number,
-  ): Promise<GalleryImage> {
+  private async findImageOrFail(imageId: number): Promise<GalleryImage> {
     const image = await this.imagesRepository.findOne({
       where: {
         id: imageId,
-        gallery: {
-          userId,
-        },
       },
     });
 
@@ -265,17 +264,13 @@ export class ImagesService {
     return image;
   }
 
-  private async findOwnedImagesOrFail(
+  private async findImagesOrFail(
     imageIds: number[],
-    userId: number,
     imagesRepository = this.imagesRepository,
   ): Promise<GalleryImage[]> {
     const images = await imagesRepository.find({
       where: {
         id: In(imageIds),
-        gallery: {
-          userId,
-        },
       },
     });
 
@@ -286,45 +281,35 @@ export class ImagesService {
     return images;
   }
 
-  private async findOwnedGalleryOrFail(
+  private async findGalleryForUpdateOrFail(
     galleryId: number,
-    userId: number,
-    message = 'Gallery not found',
-    galleriesRepository = this.galleriesRepository,
-  ): Promise<Gallery> {
-    const gallery = await galleriesRepository.findOne({
-      where: {
-        id: galleryId,
-        userId,
-      },
-    });
-
-    if (!gallery) {
-      throw new NotFoundException(message);
-    }
-
-    return gallery;
-  }
-
-  private async findOwnedGalleryForUpdateOrFail(
-    galleryId: number,
-    userId: number,
     manager: EntityManager,
-    message = 'Gallery not found',
   ): Promise<Gallery> {
     const gallery = await manager
       .getRepository(Gallery)
       .createQueryBuilder('gallery')
       .setLock('pessimistic_write')
       .where('gallery.id = :galleryId', { galleryId })
-      .andWhere('gallery.userId = :userId', { userId })
       .getOne();
 
     if (!gallery) {
-      throw new NotFoundException(message);
+      throw new NotFoundException('Gallery not found');
     }
 
     return gallery;
+  }
+
+  private async ensureCanEditImages(
+    images: GalleryImage[],
+    userId: number,
+  ): Promise<void> {
+    const galleryIds = [...new Set(images.map((image) => image.galleryId))];
+
+    await Promise.all(
+      galleryIds.map((galleryId) =>
+        this.galleriesService.getEditableGalleryOrThrow(galleryId, userId),
+      ),
+    );
   }
 
   private async countImagesInGallery(

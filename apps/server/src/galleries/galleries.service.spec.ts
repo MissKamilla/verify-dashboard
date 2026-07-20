@@ -1,11 +1,18 @@
-import { ConflictException, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, ILike, In, Repository } from 'typeorm';
 
 import { GalleryImage } from '../images/entities/image.entity';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
+import { GalleryAccess } from './entities/gallery-access.entity';
 import { Gallery } from './entities/gallery.entity';
+import { GalleryRole } from './enums/gallery-role.enum';
 import { GalleriesService } from './galleries.service';
 import { removeStoredImageFile } from '../images/images-storage.utils';
+import { User } from '../users/entities/user.entity';
 
 jest.mock('../images/images-storage.utils', () => ({
   removeStoredImageFile: jest.fn(),
@@ -20,8 +27,18 @@ describe('GalleriesService', () => {
     create: jest.Mock;
     save: jest.Mock;
   };
+  let galleryAccessRepositoryMock: {
+    find: jest.Mock;
+    findOne: jest.Mock;
+    create: jest.Mock;
+    save: jest.Mock;
+    remove: jest.Mock;
+  };
   let imagesRepositoryMock: {
     find: jest.Mock;
+  };
+  let usersRepositoryMock: {
+    findOne: jest.Mock;
   };
 
   let dataSourceMock: {
@@ -36,8 +53,20 @@ describe('GalleriesService', () => {
       save: jest.fn(),
     };
 
+    galleryAccessRepositoryMock = {
+      find: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      remove: jest.fn(),
+    };
+
     imagesRepositoryMock = {
       find: jest.fn(),
+    };
+
+    usersRepositoryMock = {
+      findOne: jest.fn(),
     };
 
     dataSourceMock = {
@@ -46,7 +75,9 @@ describe('GalleriesService', () => {
 
     galleriesService = new GalleriesService(
       galleriesRepositoryMock as unknown as Repository<Gallery>,
+      galleryAccessRepositoryMock as unknown as Repository<GalleryAccess>,
       imagesRepositoryMock as unknown as Repository<GalleryImage>,
+      usersRepositoryMock as unknown as Repository<User>,
       dataSourceMock as unknown as DataSource,
     );
   });
@@ -123,7 +154,10 @@ describe('GalleriesService', () => {
 
       expect(galleriesRepositoryMock.save).toHaveBeenCalledWith(gallery);
 
-      expect(result).toEqual(gallery);
+      expect(result).toEqual({
+        ...gallery,
+        role: GalleryRole.OWNER,
+      });
     });
   });
 
@@ -185,6 +219,71 @@ describe('GalleriesService', () => {
       });
     });
 
+    it('includes shared galleries and uses access role for shared items', async () => {
+      const ownedGallery = {
+        id: 10,
+        userId: 1,
+        title: 'Owned gallery',
+        description: 'Owned photos',
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+      };
+
+      const sharedGallery = {
+        id: 20,
+        userId: 2,
+        title: 'Shared gallery',
+        description: 'Shared photos',
+        createdAt: new Date('2026-06-04T10:00:00.000Z'),
+      };
+
+      galleryAccessRepositoryMock.find.mockResolvedValue([
+        {
+          galleryId: sharedGallery.id,
+          role: GalleryRole.VIEWER,
+        },
+      ]);
+
+      galleriesRepositoryMock.findAndCount.mockResolvedValue([
+        [ownedGallery, sharedGallery],
+        2,
+      ]);
+
+      imagesRepositoryMock.find.mockResolvedValue([]);
+
+      const result = await galleriesService.findAll(1, {});
+
+      expect(galleriesRepositoryMock.findAndCount).toHaveBeenCalledWith({
+        where: [
+          {
+            userId: 1,
+          },
+          {
+            id: In([20]),
+          },
+        ],
+        order: {
+          createdAt: 'DESC',
+        },
+        skip: 0,
+        take: 10,
+      });
+
+      expect(result.items).toEqual([
+        {
+          ...ownedGallery,
+          role: GalleryRole.OWNER,
+          photosCount: 0,
+          previewImages: [],
+        },
+        {
+          ...sharedGallery,
+          role: GalleryRole.VIEWER,
+          photosCount: 0,
+          previewImages: [],
+        },
+      ]);
+    });
+
     it('adds photos count and preview images to galleries', async () => {
       const galleries = [
         {
@@ -192,12 +291,14 @@ describe('GalleriesService', () => {
           userId: 1,
           title: 'Nature',
           description: 'Nature photos',
+          createdAt: new Date('2026-06-03T10:00:00.000Z'),
         },
         {
           id: 20,
           userId: 1,
           title: 'Travel',
           description: 'Travel photos',
+          createdAt: new Date('2026-06-04T10:00:00.000Z'),
         },
       ];
 
@@ -242,6 +343,7 @@ describe('GalleriesService', () => {
         items: [
           {
             ...galleries[0],
+            role: GalleryRole.OWNER,
             photosCount: 9,
             previewImages: natureImages.slice(0, 8).map(({ id, path }) => ({
               id,
@@ -250,6 +352,7 @@ describe('GalleriesService', () => {
           },
           {
             ...galleries[1],
+            role: GalleryRole.OWNER,
             photosCount: 1,
             previewImages: [
               {
@@ -271,6 +374,7 @@ describe('GalleriesService', () => {
         userId: 1,
         title: 'Empty gallery',
         description: null,
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
       };
 
       galleriesRepositoryMock.findAndCount.mockResolvedValue([[gallery], 1]);
@@ -283,6 +387,7 @@ describe('GalleriesService', () => {
         items: [
           {
             ...gallery,
+            role: GalleryRole.OWNER,
             photosCount: 0,
             previewImages: [],
           },
@@ -311,11 +416,13 @@ describe('GalleriesService', () => {
       expect(galleriesRepositoryMock.findOne).toHaveBeenCalledWith({
         where: {
           id: 10,
-          userId: 1,
         },
       });
 
-      expect(result).toEqual(gallery);
+      expect(result).toEqual({
+        ...gallery,
+        role: GalleryRole.OWNER,
+      });
     });
 
     it('throws NotFoundException when gallery does not exist', async () => {
@@ -330,8 +437,40 @@ describe('GalleriesService', () => {
       expect(galleriesRepositoryMock.findOne).toHaveBeenCalledWith({
         where: {
           id: 999,
+        },
+      });
+    });
+
+    it('returns shared gallery with access role', async () => {
+      const gallery = {
+        id: 10,
+        userId: 2,
+        title: 'Shared',
+        description: 'Shared photos',
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue({
+        role: GalleryRole.EDITOR,
+      });
+
+      const result = await galleriesService.findById(10, 1);
+
+      expect(galleryAccessRepositoryMock.findOne).toHaveBeenCalledWith({
+        select: {
+          role: true,
+        },
+        where: {
+          galleryId: 10,
           userId: 1,
         },
+      });
+
+      expect(result).toEqual({
+        ...gallery,
+        role: GalleryRole.EDITOR,
       });
     });
   });
@@ -359,7 +498,6 @@ describe('GalleriesService', () => {
       expect(galleriesRepositoryMock.findOne).toHaveBeenCalledWith({
         where: {
           id: 10,
-          userId: 1,
         },
       });
 
@@ -369,7 +507,10 @@ describe('GalleriesService', () => {
 
       expect(galleriesRepositoryMock.save).toHaveBeenCalledWith(gallery);
 
-      expect(result).toEqual(gallery);
+      expect(result).toEqual({
+        ...gallery,
+        role: GalleryRole.OWNER,
+      });
     });
 
     it('throws ConflictException when new title already exists', async () => {
@@ -404,7 +545,6 @@ describe('GalleriesService', () => {
       expect(galleriesRepositoryMock.findOne).toHaveBeenNthCalledWith(1, {
         where: {
           id: 10,
-          userId: 1,
         },
       });
 
@@ -442,7 +582,6 @@ describe('GalleriesService', () => {
       expect(galleriesRepositoryMock.findOne).toHaveBeenNthCalledWith(1, {
         where: {
           id: 10,
-          userId: 1,
         },
       });
 
@@ -457,7 +596,112 @@ describe('GalleriesService', () => {
 
       expect(galleriesRepositoryMock.save).toHaveBeenCalledWith(gallery);
 
-      expect(result).toEqual(gallery);
+      expect(result).toEqual({
+        ...gallery,
+        role: GalleryRole.OWNER,
+      });
+    });
+
+    it('updates gallery when user has editor access', async () => {
+      const gallery = {
+        id: 10,
+        userId: 2,
+        title: 'Shared gallery',
+        description: 'Old description',
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+      };
+
+      const dto = {
+        description: 'Updated by editor',
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue({
+        role: GalleryRole.EDITOR,
+      });
+
+      galleriesRepositoryMock.save.mockResolvedValue(gallery);
+
+      const result = await galleriesService.updateGallery(10, 1, dto);
+
+      expect(galleryAccessRepositoryMock.findOne).toHaveBeenCalledWith({
+        select: {
+          role: true,
+        },
+        where: {
+          galleryId: 10,
+          userId: 1,
+        },
+      });
+
+      expect(gallery.description).toBe('Updated by editor');
+
+      expect(result).toEqual({
+        ...gallery,
+        role: GalleryRole.EDITOR,
+      });
+    });
+
+    it('throws ForbiddenException when viewer tries to update gallery', async () => {
+      const gallery = {
+        id: 10,
+        userId: 2,
+        title: 'Shared gallery',
+        description: 'Shared photos',
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue({
+        role: GalleryRole.VIEWER,
+      });
+
+      const updatePromise = galleriesService.updateGallery(10, 1, {
+        description: 'Updated by viewer',
+      });
+
+      await expect(updatePromise).rejects.toBeInstanceOf(ForbiddenException);
+
+      await expect(updatePromise).rejects.toThrow(
+        'You do not have permission to edit this gallery',
+      );
+
+      expect(galleriesRepositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('checks updated title against gallery owner titles for editor updates', async () => {
+      const gallery = {
+        id: 10,
+        userId: 2,
+        title: 'Shared gallery',
+        description: 'Shared photos',
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+      };
+
+      const dto = {
+        title: 'Travel',
+      };
+
+      galleriesRepositoryMock.findOne
+        .mockResolvedValueOnce(gallery)
+        .mockResolvedValueOnce(null);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue({
+        role: GalleryRole.EDITOR,
+      });
+
+      galleriesRepositoryMock.save.mockResolvedValue(gallery);
+
+      await galleriesService.updateGallery(10, 1, dto);
+
+      expect(galleriesRepositoryMock.findOne).toHaveBeenNthCalledWith(2, {
+        where: {
+          userId: 2,
+          title: dto.title,
+        },
+      });
     });
   });
 
@@ -523,7 +767,7 @@ describe('GalleriesService', () => {
     });
 
     it('throws NotFoundException when gallery does not exist', async () => {
-      galleryQueryBuilderMock.getOne.mockResolvedValue(null);
+      galleriesRepositoryMock.findOne.mockResolvedValue(null);
 
       const removePromise = galleriesService.removeGallery(999, 1);
 
@@ -531,19 +775,7 @@ describe('GalleriesService', () => {
 
       await expect(removePromise).rejects.toThrow('Gallery not found');
 
-      expect(galleryQueryBuilderMock.where).toHaveBeenCalledWith(
-        'gallery.id = :id',
-        {
-          id: 999,
-        },
-      );
-
-      expect(galleryQueryBuilderMock.andWhere).toHaveBeenCalledWith(
-        'gallery.userId = :userId',
-        {
-          userId: 1,
-        },
-      );
+      expect(dataSourceMock.transaction).not.toHaveBeenCalled();
 
       expect(transactionImagesRepositoryMock.find).not.toHaveBeenCalled();
 
@@ -571,6 +803,8 @@ describe('GalleriesService', () => {
           path: '/uploads/nature-2.jpg',
         },
       ];
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
 
       galleryQueryBuilderMock.getOne.mockResolvedValue(gallery);
 
@@ -614,6 +848,8 @@ describe('GalleriesService', () => {
         title: 'Empty gallery',
       };
 
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
       galleryQueryBuilderMock.getOne.mockResolvedValue(gallery);
 
       transactionImagesRepositoryMock.find.mockResolvedValue([]);
@@ -627,6 +863,30 @@ describe('GalleriesService', () => {
       );
 
       expect(removeStoredImageFile).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when non-owner tries to remove gallery', async () => {
+      const gallery = {
+        id: 10,
+        userId: 2,
+        title: 'Shared gallery',
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue({
+        role: GalleryRole.EDITOR,
+      });
+
+      const removePromise = galleriesService.removeGallery(10, 1);
+
+      await expect(removePromise).rejects.toBeInstanceOf(ForbiddenException);
+
+      await expect(removePromise).rejects.toThrow(
+        'Only the gallery owner can delete this gallery',
+      );
+
+      expect(dataSourceMock.transaction).not.toHaveBeenCalled();
     });
   });
 });

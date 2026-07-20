@@ -26,8 +26,8 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
-      request.user = payload;
+      const payload: unknown = await this.jwtService.verifyAsync(token);
+      request.user = this.toJwtPayload(payload);
     } catch {
       throw new UnauthorizedException('Invalid token');
     }
@@ -38,5 +38,27 @@ export class JwtAuthGuard implements CanActivate {
     const [type, token] = request.headers.authorization?.split(' ') ?? [];
 
     return type === 'Bearer' ? token : undefined;
+  }
+
+  private toJwtPayload(payload: unknown): JwtPayload {
+    if (
+      typeof payload !== 'object' ||
+      payload === null ||
+      !('sub' in payload) ||
+      !('email' in payload)
+    ) {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    const sub = Number(payload.sub);
+
+    if (!Number.isInteger(sub) || typeof payload.email !== 'string') {
+      throw new UnauthorizedException('Invalid token');
+    }
+
+    return {
+      sub,
+      email: payload.email,
+    };
   }
 }

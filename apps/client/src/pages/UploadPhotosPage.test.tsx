@@ -52,6 +52,7 @@ const gallery: Gallery = {
   title: "Vacation photos",
   description: "Summer trip",
   userId: 3,
+  role: "owner",
   createdAt: "2026-06-01T10:00:00.000Z",
 };
 
@@ -136,5 +137,25 @@ describe("UploadPhotosPage", () => {
     expect(container.textContent).toContain("Go to my gallery");
     expect(container.textContent).toContain("Back: /galleries/7/edit");
     expect(container.textContent).toContain("Upload form: 7");
+  });
+
+  it("denies access for viewer gallery", () => {
+    useGalleryRouteGalleryMock.mockReturnValue({
+      gallery: {
+        ...gallery,
+        role: "viewer",
+      },
+      numericGalleryId: gallery.id,
+      isValidGalleryId: true,
+      galleryPageState: null,
+    });
+
+    const container = renderPage();
+
+    expect(container.textContent).toContain("Access denied");
+    expect(container.textContent).toContain(
+      "You don’t have permission to upload photos to this gallery.",
+    );
+    expect(container.textContent).not.toContain("Upload form: 7");
   });
 });

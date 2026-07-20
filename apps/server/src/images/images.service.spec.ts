@@ -1,7 +1,12 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 
 import { Gallery } from '../galleries/entities/gallery.entity';
+import type { GalleriesService } from '../galleries/galleries.service';
 import { GalleryImage } from './entities/image.entity';
 import { ImagesService } from './images.service';
 import {
@@ -32,8 +37,9 @@ describe('ImagesService', () => {
     save: jest.Mock;
   };
 
-  let galleriesRepositoryMock: {
-    findOne: jest.Mock;
+  let galleriesServiceMock: {
+    getAccessibleGalleryOrThrow: jest.Mock;
+    getEditableGalleryOrThrow: jest.Mock;
   };
 
   let dataSourceMock: {
@@ -49,8 +55,23 @@ describe('ImagesService', () => {
       save: jest.fn(),
     };
 
-    galleriesRepositoryMock = {
-      findOne: jest.fn(),
+    galleriesServiceMock = {
+      getAccessibleGalleryOrThrow: jest.fn().mockResolvedValue({
+        gallery: {
+          id: 10,
+          userId: 1,
+          title: 'Nature',
+        },
+        role: 'owner',
+      }),
+      getEditableGalleryOrThrow: jest.fn().mockResolvedValue({
+        gallery: {
+          id: 10,
+          userId: 1,
+          title: 'Nature',
+        },
+        role: 'owner',
+      }),
     };
 
     dataSourceMock = {
@@ -59,7 +80,7 @@ describe('ImagesService', () => {
 
     imagesService = new ImagesService(
       imagesRepositoryMock as unknown as Repository<GalleryImage>,
-      galleriesRepositoryMock as unknown as Repository<Gallery>,
+      galleriesServiceMock as unknown as GalleriesService,
       dataSourceMock as unknown as DataSource,
     );
   });
@@ -79,22 +100,13 @@ describe('ImagesService', () => {
         },
       ];
 
-      galleriesRepositoryMock.findOne.mockResolvedValue({
-        id: 10,
-        userId: 1,
-        title: 'Nature',
-      });
-
       imagesRepositoryMock.findAndCount.mockResolvedValue([images, 2]);
 
       const result = await imagesService.findByGallery(10, 1, {});
 
-      expect(galleriesRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: {
-          id: 10,
-          userId: 1,
-        },
-      });
+      expect(
+        galleriesServiceMock.getAccessibleGalleryOrThrow,
+      ).toHaveBeenCalledWith(10, 1);
 
       expect(imagesRepositoryMock.findAndCount).toHaveBeenCalledWith({
         where: {
@@ -117,12 +129,6 @@ describe('ImagesService', () => {
     });
 
     it('uses pagination from query', async () => {
-      galleriesRepositoryMock.findOne.mockResolvedValue({
-        id: 10,
-        userId: 1,
-        title: 'Nature',
-      });
-
       imagesRepositoryMock.findAndCount.mockResolvedValue([[], 12]);
 
       const result = await imagesService.findByGallery(10, 1, {
@@ -151,7 +157,9 @@ describe('ImagesService', () => {
     });
 
     it('throws NotFoundException when gallery does not exist', async () => {
-      galleriesRepositoryMock.findOne.mockResolvedValue(null);
+      galleriesServiceMock.getAccessibleGalleryOrThrow.mockRejectedValue(
+        new NotFoundException('Gallery not found'),
+      );
 
       const findPromise = imagesService.findByGallery(999, 1, {});
 
@@ -159,14 +167,28 @@ describe('ImagesService', () => {
 
       await expect(findPromise).rejects.toThrow('Gallery not found');
 
-      expect(galleriesRepositoryMock.findOne).toHaveBeenCalledWith({
-        where: {
-          id: 999,
-          userId: 1,
-        },
-      });
+      expect(
+        galleriesServiceMock.getAccessibleGalleryOrThrow,
+      ).toHaveBeenCalledWith(999, 1);
 
       expect(imagesRepositoryMock.findAndCount).not.toHaveBeenCalled();
+    });
+
+    it('returns images when shared gallery is accessible', async () => {
+      galleriesServiceMock.getAccessibleGalleryOrThrow.mockResolvedValue({
+        gallery: {
+          id: 10,
+          userId: 2,
+          title: 'Shared gallery',
+        },
+        role: 'viewer',
+      });
+
+      imagesRepositoryMock.findAndCount.mockResolvedValue([[], 0]);
+
+      await imagesService.findByGallery(10, 1, {});
+
+      expect(imagesRepositoryMock.findAndCount).toHaveBeenCalled();
     });
   });
 
@@ -453,6 +475,30 @@ describe('ImagesService', () => {
 
       expect(removeUploadedFiles).toHaveBeenCalledWith(files);
     });
+
+    it('throws ForbiddenException and removes uploaded files when user cannot edit gallery', async () => {
+      const files = [
+        {
+          path: '/tmp/lake.jpg',
+          filename: 'lake.jpg',
+          originalname: 'summer-lake.jpg',
+        },
+      ];
+
+      galleriesServiceMock.getEditableGalleryOrThrow.mockRejectedValue(
+        new ForbiddenException(
+          'You do not have permission to edit this gallery',
+        ),
+      );
+
+      const uploadPromise = imagesService.uploadToGallery(10, 1, files);
+
+      await expect(uploadPromise).rejects.toBeInstanceOf(ForbiddenException);
+
+      expect(dataSourceMock.transaction).not.toHaveBeenCalled();
+
+      expect(removeUploadedFiles).toHaveBeenCalledWith(files);
+    });
   });
 
   describe('updateMetafields', () => {
@@ -479,9 +525,6 @@ describe('ImagesService', () => {
       expect(imagesRepositoryMock.findOne).toHaveBeenCalledWith({
         where: {
           id: 20,
-          gallery: {
-            userId: 1,
-          },
         },
       });
 
@@ -544,6 +587,28 @@ describe('ImagesService', () => {
       await expect(updatePromise).rejects.toBeInstanceOf(NotFoundException);
 
       await expect(updatePromise).rejects.toThrow('Image not found');
+
+      expect(imagesRepositoryMock.save).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when user cannot edit image gallery', async () => {
+      imagesRepositoryMock.findOne.mockResolvedValue({
+        id: 20,
+        galleryId: 10,
+        path: '/uploads/images/nature.jpg',
+      });
+
+      galleriesServiceMock.getEditableGalleryOrThrow.mockRejectedValue(
+        new ForbiddenException(
+          'You do not have permission to edit this gallery',
+        ),
+      );
+
+      const updatePromise = imagesService.updateMetafields(20, 1, {
+        name: 'Updated name',
+      });
+
+      await expect(updatePromise).rejects.toBeInstanceOf(ForbiddenException);
 
       expect(imagesRepositoryMock.save).not.toHaveBeenCalled();
     });
@@ -650,19 +715,9 @@ describe('ImagesService', () => {
         },
       );
 
-      expect(galleryQueryBuilderMock.andWhere).toHaveBeenCalledWith(
-        'gallery.userId = :userId',
-        {
-          userId: 1,
-        },
-      );
-
       expect(transactionImagesRepositoryMock.find).toHaveBeenCalledWith({
         where: {
           id: In([100, 200]),
-          gallery: {
-            userId: 1,
-          },
         },
       });
 
@@ -737,9 +792,6 @@ describe('ImagesService', () => {
       expect(transactionImagesRepositoryMock.find).toHaveBeenCalledWith({
         where: {
           id: In([100, 200]),
-          gallery: {
-            userId: 1,
-          },
         },
       });
 
@@ -945,9 +997,6 @@ describe('ImagesService', () => {
       expect(transactionImagesRepositoryMock.find).toHaveBeenCalledWith({
         where: {
           id: In([100, 200]),
-          gallery: {
-            userId: 1,
-          },
         },
       });
 
@@ -1198,9 +1247,6 @@ describe('ImagesService', () => {
       expect(transactionImagesRepositoryMock.find).toHaveBeenCalledWith({
         where: {
           id: In([100, 200]),
-          gallery: {
-            userId: 1,
-          },
         },
       });
 
@@ -1237,6 +1283,30 @@ describe('ImagesService', () => {
       await expect(deletePromise).rejects.toThrow(
         'One or more images not found',
       );
+
+      expect(transactionImagesRepositoryMock.remove).not.toHaveBeenCalled();
+
+      expect(removeStoredImageFile).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when user cannot edit image gallery', async () => {
+      transactionImagesRepositoryMock.find.mockResolvedValue([
+        {
+          id: 100,
+          galleryId: 10,
+          path: '/uploads/images/nature-1.jpg',
+        },
+      ]);
+
+      galleriesServiceMock.getEditableGalleryOrThrow.mockRejectedValue(
+        new ForbiddenException(
+          'You do not have permission to edit this gallery',
+        ),
+      );
+
+      const deletePromise = imagesService.deleteImages([100], 1);
+
+      await expect(deletePromise).rejects.toBeInstanceOf(ForbiddenException);
 
       expect(transactionImagesRepositoryMock.remove).not.toHaveBeenCalled();
 

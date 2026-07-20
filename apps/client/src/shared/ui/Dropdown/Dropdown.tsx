@@ -13,6 +13,7 @@ type DropdownProps<TValue extends string> = {
   options: DropdownOption<TValue>[];
   ariaLabel: string;
   placeholder?: string;
+  disabled?: boolean;
   onChange: (value: TValue) => void;
 };
 
@@ -21,6 +22,7 @@ export function Dropdown<TValue extends string>({
   options,
   ariaLabel,
   placeholder = "",
+  disabled = false,
   onChange,
 }: DropdownProps<TValue>) {
   const selectedOption = options.find((option) => option.value === value);
@@ -32,7 +34,8 @@ export function Dropdown<TValue extends string>({
         <button
           type="button"
           onClick={toggle}
-          className="flex h-[50px] w-full cursor-pointer items-center justify-between rounded-2xl border border-border-default bg-white px-4 text-left text-sm text-text-main outline-none transition-colors hover:border-brand"
+          disabled={disabled}
+          className="flex h-[50px] w-full cursor-pointer items-center justify-between rounded-2xl border border-border-default bg-white px-4 text-left text-sm text-text-main outline-none transition-colors hover:border-brand disabled:cursor-not-allowed disabled:opacity-60"
           aria-label={ariaLabel}
           aria-expanded={isOpen}
           aria-haspopup="menu"

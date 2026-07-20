@@ -80,8 +80,16 @@ vi.mock("@/features/image/hooks/useUpdateImages", () => ({
 }));
 
 vi.mock("@/features/gallery/components/GalleryDetailsEmptyState", () => ({
-  GalleryDetailsEmptyState: ({ galleryId }: { galleryId: number }) => (
-    <p>Empty gallery: {galleryId}</p>
+  GalleryDetailsEmptyState: ({
+    galleryId,
+    canUpload,
+  }: {
+    galleryId: number;
+    canUpload: boolean;
+  }) => (
+    <p>
+      Empty gallery: {galleryId}, can upload: {String(canUpload)}
+    </p>
   ),
 }));
 
@@ -123,12 +131,14 @@ vi.mock("@/shared/ui/ScrollArea", () => ({
 vi.mock("@/features/image/components/ImageCard", () => ({
   ImageCard: ({
     image,
+    canManage,
     onEditClick,
     onMoveClick,
     onCopyClick,
     onDeleteClick,
   }: {
     image: GalleryImage;
+    canManage: boolean;
     onEditClick: (image: GalleryImage) => void;
     onMoveClick: (image: GalleryImage) => void;
     onCopyClick: (image: GalleryImage) => void;
@@ -136,18 +146,22 @@ vi.mock("@/features/image/components/ImageCard", () => ({
   }) => (
     <article>
       <p>Image card: {image.originalFilename}</p>
-      <button type="button" onClick={() => onEditClick(image)}>
-        Edit image {image.id}
-      </button>
-      <button type="button" onClick={() => onMoveClick(image)}>
-        Move image {image.id}
-      </button>
-      <button type="button" onClick={() => onCopyClick(image)}>
-        Copy image {image.id}
-      </button>
-      <button type="button" onClick={() => onDeleteClick(image)}>
-        Delete image {image.id}
-      </button>
+      {canManage && (
+        <>
+          <button type="button" onClick={() => onEditClick(image)}>
+            Edit image {image.id}
+          </button>
+          <button type="button" onClick={() => onMoveClick(image)}>
+            Move image {image.id}
+          </button>
+          <button type="button" onClick={() => onCopyClick(image)}>
+            Copy image {image.id}
+          </button>
+          <button type="button" onClick={() => onDeleteClick(image)}>
+            Delete image {image.id}
+          </button>
+        </>
+      )}
     </article>
   ),
 }));
@@ -229,6 +243,7 @@ const gallery: Gallery = {
   title: "Vacation photos",
   description: "Summer trip",
   userId: 3,
+  role: "owner",
   createdAt: "2026-06-01T10:00:00.000Z",
 };
 
@@ -488,6 +503,65 @@ describe("GalleryDetailsPage", () => {
     expect(openCopyImageModalMock).toHaveBeenCalledWith(image);
     expect(openDeleteImageModalMock).toHaveBeenCalledWith(image);
     expect(openDeleteAllImagesModalMock).toHaveBeenCalledWith([10, 11]);
+  });
+
+  it("keeps viewer gallery read-only while mobile menu stays available", () => {
+    useGalleryRouteGalleryMock.mockReturnValue({
+      gallery: {
+        ...gallery,
+        role: "viewer",
+      },
+      numericGalleryId: gallery.id,
+      isValidGalleryId: true,
+      galleryPageState: null,
+    });
+
+    useGalleryImagesQueryMock.mockReturnValue({
+      data: imagesResponse,
+      isPending: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useGalleryImagesQuery>);
+
+    const container = renderPage();
+
+    expect(container.textContent).toContain("Image card: photo.jpg");
+    expect(container.textContent).not.toContain(
+      "Upload photos: /galleries/7/upload-photos",
+    );
+    expect(container.textContent).not.toContain("Delete All (2)");
+    expect(container.textContent).not.toContain("Edit image 10");
+    expect(container.textContent).not.toContain("Move image 10");
+    expect(container.textContent).not.toContain("Copy image 10");
+    expect(container.textContent).not.toContain("Delete image 10");
+
+    const openMenuButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Open menu"]',
+    );
+
+    act(() => {
+      openMenuButton?.click();
+    });
+
+    expect(openMobileSidebarMock).toHaveBeenCalledOnce();
+  });
+
+  it("passes read-only state to empty gallery state for viewer", () => {
+    useGalleryRouteGalleryMock.mockReturnValue({
+      gallery: {
+        ...gallery,
+        role: "viewer",
+      },
+      numericGalleryId: gallery.id,
+      isValidGalleryId: true,
+      galleryPageState: null,
+    });
+
+    const container = renderPage();
+
+    expect(container.textContent).toContain("Empty gallery: 7, can upload: false");
+    expect(container.textContent).not.toContain(
+      "Upload photos: /galleries/7/upload-photos",
+    );
   });
 
   it("renders action, edit, delete, and success modals from hook state", () => {

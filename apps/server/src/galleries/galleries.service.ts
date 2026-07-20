@@ -1,19 +1,50 @@
 import {
+  BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Gallery } from './entities/gallery.entity';
-import { DataSource, ILike, In, Repository } from 'typeorm';
-import { UpdateGalleryDto } from './dto/update-gallery.dto';
+import { DataSource, FindOptionsWhere, ILike, In, Repository } from 'typeorm';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
+import {
+  CreateGalleryAccessDto,
+  UpdateGalleryAccessDto,
+} from './dto/gallery-access.dto';
 import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
 import { GalleryListItemResponseDto } from './dto/gallery-list-item-response.dto';
+import { UpdateGalleryDto } from './dto/update-gallery.dto';
+import { GalleryResponseDto } from './dto/gallery-response.dto';
+import { GalleryRole } from './enums/gallery-role.enum';
+import { GalleryAccess } from './entities/gallery-access.entity';
 import { GalleryImage } from '../images/entities/image.entity';
 import { removeStoredImageFile } from '../images/images-storage.utils';
+import { User } from '../users/entities/user.entity';
 
 const GALLERY_PREVIEW_IMAGES_LIMIT = 8;
+
+type GalleryRoleById = Partial<Record<number, GalleryRole>>;
+type ImagesByGalleryId = Partial<Record<number, GalleryImage[]>>;
+type GalleryAccessData = {
+  sharedGalleryIds: number[];
+  roleByGalleryId: GalleryRoleById;
+};
+
+type GalleryListOptions = {
+  page: number;
+  limit: number;
+  sortBy: 'createdAt' | 'title';
+  sortOrder: 'ASC' | 'DESC';
+  search?: string;
+};
+type GalleryListWhere = FindOptionsWhere<Gallery> | FindOptionsWhere<Gallery>[];
+
+type AccessibleGalleryData = {
+  gallery: Gallery;
+  role: GalleryRole;
+};
 
 @Injectable()
 export class GalleriesService {
@@ -21,30 +52,32 @@ export class GalleriesService {
     @InjectRepository(Gallery)
     private readonly galleriesRepository: Repository<Gallery>,
 
+    @InjectRepository(GalleryAccess)
+    private readonly galleryAccessRepository: Repository<GalleryAccess>,
+
     @InjectRepository(GalleryImage)
     private readonly imagesRepository: Repository<GalleryImage>,
+
+    @InjectRepository(User)
+    private readonly usersRepository: Repository<User>,
 
     private readonly dataSource: DataSource,
   ) {}
 
-  async createGallery(userId: number, dto: CreateGalleryDto): Promise<Gallery> {
-    const existingGallery = await this.galleriesRepository.findOne({
-      where: {
-        userId,
-        title: dto.title,
-      },
-    });
-
-    if (existingGallery) {
-      throw new ConflictException('Gallery with this title already exists');
-    }
+  async createGallery(
+    userId: number,
+    dto: CreateGalleryDto,
+  ): Promise<GalleryResponseDto> {
+    await this.ensureGalleryTitleIsAvailable(userId, dto.title);
 
     const gallery = this.galleriesRepository.create({
       ...dto,
       userId,
     });
 
-    return this.galleriesRepository.save(gallery);
+    const savedGallery = await this.galleriesRepository.save(gallery);
+
+    return this.toGalleryResponse(savedGallery, GalleryRole.OWNER);
   }
 
   async findAll(
@@ -56,113 +89,81 @@ export class GalleriesService {
     page: number;
     limit: number;
   }> {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const sortBy = query.sortBy ?? 'createdAt';
-    const sortOrder = query.sortOrder ?? 'DESC';
-    const search = query.search?.trim();
+    const options = this.getGalleryListOptions(query);
+
+    const { sharedGalleryIds, roleByGalleryId } =
+      await this.getGalleryAccessData(userId);
 
     const [galleries, total] = await this.galleriesRepository.findAndCount({
-      where: {
+      where: this.getVisibleGalleriesWhere(
         userId,
-        ...(search ? { title: ILike(`%${search}%`) } : {}),
-      },
+        sharedGalleryIds,
+        options.search,
+      ),
       order: {
-        [sortBy]: sortOrder,
+        [options.sortBy]: options.sortOrder,
       },
-      skip: (page - 1) * limit,
-      take: limit,
+      skip: (options.page - 1) * options.limit,
+      take: options.limit,
     });
 
     const galleryIds = galleries.map((gallery) => gallery.id);
 
-    const images =
-      galleryIds.length > 0
-        ? await this.imagesRepository.find({
-            select: {
-              id: true,
-              galleryId: true,
-              path: true,
-            },
-            where: {
-              galleryId: In(galleryIds),
-            },
-            order: {
-              createdAt: 'DESC',
-            },
-          })
-        : [];
+    const imagesByGalleryId = await this.getImagesByGalleryId(galleryIds);
 
-    const imagesByGalleryId = new Map<number, GalleryImage[]>();
-
-    images.forEach((image) => {
-      const galleryImages = imagesByGalleryId.get(image.galleryId) ?? [];
-
-      galleryImages.push(image);
-      imagesByGalleryId.set(image.galleryId, galleryImages);
-    });
-
-    const items = galleries.map((gallery) => {
-      const galleryImages = imagesByGalleryId.get(gallery.id) ?? [];
-
-      return {
-        ...gallery,
-        photosCount: galleryImages.length,
-        previewImages: galleryImages
-          .slice(0, GALLERY_PREVIEW_IMAGES_LIMIT)
-          .map(({ id, path }) => ({
-            id,
-            path,
-          })),
-      };
-    });
+    const items = galleries.map((gallery) =>
+      this.toGalleryListItem(
+        gallery,
+        userId,
+        roleByGalleryId,
+        imagesByGalleryId,
+      ),
+    );
 
     return {
       items,
       total,
-      page,
-      limit,
+      page: options.page,
+      limit: options.limit,
     };
   }
 
-  async findById(id: number, userId: number): Promise<Gallery> {
-    const gallery = await this.galleriesRepository.findOne({
-      where: { id, userId },
-    });
+  async findById(id: number, userId: number): Promise<GalleryResponseDto> {
+    const { gallery, role } = await this.getAccessibleGalleryOrThrow(
+      id,
+      userId,
+    );
 
-    if (!gallery) {
-      throw new NotFoundException('Gallery not found');
-    }
-
-    return gallery;
+    return this.toGalleryResponse(gallery, role);
   }
 
   async updateGallery(
     id: number,
     userId: number,
     dto: UpdateGalleryDto,
-  ): Promise<Gallery> {
-    const gallery = await this.findById(id, userId);
+  ): Promise<GalleryResponseDto> {
+    const { gallery, role } = await this.getEditableGalleryOrThrow(id, userId);
 
     if (dto.title && dto.title !== gallery.title) {
-      const existingGallery = await this.galleriesRepository.findOne({
-        where: {
-          userId,
-          title: dto.title,
-        },
-      });
-
-      if (existingGallery) {
-        throw new ConflictException('Gallery with this title already exists');
-      }
+      await this.ensureGalleryTitleIsAvailable(gallery.userId, dto.title);
     }
 
     Object.assign(gallery, dto);
 
-    return this.galleriesRepository.save(gallery);
+    const updatedGallery = await this.galleriesRepository.save(gallery);
+
+    return this.toGalleryResponse(updatedGallery, role);
   }
 
   async removeGallery(id: number, userId: number): Promise<void> {
+    const { role } = await this.getAccessibleGalleryOrThrow(id, userId);
+
+    if (role !== GalleryRole.OWNER) {
+      throw new ForbiddenException(
+        'Only the gallery owner can delete this gallery',
+      );
+    }
+
     const imagePaths = await this.dataSource.transaction(async (manager) => {
       const galleriesRepository = manager.getRepository(Gallery);
       const imagesRepository = manager.getRepository(GalleryImage);
@@ -192,5 +193,354 @@ export class GalleriesService {
     await Promise.all(
       imagePaths.map((imagePath) => removeStoredImageFile(imagePath)),
     );
+  }
+
+  async createAccess(
+    galleryId: number,
+    currentUserId: number,
+    dto: CreateGalleryAccessDto,
+  ): Promise<GalleryAccess> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    const targetUser = await this.usersRepository.findOne({
+      where: {
+        email: dto.email,
+      },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (targetUser.id === currentUserId) {
+      throw new BadRequestException('You cannot share a gallery with yourself');
+    }
+
+    const existingAccess = await this.galleryAccessRepository.findOne({
+      where: {
+        galleryId,
+        userId: targetUser.id,
+      },
+    });
+
+    if (existingAccess) {
+      throw new ConflictException('User already has access to this gallery');
+    }
+
+    const access = this.galleryAccessRepository.create({
+      galleryId,
+      userId: targetUser.id,
+      role: dto.role,
+    });
+
+    return this.galleryAccessRepository.save(access);
+  }
+
+  async findAllAccesses(
+    galleryId: number,
+    currentUserId: number,
+  ): Promise<GalleryAccess[]> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    return this.galleryAccessRepository.find({
+      where: {
+        galleryId,
+      },
+      relations: {
+        user: true,
+      },
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+  }
+
+  async updateAccess(
+    galleryId: number,
+    targetUserId: number,
+    currentUserId: number,
+    dto: UpdateGalleryAccessDto,
+  ): Promise<GalleryAccess> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    const access = await this.getAccessOrThrow(galleryId, targetUserId);
+
+    access.role = dto.role;
+
+    return this.galleryAccessRepository.save(access);
+  }
+
+  async removeAccess(
+    galleryId: number,
+    targetUserId: number,
+    currentUserId: number,
+  ): Promise<void> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    const access = await this.getAccessOrThrow(galleryId, targetUserId);
+
+    await this.galleryAccessRepository.remove(access);
+  }
+
+  async getAccessibleGalleryOrThrow(
+    galleryId: number,
+    userId: number,
+  ): Promise<AccessibleGalleryData> {
+    const gallery = await this.galleriesRepository.findOne({
+      where: {
+        id: galleryId,
+      },
+    });
+
+    if (!gallery) {
+      throw new NotFoundException('Gallery not found');
+    }
+
+    if (gallery.userId === userId) {
+      return {
+        gallery,
+        role: GalleryRole.OWNER,
+      };
+    }
+
+    const access = await this.galleryAccessRepository.findOne({
+      select: {
+        role: true,
+      },
+      where: {
+        galleryId,
+        userId,
+      },
+    });
+
+    if (!access) {
+      throw new NotFoundException('Gallery not found');
+    }
+
+    return {
+      gallery,
+      role: access.role,
+    };
+  }
+
+  async getEditableGalleryOrThrow(
+    galleryId: number,
+    userId: number,
+  ): Promise<AccessibleGalleryData> {
+    const accessibleGallery = await this.getAccessibleGalleryOrThrow(
+      galleryId,
+      userId,
+    );
+
+    if (accessibleGallery.role === GalleryRole.VIEWER) {
+      throw new ForbiddenException(
+        'You do not have permission to edit this gallery',
+      );
+    }
+
+    return accessibleGallery;
+  }
+
+  private async getGalleryAccessData(
+    userId: number,
+  ): Promise<GalleryAccessData> {
+    const accesses = await this.galleryAccessRepository.find({
+      select: {
+        galleryId: true,
+        role: true,
+      },
+      where: {
+        userId,
+      },
+    });
+
+    const sharedGalleryIds = accesses.map((access) => access.galleryId);
+
+    const roleByGalleryId = Object.fromEntries(
+      accesses.map((access) => [access.galleryId, access.role]),
+    ) as GalleryRoleById;
+
+    return {
+      sharedGalleryIds,
+      roleByGalleryId,
+    };
+  }
+
+  private getGalleryListOptions(
+    query: GetGalleriesQueryDto,
+  ): GalleryListOptions {
+    return {
+      page: query.page ?? 1,
+      limit: query.limit ?? 10,
+      sortBy: query.sortBy ?? 'createdAt',
+      sortOrder: query.sortOrder ?? 'DESC',
+      search: query.search?.trim(),
+    };
+  }
+
+  private getVisibleGalleriesWhere(
+    userId: number,
+    sharedGalleryIds: number[],
+    search?: string,
+  ): GalleryListWhere {
+    const searchCondition = search
+      ? {
+          title: ILike(`%${search}%`),
+        }
+      : {};
+
+    if (sharedGalleryIds.length === 0) {
+      return {
+        userId,
+        ...searchCondition,
+      };
+    }
+
+    return [
+      {
+        userId,
+        ...searchCondition,
+      },
+      {
+        id: In(sharedGalleryIds),
+        ...searchCondition,
+      },
+    ];
+  }
+
+  private async getImagesByGalleryId(
+    galleryIds: number[],
+  ): Promise<ImagesByGalleryId> {
+    if (galleryIds.length === 0) {
+      return {};
+    }
+
+    const images = await this.imagesRepository.find({
+      select: {
+        id: true,
+        galleryId: true,
+        path: true,
+      },
+      where: {
+        galleryId: In(galleryIds),
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    return images.reduce<ImagesByGalleryId>((imagesByGalleryId, image) => {
+      const galleryImages = imagesByGalleryId[image.galleryId] ?? [];
+
+      galleryImages.push(image);
+      imagesByGalleryId[image.galleryId] = galleryImages;
+
+      return imagesByGalleryId;
+    }, {});
+  }
+
+  private getGalleryRole(
+    gallery: Gallery,
+    currentUserId: number,
+    roleByGalleryId: GalleryRoleById,
+  ): GalleryRole {
+    if (gallery.userId === currentUserId) {
+      return GalleryRole.OWNER;
+    }
+
+    const role = roleByGalleryId[gallery.id];
+
+    if (!role) {
+      throw new NotFoundException('Gallery access not found');
+    }
+
+    return role;
+  }
+
+  private toGalleryListItem(
+    gallery: Gallery,
+    currentUserId: number,
+    roleByGalleryId: GalleryRoleById,
+    imagesByGalleryId: ImagesByGalleryId,
+  ): GalleryListItemResponseDto {
+    const galleryImages = imagesByGalleryId[gallery.id] ?? [];
+    const role = this.getGalleryRole(gallery, currentUserId, roleByGalleryId);
+
+    return {
+      ...this.toGalleryResponse(gallery, role),
+      photosCount: galleryImages.length,
+      previewImages: galleryImages
+        .slice(0, GALLERY_PREVIEW_IMAGES_LIMIT)
+        .map(({ id, path }) => ({
+          id,
+          path,
+        })),
+    };
+  }
+
+  private toGalleryResponse(
+    gallery: Gallery,
+    role: GalleryRole,
+  ): GalleryResponseDto {
+    return {
+      id: gallery.id,
+      title: gallery.title,
+      description: gallery.description,
+      userId: gallery.userId,
+      createdAt: gallery.createdAt,
+      role,
+    };
+  }
+
+  private async getOwnedGalleryOrThrow(
+    galleryId: number,
+    userId: number,
+  ): Promise<Gallery> {
+    const gallery = await this.galleriesRepository.findOne({
+      where: {
+        id: galleryId,
+        userId,
+      },
+    });
+
+    if (!gallery) {
+      throw new NotFoundException('Gallery not found');
+    }
+
+    return gallery;
+  }
+
+  private async ensureGalleryTitleIsAvailable(
+    userId: number,
+    title: string,
+  ): Promise<void> {
+    const existingGallery = await this.galleriesRepository.findOne({
+      where: {
+        userId,
+        title,
+      },
+    });
+
+    if (existingGallery) {
+      throw new ConflictException('Gallery with this title already exists');
+    }
+  }
+
+  private async getAccessOrThrow(
+    galleryId: number,
+    userId: number,
+  ): Promise<GalleryAccess> {
+    const access = await this.galleryAccessRepository.findOne({
+      where: {
+        galleryId,
+        userId,
+      },
+    });
+
+    if (!access) {
+      throw new NotFoundException('Gallery access not found');
+    }
+
+    return access;
   }
 }

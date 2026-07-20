@@ -2,22 +2,44 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   createGallery,
+  createGalleryAccess,
   deleteGallery,
+  deleteGalleryAccess,
   getGalleries,
+  getGalleryAccesses,
   getGalleryById,
   updateGallery,
+  updateGalleryAccess,
 } from "./galleryApi";
 
 import type {
+  CreateGalleryAccessPayload,
   CreateGalleryPayload,
   GalleryListItem,
   GetGalleriesParams,
+  UpdateGalleryAccessPayload,
   UpdateGalleryPayload,
 } from "./types";
 
 type UpdateGalleryVariables = {
   id: number;
   payload: UpdateGalleryPayload;
+};
+
+type CreateGalleryAccessVariables = {
+  galleryId: number;
+  payload: CreateGalleryAccessPayload;
+};
+
+type UpdateGalleryAccessVariables = {
+  galleryId: number;
+  userId: number;
+  payload: UpdateGalleryAccessPayload;
+};
+
+type DeleteGalleryAccessVariables = {
+  galleryId: number;
+  userId: number;
 };
 
 export const galleryQueryKeys = {
@@ -35,6 +57,9 @@ export const galleryQueryKeys = {
 
   details: () => [...galleryQueryKeys.all, "detail"] as const,
   detail: (id: number) => [...galleryQueryKeys.details(), id] as const,
+  accesses: () => [...galleryQueryKeys.all, "access"] as const,
+  accessList: (galleryId: number) =>
+    [...galleryQueryKeys.accesses(), galleryId] as const,
 };
 
 const ALL_GALLERIES_PAGE_LIMIT = 50;
@@ -135,6 +160,60 @@ export const useDeleteGalleryMutation = () => {
 
       queryClient.removeQueries({
         queryKey: galleryQueryKeys.detail(id),
+      });
+    },
+  });
+};
+
+export const useGalleryAccessesQuery = (galleryId: number, enabled = true) =>
+  useQuery({
+    queryKey: galleryQueryKeys.accessList(galleryId),
+    queryFn: () => getGalleryAccesses(galleryId),
+    enabled,
+    retry: false,
+  });
+
+export const useCreateGalleryAccessMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ galleryId, payload }: CreateGalleryAccessVariables) =>
+      createGalleryAccess(galleryId, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.accessList(variables.galleryId),
+      });
+    },
+  });
+};
+
+export const useUpdateGalleryAccessMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      galleryId,
+      userId,
+      payload,
+    }: UpdateGalleryAccessVariables) =>
+      updateGalleryAccess(galleryId, userId, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.accessList(variables.galleryId),
+      });
+    },
+  });
+};
+
+export const useDeleteGalleryAccessMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ galleryId, userId }: DeleteGalleryAccessVariables) =>
+      deleteGalleryAccess(galleryId, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.accessList(variables.galleryId),
       });
     },
   });

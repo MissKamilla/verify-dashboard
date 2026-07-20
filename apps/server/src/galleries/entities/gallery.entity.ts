@@ -9,8 +9,9 @@ import {
   Unique,
 } from 'typeorm';
 
-import { User } from '../../users/entities/user.entity';
 import { GalleryImage } from '../../images/entities/image.entity';
+import { User } from '../../users/entities/user.entity';
+import { GalleryAccess } from './gallery-access.entity';
 
 @Entity('galleries')
 @Unique(['userId', 'title'])
@@ -27,13 +28,19 @@ export class Gallery {
   @Column({ name: 'user_id' })
   userId!: number;
 
-  @ManyToOne(() => User, (user) => user.galleries, { onDelete: 'CASCADE' })
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
+
+  // relations
+  @ManyToOne(() => User, (user) => user.galleries, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
   @OneToMany(() => GalleryImage, (image) => image.gallery)
   images!: GalleryImage[];
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt!: Date;
+  @OneToMany(() => GalleryAccess, (access) => access.gallery)
+  accesses!: GalleryAccess[];
 }

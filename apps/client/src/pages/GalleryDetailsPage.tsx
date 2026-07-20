@@ -123,6 +123,10 @@ export function GalleryDetailsPage() {
     return null;
   }
 
+  const canManageGallery = gallery.role !== "viewer";
+
+  const editableGalleries = galleries.filter((item) => item.role !== "viewer");
+
   return (
     <section className="flex h-[calc(100vh-60px)] min-h-0 flex-col overflow-hidden">
       <header className="mb-[13px] flex min-h-[94px] shrink-0 items-center justify-between gap-4 rounded-2xl bg-page-bg/50 backdrop-blur-[20px]">
@@ -130,12 +134,13 @@ export function GalleryDetailsPage() {
           Gallery
         </h1>
 
-        <GalleryActionLink
-          to={`/galleries/${numericGalleryId}/upload-photos`}
-          label="Upload photos"
-          className="hidden min-h-[50px] w-[180px] shrink-0 text-base leading-normal active:bg-brand-active lg:flex"
-        />
-
+        {canManageGallery && (
+          <GalleryActionLink
+            to={`/galleries/${numericGalleryId}/upload-photos`}
+            label="Upload photos"
+            className="hidden min-h-[50px] w-[180px] shrink-0 text-base leading-normal active:bg-brand-active lg:flex"
+          />
+        )}
         <button
           type="button"
           onClick={openMobileSidebar}
@@ -145,11 +150,13 @@ export function GalleryDetailsPage() {
           <Icon src={burgerIconUrl} className="h-6 w-6" />
         </button>
       </header>
-      <GalleryActionLink
-        to={`/galleries/${numericGalleryId}/upload-photos`}
-        label="Upload photos"
-        className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-base leading-normal active:bg-brand-active lg:hidden"
-      />
+      {canManageGallery && (
+        <GalleryActionLink
+          to={`/galleries/${numericGalleryId}/upload-photos`}
+          label="Upload photos"
+          className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-base leading-normal active:bg-brand-active lg:hidden"
+        />
+      )}
       <ScrollArea
         itemsCount={imagesCount}
         trackBottomOffset={70}
@@ -174,7 +181,10 @@ export function GalleryDetailsPage() {
               Failed to load photos. Please try again.
             </p>
           ) : !hasImages ? (
-            <GalleryDetailsEmptyState galleryId={numericGalleryId} />
+            <GalleryDetailsEmptyState
+              galleryId={numericGalleryId}
+              canUpload={canManageGallery}
+            />
           ) : (
             <>
               <div className="mt-[30px]">
@@ -189,6 +199,7 @@ export function GalleryDetailsPage() {
                     <ImageCard
                       key={image.id}
                       image={image}
+                      canManage={canManageGallery}
                       onEditClick={openEditImageModal}
                       onMoveClick={openMoveImageModal}
                       onCopyClick={openCopyImageModal}
@@ -198,16 +209,18 @@ export function GalleryDetailsPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() =>
-                  openDeleteAllImagesModal(images.map((image) => image.id))
-                }
-                disabled={isDeleting}
-                className="relative z-20 mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
-              >
-                Delete All ({imagesCount})
-              </button>
+              {canManageGallery && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    openDeleteAllImagesModal(images.map((image) => image.id))
+                  }
+                  disabled={isDeleting}
+                  className="relative z-20 mt-10 cursor-pointer text-base font-bold leading-normal text-brand hover:text-brand-active"
+                >
+                  Delete All ({imagesCount})
+                </button>
+              )}
             </>
           )}
         </div>
@@ -232,7 +245,7 @@ export function GalleryDetailsPage() {
         <ImageGalleryActionModal
           isOpen={isImageGalleryActionModalOpen}
           imageAction={activeImageGalleryAction}
-          galleries={galleries}
+          galleries={editableGalleries}
           currentGalleryId={numericGalleryId}
           selectedGalleryId={selectedTargetGalleryId}
           isLoading={areGalleriesPending}

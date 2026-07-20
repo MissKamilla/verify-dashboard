@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+import { GalleryAccess } from '../../galleries/entities/gallery-access.entity';
 import { Gallery } from '../../galleries/entities/gallery.entity';
 
 @Entity('users')
@@ -25,9 +26,13 @@ export class User {
   @Column({ select: false })
   password!: string;
 
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt!: Date;
+
+  // relations
   @OneToMany(() => Gallery, (gallery) => gallery.user)
   galleries!: Gallery[];
 
-  @CreateDateColumn({ name: 'created_at' })
-  createdAt!: Date;
+  @OneToMany(() => GalleryAccess, (access) => access.user)
+  galleryAccesses!: GalleryAccess[];
 }

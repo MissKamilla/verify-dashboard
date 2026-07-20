@@ -3,6 +3,8 @@ import { GalleryWorkflowPageLayout } from "@/features/gallery/components/Gallery
 import { useGalleryRouteGallery } from "@/features/gallery/hooks/useGalleryRouteGallery";
 import { ImageUploadForm } from "@/features/image/components/ImageUploadForm";
 
+import { PageError } from "@/shared/ui/PageError";
+
 export function UploadPhotosPage() {
   const { gallery, numericGalleryId, galleryPageState } =
     useGalleryRouteGallery();
@@ -13,6 +15,15 @@ export function UploadPhotosPage() {
 
   if (!gallery) {
     return null;
+  }
+
+  if (gallery.role === "viewer") {
+    return (
+      <PageError
+        title="Access denied"
+        description="You don’t have permission to upload photos to this gallery."
+      />
+    );
   }
 
   return (
