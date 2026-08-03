@@ -9,6 +9,7 @@ import { useAllGalleriesQuery } from "@/features/gallery/galleryQueries";
 import { GalleryDetailsEmptyState } from "@/features/gallery/components/GalleryDetailsEmptyState";
 import { GalleryActionLink } from "@/features/gallery/components/GalleryActionLink";
 import { GalleryBackLink } from "@/features/gallery/components/GalleryBackLink";
+import { GalleryShareModal } from "@/features/gallery/components/GalleryShareModal";
 import { useGalleryRouteGallery } from "@/features/gallery/hooks/useGalleryRouteGallery";
 import { ScrollArea } from "@/shared/ui/ScrollArea";
 import { DeleteImagesModal } from "@/features/image/components/DeleteImagesModal";
@@ -30,9 +31,13 @@ const GALLERY_IMAGES_QUERY_PARAMS = {
   limit: 50,
 } satisfies GetImagesParams;
 
+const shareButtonBaseClassName =
+  "flex min-h-[50px] cursor-pointer items-center justify-center rounded-2xl border border-brand text-base font-bold leading-normal text-brand transition-colors hover:border-avatar hover:bg-avatar hover:text-white active:bg-brand-active";
+
 export function GalleryDetailsPage() {
   const { openMobileSidebar } = useOutletContext<AuthenticatedLayoutContext>();
 
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [successModalDescription, setSuccessModalDescription] = useState<
     string | null
   >(null);
@@ -123,6 +128,7 @@ export function GalleryDetailsPage() {
     return null;
   }
 
+  const canShareGallery = gallery.role === "owner";
   const canManageGallery = gallery.role !== "viewer";
 
   const editableGalleries = galleries.filter((item) => item.role !== "viewer");
@@ -135,12 +141,25 @@ export function GalleryDetailsPage() {
         </h1>
 
         {canManageGallery && (
-          <GalleryActionLink
-            to={`/galleries/${numericGalleryId}/upload-photos`}
-            label="Upload photos"
-            className="hidden min-h-[50px] w-[180px] shrink-0 text-base leading-normal active:bg-brand-active lg:flex"
-          />
+          <div className="hidden items-center gap-3 lg:flex">
+            {canShareGallery && (
+              <button
+                type="button"
+                onClick={() => setIsShareModalOpen(true)}
+                className={`${shareButtonBaseClassName} w-[180px] shrink-0`}
+              >
+                Share
+              </button>
+            )}
+
+            <GalleryActionLink
+              to={`/galleries/${numericGalleryId}/upload-photos`}
+              label="Upload photos"
+              className="flex min-h-[50px] w-[180px] shrink-0 text-base leading-normal active:bg-brand-active"
+            />
+          </div>
         )}
+
         <button
           type="button"
           onClick={openMobileSidebar}
@@ -150,13 +169,27 @@ export function GalleryDetailsPage() {
           <Icon src={burgerIconUrl} className="h-6 w-6" />
         </button>
       </header>
+
       {canManageGallery && (
-        <GalleryActionLink
-          to={`/galleries/${numericGalleryId}/upload-photos`}
-          label="Upload photos"
-          className="mb-[13px] flex min-h-[50px] w-full shrink-0 text-base leading-normal active:bg-brand-active lg:hidden"
-        />
+        <div className="mb-[13px] flex shrink-0 gap-3 lg:hidden">
+          {canShareGallery && (
+            <button
+              type="button"
+              onClick={() => setIsShareModalOpen(true)}
+              className={`${shareButtonBaseClassName} flex-1`}
+            >
+              Share
+            </button>
+          )}
+
+          <GalleryActionLink
+            to={`/galleries/${numericGalleryId}/upload-photos`}
+            label="Upload photos"
+            className="flex min-h-[50px] flex-1 text-base leading-normal active:bg-brand-active"
+          />
+        </div>
       )}
+
       <ScrollArea
         itemsCount={imagesCount}
         trackBottomOffset={70}
@@ -265,6 +298,15 @@ export function GalleryDetailsPage() {
         onConfirm={confirmDeleteImages}
         onClose={closeDeleteImagesModal}
       />
+
+      {canShareGallery && (
+        <GalleryShareModal
+          isOpen={isShareModalOpen}
+          galleryId={numericGalleryId}
+          galleryTitle={gallery.title}
+          onClose={() => setIsShareModalOpen(false)}
+        />
+      )}
 
       <SuccessModal
         isOpen={Boolean(successModalDescription)}
