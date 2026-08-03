@@ -11,6 +11,7 @@ type GalleriesListProps = {
   totalPages: number;
   pageLimit: number;
   onPageChange: (page: number) => void;
+  onShareClick: (gallery: Gallery) => void;
   onDeleteClick: (gallery: Gallery) => void;
 };
 
@@ -21,6 +22,7 @@ export function GalleriesList({
   totalPages,
   pageLimit,
   onPageChange,
+  onShareClick,
   onDeleteClick,
 }: GalleriesListProps) {
   return (
@@ -44,6 +46,7 @@ export function GalleriesList({
             <GalleryCard
               key={gallery.id}
               gallery={gallery}
+              onShareClick={onShareClick}
               onDeleteClick={onDeleteClick}
             />
           ))}

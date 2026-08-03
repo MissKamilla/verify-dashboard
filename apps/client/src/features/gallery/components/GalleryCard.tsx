@@ -8,10 +8,15 @@ import { GalleryRoleBadge } from "./GalleryRoleBadge";
 
 type GalleryCardProps = {
   gallery: GalleryListItem;
+  onShareClick: (gallery: Gallery) => void;
   onDeleteClick: (gallery: Gallery) => void;
 };
 
-export function GalleryCard({ gallery, onDeleteClick }: GalleryCardProps) {
+export function GalleryCard({
+  gallery,
+  onShareClick,
+  onDeleteClick,
+}: GalleryCardProps) {
   const photosLabel = gallery.photosCount === 1 ? "photo" : "photos";
   return (
     <article className="relative min-w-0">
@@ -39,7 +44,11 @@ export function GalleryCard({ gallery, onDeleteClick }: GalleryCardProps) {
 
       {gallery.role !== "viewer" && (
         <div className="absolute -right-2 -top-2">
-          <GalleryActionsMenu gallery={gallery} onDeleteClick={onDeleteClick} />
+          <GalleryActionsMenu
+            gallery={gallery}
+            onShareClick={onShareClick}
+            onDeleteClick={onDeleteClick}
+          />
         </div>
       )}
     </article>

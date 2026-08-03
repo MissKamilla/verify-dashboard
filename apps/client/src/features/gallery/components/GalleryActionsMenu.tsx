@@ -1,7 +1,9 @@
 import { useState } from "react";
-import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
+
 import actionDeleteIconUrl from "@/assets/icons/action-delete.svg";
 import actionEditIconUrl from "@/assets/icons/action-edit.svg";
+import actionShareIconUrl from "@/assets/icons/action-share.svg";
+import dotsVerticalIconUrl from "@/assets/icons/dots-vertical.svg";
 
 import { DropdownMenu, DropdownMenuItem } from "@/shared/ui/Dropdown";
 
@@ -11,11 +13,13 @@ import { GalleryMobileActionsSheet } from "./GalleryMobileActionsSheet";
 
 type GalleryActionsMenuProps = {
   gallery: Gallery;
+  onShareClick: (gallery: Gallery) => void;
   onDeleteClick: (gallery: Gallery) => void;
 };
 
 export function GalleryActionsMenu({
   gallery,
+  onShareClick,
   onDeleteClick,
 }: GalleryActionsMenuProps) {
   const [isMobileActionsOpen, setIsMobileActionsOpen] = useState(false);
@@ -61,6 +65,18 @@ export function GalleryActionsMenu({
       >
         {({ close }) => (
           <>
+            {gallery.role === "owner" && (
+              <DropdownMenuItem
+                iconSrc={actionShareIconUrl}
+                onClick={() => {
+                  close();
+                  onShareClick(gallery);
+                }}
+              >
+                Share
+              </DropdownMenuItem>
+            )}
+
             <DropdownMenuItem
               to={`/galleries/${gallery.id}/edit`}
               iconSrc={actionEditIconUrl}
@@ -87,8 +103,10 @@ export function GalleryActionsMenu({
       <GalleryMobileActionsSheet
         galleryId={gallery.id}
         isOpen={isMobileActionsOpen}
+        canShare={gallery.role === "owner"}
         canDelete={gallery.role === "owner"}
         onClose={() => setIsMobileActionsOpen(false)}
+        onShareClick={() => onShareClick(gallery)}
         onDeleteClick={() => onDeleteClick(gallery)}
       />
     </>
