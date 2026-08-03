@@ -151,4 +151,57 @@ describe("Modal", () => {
 
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it("only lets the top modal close from overlay or Escape", () => {
+    const parentOnClose = vi.fn();
+    const childOnClose = vi.fn();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+
+    const root = createRoot(container);
+
+    act(() => {
+      root.render(
+        createElement(
+          "div",
+          null,
+          createElement(Modal, {
+            isOpen: true,
+            titleId: "parent-modal-title",
+            onClose: parentOnClose,
+            children: createElement(
+              "h2",
+              { id: "parent-modal-title" },
+              "Parent modal",
+            ),
+          }),
+          createElement(Modal, {
+            isOpen: true,
+            titleId: "child-modal-title",
+            onClose: childOnClose,
+            children: createElement(
+              "h2",
+              { id: "child-modal-title" },
+              "Child modal",
+            ),
+          }),
+        ),
+      );
+    });
+
+    const dialogs = container.querySelectorAll("[role='dialog']");
+    const parentOverlay = dialogs[0]?.parentElement;
+
+    parentOverlay?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+
+    expect(parentOnClose).not.toHaveBeenCalled();
+    expect(childOnClose).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      root.unmount();
+    });
+
+    container.remove();
+  });
 });

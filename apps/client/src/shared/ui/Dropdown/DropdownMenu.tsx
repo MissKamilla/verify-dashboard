@@ -1,6 +1,11 @@
-import { useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router";
+
+import {
+  useAnchoredPopupPosition,
+  type AnchoredPopupAlign,
+} from "@/shared/lib/useAnchoredPopupPosition";
 
 import { usePopupDismiss } from "@/shared/lib/usePopupDismiss";
 import { Icon } from "@/shared/ui/Icon";
@@ -16,6 +21,8 @@ type DropdownMenuProps = {
   children: (props: { close: () => void }) => ReactNode;
   menuClassName: string;
   rootClassName?: string;
+  renderInPortal?: boolean;
+  portalAlign?: AnchoredPopupAlign;
 };
 
 type DropdownMenuItemProps = {
@@ -35,27 +42,44 @@ export function DropdownMenu({
   children,
   menuClassName,
   rootClassName = "relative",
+  renderInPortal = false,
+  portalAlign = "start",
 }: DropdownMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const portalStyle = useAnchoredPopupPosition({
+    anchorRef: rootRef,
+    popupRef: menuRef,
+    enabled: isOpen && renderInPortal,
+    align: portalAlign,
+  });
 
   const close = () => setIsOpen(false);
   const toggle = () => setIsOpen((currentValue) => !currentValue);
 
-  usePopupDismiss(rootRef, close, isOpen);
+  usePopupDismiss(rootRef, close, isOpen, menuRef);
+
+  const menu = isOpen ? (
+    <div
+      ref={menuRef}
+      role="menu"
+      style={renderInPortal ? portalStyle : undefined}
+      className={`${
+        renderInPortal ? "fixed" : "absolute"
+      } overflow-hidden bg-white shadow-card ${menuClassName}`}
+    >
+      {children({ close })}
+    </div>
+  ) : null;
 
   return (
     <div ref={rootRef} className={rootClassName}>
       {trigger({ isOpen, toggle, close })}
 
-      {isOpen && (
-        <div
-          role="menu"
-          className={`absolute overflow-hidden bg-white shadow-card ${menuClassName}`}
-        >
-          {children({ close })}
-        </div>
-      )}
+      {renderInPortal && menu ? createPortal(menu, document.body) : menu}
     </div>
   );
 }
