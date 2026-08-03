@@ -43,6 +43,7 @@ const renderCard = (galleryOverride: Partial<GalleryListItem> = {}) => {
       <MemoryRouter>
         <GalleryCard
           gallery={{ ...gallery, ...galleryOverride }}
+          onShareClick={vi.fn()}
           onDeleteClick={vi.fn()}
         />
       </MemoryRouter>,
