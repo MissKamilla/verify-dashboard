@@ -111,7 +111,9 @@ export function GalleryAccessRow({ access }: GalleryAccessRowProps) {
 
         <DropdownMenu
           rootClassName="relative w-[180px] max-w-full md:w-auto"
-          menuClassName="right-0 top-10 z-30 w-[132px] rounded-2xl"
+          menuClassName="z-[60] w-[132px] rounded-2xl"
+          renderInPortal
+          portalAlign="end"
           trigger={({ isOpen, toggle }) => (
             <button
               type="button"
@@ -155,7 +157,9 @@ export function GalleryAccessRow({ access }: GalleryAccessRowProps) {
       <div className="col-start-2 flex items-end justify-center md:col-auto md:items-center">
         <DropdownMenu
           rootClassName="relative inline-block"
-          menuClassName="right-0 top-9 z-30 w-[132px] rounded-2xl"
+          menuClassName="z-[60] w-[132px] rounded-2xl"
+          renderInPortal
+          portalAlign="end"
           trigger={({ isOpen, toggle }) => (
             <button
               type="button"

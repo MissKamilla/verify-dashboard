@@ -9,6 +9,7 @@ import type {
 import { validateGalleryAccessForm } from "@/features/gallery/validateGalleryAccessForm";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
+import { isValidEmail } from "@/shared/lib/validationRules";
 import { Dropdown, type DropdownOption } from "@/shared/ui/Dropdown";
 import { FormInputField } from "@/shared/ui/FormInputField";
 import { FormSubmitButton } from "@/shared/ui/FormSubmitButton";
@@ -20,10 +21,10 @@ type GalleryAccessFormProps = {
 
 const initialValues: GalleryAccessFormValues = {
   email: "",
-  role: "",
+  role: "viewer",
 };
 
-const roleOptions: DropdownOption<GalleryAccessFormValues["role"]>[] = [
+const roleOptions: DropdownOption<GalleryAccessRole>[] = [
   {
     value: "editor",
     label: "Editor",
@@ -36,6 +37,7 @@ const roleOptions: DropdownOption<GalleryAccessFormValues["role"]>[] = [
 
 export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
   const [apiError, setApiError] = useState("");
+  const [sendNotification, setSendNotification] = useState(false);
 
   const createAccessMutation = useCreateGalleryAccessMutation();
 
@@ -54,11 +56,12 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
         galleryId,
         payload: {
           email: values.email.trim(),
-          role: values.role as GalleryAccessRole,
+          role: values.role,
         },
       });
 
       resetForm();
+      setSendNotification(false);
     } catch (error) {
       setApiError(getApiErrorMessage(error));
     }
@@ -81,19 +84,24 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
           handleChange,
           handleBlur,
           setFieldValue,
-          setFieldTouched,
           isSubmitting,
         }) => {
+          const trimmedEmail = values.email.trim();
+          const isEmailValid = isValidEmail(trimmedEmail);
+
           const isDisabled = createAccessMutation.isPending || isSubmitting;
 
           return (
-            <Form noValidate className="flex flex-col gap-6">
+            <Form noValidate className="flex flex-col gap-4">
               <FormInputField
                 label="Email"
                 type="email"
                 name="email"
                 value={values.email}
-                onChange={handleChange}
+                onChange={(event) => {
+                  handleChange(event);
+                  setApiError("");
+                }}
                 onBlur={handleBlur}
                 error={touched.email ? errors.email : undefined}
                 placeholder="user@example.com"
@@ -102,45 +110,73 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
                 required
               />
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-medium leading-none text-text-main">
-                  Role <span className="text-error">*</span>
-                </label>
-
-                <Dropdown
-                  value={values.role}
-                  options={roleOptions}
-                  placeholder="Select a role"
-                  ariaLabel="Select user role"
-                  disabled={isDisabled}
-                  onChange={(role) => {
-                    void setFieldValue("role", role);
-                    void setFieldTouched("role", true, false);
-                  }}
-                />
-
-                {touched.role && errors.role && (
-                  <p
-                    role="alert"
-                    className="text-xs font-normal leading-6 text-error"
-                  >
-                    {errors.role}
-                  </p>
-                )}
-              </div>
-
-              {apiError && (
-                <p
-                  role="alert"
-                  aria-live="polite"
-                  className="text-sm text-error"
+              <div
+                aria-hidden={!isEmailValid}
+                className={`grid transition-[grid-template-rows,opacity,margin-top] duration-300 ease-out ${
+                  isEmailValid
+                    ? "mt-4 grid-rows-[1fr] opacity-100"
+                    : "pointer-events-none mt-0 grid-rows-[0fr] opacity-0"
+                }`}
+              >
+                <div
+                  className={`min-h-0 ${
+                    isEmailValid ? "overflow-visible" : "overflow-hidden"
+                  }`}
                 >
-                  {apiError}
-                </p>
-              )}
+                  <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div className="min-w-0 flex-1">
+                      <label className="mb-2 block text-sm font-medium leading-none text-text-main">
+                        Role
+                      </label>
 
-              <div className="ml-auto w-full lg:w-[180px]">
-                <FormSubmitButton text="Grant access" disabled={isDisabled} />
+                      <Dropdown
+                        value={values.role}
+                        options={roleOptions}
+                        ariaLabel="Select user role"
+                        disabled={isDisabled || !isEmailValid}
+                        onChange={(role) => {
+                          setApiError("");
+                          void setFieldValue("role", role);
+                        }}
+                      />
+                    </div>
+
+                    <label className="group flex min-h-[50px] cursor-pointer items-center gap-3 text-sm text-text-main">
+                      <input
+                        type="checkbox"
+                        checked={sendNotification}
+                        disabled={isDisabled || !isEmailValid}
+                        onChange={(event) =>
+                          setSendNotification(event.target.checked)
+                        }
+                        className="peer sr-only"
+                      />
+
+                      <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-border-default bg-white transition-colors peer-checked:border-brand peer-checked:bg-brand peer-disabled:opacity-60 group-hover:border-brand">
+                        <span className="absolute left-1/2 top-1/2 h-2.5 w-1.5 -translate-x-1/2 -translate-y-[60%] rotate-45 border-b-2 border-r-2 border-white opacity-0 transition-opacity group-has-[:checked]:opacity-100" />
+                      </span>
+
+                      Send notification
+                    </label>
+                  </div>
+
+                  {apiError && (
+                    <p
+                      role="alert"
+                      aria-live="polite"
+                      className="mt-4 text-sm text-error"
+                    >
+                      {apiError}
+                    </p>
+                  )}
+
+                  <div className="mt-4 ml-auto w-full md:w-[180px]">
+                    <FormSubmitButton
+                      text="Share"
+                      disabled={isDisabled || !isEmailValid}
+                    />
+                  </div>
+                </div>
               </div>
             </Form>
           );

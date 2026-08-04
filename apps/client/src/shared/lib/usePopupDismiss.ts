@@ -2,10 +2,14 @@ import { useEffect, type RefObject } from "react";
 
 import { useEscapeKey } from "./useEscapeKey";
 
-export const usePopupDismiss = <T extends HTMLElement>(
-  popupRef: RefObject<T | null>,
+export const usePopupDismiss = <
+  TPopup extends HTMLElement,
+  TAdditionalPopup extends HTMLElement = HTMLElement,
+>(
+  popupRef: RefObject<TPopup | null>,
   onClose: () => void,
   enabled = true,
+  additionalPopupRef?: RefObject<TAdditionalPopup | null>,
 ) => {
   useEscapeKey(onClose, enabled, document);
 
@@ -15,7 +19,13 @@ export const usePopupDismiss = <T extends HTMLElement>(
     }
 
     const handleDocumentClick = (event: MouseEvent) => {
-      if (!popupRef.current?.contains(event.target as Node)) {
+      const eventTarget = event.target as Node;
+
+      const isInsidePopup = popupRef.current?.contains(eventTarget);
+      const isInsideAdditionalPopup =
+        additionalPopupRef?.current?.contains(eventTarget);
+
+      if (!isInsidePopup && !isInsideAdditionalPopup) {
         onClose();
       }
     };
@@ -25,5 +35,5 @@ export const usePopupDismiss = <T extends HTMLElement>(
     return () => {
       document.removeEventListener("mousedown", handleDocumentClick);
     };
-  }, [enabled, onClose, popupRef]);
+  }, [additionalPopupRef, enabled, onClose, popupRef]);
 };

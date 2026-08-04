@@ -230,6 +230,31 @@ vi.mock("@/shared/ui/SuccessModal", () => ({
     ) : null,
 }));
 
+vi.mock("@/features/gallery/components/GalleryShareModal", () => ({
+  GalleryShareModal: ({
+    isOpen,
+    galleryId,
+    galleryTitle,
+    onClose,
+  }: {
+    isOpen: boolean;
+    galleryId: number;
+    galleryTitle: string;
+    onClose: () => void;
+  }) =>
+    isOpen ? (
+      <div>
+        <p>
+          Share modal: {galleryId}, {galleryTitle}
+        </p>
+
+        <button type="button" onClick={onClose}>
+          Close share modal
+        </button>
+      </div>
+    ) : null,
+}));
+
 const useOutletContextMock = vi.mocked(useOutletContext);
 const useGalleryRouteGalleryMock = vi.mocked(useGalleryRouteGallery);
 const useGalleryImagesQueryMock = vi.mocked(useGalleryImagesQuery);
@@ -524,6 +549,13 @@ describe("GalleryDetailsPage", () => {
 
     const container = renderPage();
 
+    const shareButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Share",
+    );
+
+    expect(shareButton).toBeUndefined();
+    expect(container.textContent).not.toContain("Share modal:");
+
     expect(container.textContent).toContain("Image card: photo.jpg");
     expect(container.textContent).not.toContain(
       "Upload photos: /galleries/7/upload-photos",
@@ -558,7 +590,9 @@ describe("GalleryDetailsPage", () => {
 
     const container = renderPage();
 
-    expect(container.textContent).toContain("Empty gallery: 7, can upload: false");
+    expect(container.textContent).toContain(
+      "Empty gallery: 7, can upload: false",
+    );
     expect(container.textContent).not.toContain(
       "Upload photos: /galleries/7/upload-photos",
     );
@@ -598,5 +632,60 @@ describe("GalleryDetailsPage", () => {
     expect(container.textContent).toContain(
       "Photos have been successfully deleted from the gallery.",
     );
+  });
+
+  it("allows owner to open and close share modal", () => {
+    const container = renderPage();
+
+    const shareButtons = Array.from(
+      container.querySelectorAll("button"),
+    ).filter((button) => button.textContent === "Share");
+
+    expect(shareButtons.length).toBeGreaterThan(0);
+    expect(container.textContent).toContain(
+      "Upload photos: /galleries/7/upload-photos",
+    );
+    expect(container.textContent).not.toContain("Share modal:");
+
+    act(() => {
+      shareButtons[0]?.click();
+    });
+
+    expect(container.textContent).toContain("Share modal: 7, Vacation photos");
+
+    const closeButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Close share modal",
+    );
+
+    act(() => {
+      closeButton?.click();
+    });
+
+    expect(container.textContent).not.toContain("Share modal:");
+  });
+
+  it("allows editor to upload photos but not share gallery", () => {
+    useGalleryRouteGalleryMock.mockReturnValue({
+      gallery: {
+        ...gallery,
+        role: "editor",
+      },
+      numericGalleryId: gallery.id,
+      isValidGalleryId: true,
+      galleryPageState: null,
+    });
+
+    const container = renderPage();
+
+    expect(container.textContent).toContain(
+      "Upload photos: /galleries/7/upload-photos",
+    );
+
+    const shareButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Share",
+    );
+
+    expect(shareButton).toBeUndefined();
+    expect(container.textContent).not.toContain("Share modal:");
   });
 });

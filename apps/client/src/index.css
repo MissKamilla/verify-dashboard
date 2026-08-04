@@ -1,6 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap");
 
 @import "tailwindcss";
+@import "./styles/scrollbars.css";
 
 @theme {
   --color-text-main: #161616;
@@ -37,15 +38,4 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
   -webkit-box-shadow: 0 0 0 1000px white inset;
   -webkit-text-fill-color: #161616;
-}
-
-.scrollbar-gallery {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.scrollbar-gallery::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
 }

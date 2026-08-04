@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useId, useSyncExternalStore, type ReactNode } from "react";
 
 import closeIconUrl from "@/assets/icons/close.svg";
 
@@ -11,8 +11,42 @@ type ModalProps = {
   descriptionId?: string;
   isDismissDisabled?: boolean;
   contentClassName?: string;
+  maxWidthClassName?: string;
   children: ReactNode;
   onClose: () => void;
+};
+
+const modalStack: string[] = [];
+const modalStackSubscribers = new Set<() => void>();
+
+const emitModalStackChange = () => {
+  modalStackSubscribers.forEach((subscriber) => subscriber());
+};
+
+const subscribeToModalStack = (subscriber: () => void) => {
+  modalStackSubscribers.add(subscriber);
+
+  return () => {
+    modalStackSubscribers.delete(subscriber);
+  };
+};
+
+const getTopModalId = () => modalStack.at(-1) ?? null;
+
+const registerModal = (modalId: string) => {
+  modalStack.push(modalId);
+  emitModalStackChange();
+};
+
+const unregisterModal = (modalId: string) => {
+  const modalIndex = modalStack.lastIndexOf(modalId);
+
+  if (modalIndex === -1) {
+    return;
+  }
+
+  modalStack.splice(modalIndex, 1);
+  emitModalStackChange();
 };
 
 export function Modal({
@@ -21,17 +55,38 @@ export function Modal({
   descriptionId,
   isDismissDisabled = false,
   contentClassName = "",
+  maxWidthClassName = "max-w-[398px]",
   children,
   onClose,
 }: ModalProps) {
-  useEscapeKey(onClose, isOpen && !isDismissDisabled);
+  const modalId = useId();
+  const topModalId = useSyncExternalStore(
+    subscribeToModalStack,
+    getTopModalId,
+    getTopModalId,
+  );
+  const isTopModal = topModalId === modalId;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    registerModal(modalId);
+
+    return () => {
+      unregisterModal(modalId);
+    };
+  }, [isOpen, modalId]);
+
+  useEscapeKey(onClose, isOpen && isTopModal && !isDismissDisabled);
 
   if (!isOpen) {
     return null;
   }
 
   const handleOverlayClick = () => {
-    if (!isDismissDisabled) {
+    if (isTopModal && !isDismissDisabled) {
       onClose();
     }
   };
@@ -46,7 +101,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
-        className={`relative w-full max-w-[398px] rounded-2xl bg-white px-8 pb-8 pt-[46px] ${contentClassName}`}
+        className={`relative w-full ${maxWidthClassName} rounded-2xl bg-white px-8 pb-8 pt-[46px] ${contentClassName}`}
         onClick={(event) => event.stopPropagation()}
       >
         <button

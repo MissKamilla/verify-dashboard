@@ -165,4 +165,11 @@ describe("AppRouter", () => {
 
     expect(container.textContent).toContain("Not found page");
   });
+
+  it("renders not found page for removed user management route", () => {
+    const { container } = renderAppRouter("/user-management", true);
+
+    expect(container.textContent).toContain("Not found page");
+    expect(container.textContent).not.toContain("Authenticated layout");
+  });
 });
