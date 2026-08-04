@@ -11,7 +11,6 @@ import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { UploadPhotosPage } from "@/pages/UploadPhotosPage";
-import { UserManagementPage } from "@/pages/UserManagementPage";
 
 import { ProtectedRoute, PublicOnlyRoute } from "./RouteGuards";
 
@@ -42,7 +41,6 @@ export function AppRouter() {
             path="/galleries/:galleryId"
             element={<GalleryDetailsPage />}
           />
-          <Route path="/user-management" element={<UserManagementPage />} />
 
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

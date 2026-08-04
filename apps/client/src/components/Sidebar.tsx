@@ -5,7 +5,6 @@ import logoUrl from "@/assets/verify-logo-black.svg";
 import galleryIconUrl from "@/assets/icons/gallery.svg";
 import chevronDownIconUrl from "@/assets/icons/chevron-down.svg";
 import logoutIconUrl from "@/assets/icons/logout.svg";
-import profileIconUrl from "@/assets/icons/profile.svg";
 
 import { getInitials } from "@/features/profile/getInitials";
 
@@ -144,23 +143,6 @@ export function Sidebar({
             </span>
           </div>
         )}
-
-        <div className="mt-8 flex h-6 w-full items-center px-5">
-          <NavLink
-            to="/user-management"
-            onClick={onNavigate}
-            className={`w-full ${getSectionLinkClassName("/user-management")}`}
-          >
-            <Icon
-              src={profileIconUrl}
-              className={`h-6 w-6 ${getSectionIconClassName(
-                "/user-management",
-              )}`}
-            />
-
-            <span>User management</span>
-          </NavLink>
-        </div>
       </nav>
 
       <div className="mt-auto px-2.5 pb-7">
