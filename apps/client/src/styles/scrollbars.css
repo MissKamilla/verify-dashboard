@@ -1,0 +1,58 @@
+.scrollbar-gallery {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-gallery::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.scrollbar-gallery-visible {
+  scrollbar-color: #a0b1a5 transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-gallery-visible::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-gallery-visible::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-gallery-visible::-webkit-scrollbar-thumb {
+  background-color: #a0b1a5;
+  border-radius: 999px;
+}
+
+.scrollbar-gallery-visible-desktop {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-gallery-visible-desktop::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+@media (min-width: 768px) {
+  .scrollbar-gallery-visible-desktop {
+    scrollbar-color: #a0b1a5 transparent;
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-gallery-visible-desktop::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-gallery-visible-desktop::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-gallery-visible-desktop::-webkit-scrollbar-thumb {
+    background-color: #a0b1a5;
+    border-radius: 999px;
+  }
+}

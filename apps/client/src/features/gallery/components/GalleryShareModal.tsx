@@ -46,9 +46,11 @@ export function GalleryShareModal({
         </p>
       </header>
 
-      <div className="mt-6 min-h-0 overflow-y-auto bg-white px-0 pb-1">
-        <div className="flex flex-col gap-6">
-          <GalleryAccessForm galleryId={galleryId} />
+      <div className="scrollbar-gallery mt-6 flex min-h-0 flex-1 flex-col overflow-y-auto bg-white px-0 pb-1 md:overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col gap-6">
+          <div className="shrink-0">
+            <GalleryAccessForm galleryId={galleryId} />
+          </div>
 
           <GalleryAccessList galleryId={galleryId} />
         </div>

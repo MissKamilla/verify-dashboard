@@ -86,6 +86,22 @@ describe("GalleryShareModal", () => {
     expect(container.textContent).toContain("Access list for gallery 7");
   });
 
+  it("scrolls the entire share content on mobile without visible scrollbar", () => {
+    const { container } = renderGalleryShareModal();
+
+    const mobileScrollContainer = container.querySelector(
+      "[role='dialog'] .scrollbar-gallery",
+    );
+
+    expect(mobileScrollContainer?.className).toContain("overflow-y-auto");
+    expect(mobileScrollContainer?.className).toContain("md:overflow-hidden");
+    expect(
+      container.querySelector(
+        "[role='dialog'] .scrollbar-gallery-visible-desktop",
+      ),
+    ).toBeNull();
+  });
+
   it("closes from the modal close button", () => {
     const { container, onClose } = renderGalleryShareModal();
 
