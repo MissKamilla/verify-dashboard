@@ -18,6 +18,7 @@ vi.mock("./GalleryAccessRow", () => ({
 }));
 
 const useGalleryAccessesQueryMock = vi.mocked(useGalleryAccessesQuery);
+const refetchMock = vi.fn();
 const mountedCleanups: Array<() => void> = [];
 
 const access: GalleryAccessListItem = {
@@ -35,7 +36,22 @@ const access: GalleryAccessListItem = {
   },
 };
 
-const renderGalleryAccessList = () => {
+const defaultQueryResult = {
+  data: [access],
+  isPending: false,
+  isError: false,
+  isFetching: false,
+  refetch: refetchMock,
+} as unknown as ReturnType<typeof useGalleryAccessesQuery>;
+
+const renderGalleryAccessList = (
+  queryResult: Partial<ReturnType<typeof useGalleryAccessesQuery>> = {},
+) => {
+  useGalleryAccessesQueryMock.mockReturnValue({
+    ...defaultQueryResult,
+    ...queryResult,
+  } as ReturnType<typeof useGalleryAccessesQuery>);
+
   const container = document.createElement("div");
   document.body.appendChild(container);
 
@@ -65,14 +81,6 @@ describe("GalleryAccessList", () => {
     });
 
     vi.clearAllMocks();
-
-    useGalleryAccessesQueryMock.mockReturnValue({
-      data: [access],
-      isPending: false,
-      isError: false,
-      isFetching: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useGalleryAccessesQuery>);
   });
 
   afterEach(() => {
@@ -95,5 +103,74 @@ describe("GalleryAccessList", () => {
     expect(rowsContainer?.className.split(" ")).not.toContain(
       "overflow-y-auto",
     );
+  });
+
+  it("shows loading state while users are loading", () => {
+    const container = renderGalleryAccessList({
+      data: undefined,
+      isPending: true,
+    } as Partial<ReturnType<typeof useGalleryAccessesQuery>>);
+
+    expect(container.querySelector("[role='status']")).not.toBeNull();
+    expect(container.textContent).toContain("Loading users...");
+    expect(container.textContent).not.toContain("jane@example.com");
+  });
+
+  it("shows retryable error state", () => {
+    const container = renderGalleryAccessList({
+      data: undefined,
+      isPending: false,
+      isError: true,
+      isFetching: false,
+      refetch: refetchMock,
+    } as Partial<ReturnType<typeof useGalleryAccessesQuery>>);
+
+    expect(container.querySelector("[role='alert']")).not.toBeNull();
+    expect(container.textContent).toContain("Couldn’t load users");
+
+    const retryButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Try again",
+    );
+
+    act(() => {
+      retryButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(refetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("disables retry button while refetching", () => {
+    const container = renderGalleryAccessList({
+      data: undefined,
+      isPending: false,
+      isError: true,
+      isFetching: true,
+    } as Partial<ReturnType<typeof useGalleryAccessesQuery>>);
+
+    const retryButton = Array.from(container.querySelectorAll("button")).find(
+      (button) => button.textContent === "Retrying...",
+    ) as HTMLButtonElement | undefined;
+
+    expect(retryButton?.disabled).toBe(true);
+  });
+
+  it("shows empty state when no users have access", () => {
+    const container = renderGalleryAccessList({
+      data: [],
+    } as Partial<ReturnType<typeof useGalleryAccessesQuery>>);
+
+    expect(container.textContent).toContain("No shared access");
+    expect(container.textContent).toContain(
+      "This gallery has not been shared with other users yet.",
+    );
+    expect(container.textContent).not.toContain("jane@example.com");
+  });
+
+  it("renders people with access and count", () => {
+    const container = renderGalleryAccessList();
+
+    expect(container.textContent).toContain("People with access");
+    expect(container.textContent).toContain("1");
+    expect(container.textContent).toContain("jane@example.com");
   });
 });
