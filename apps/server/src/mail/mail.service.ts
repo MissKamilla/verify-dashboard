@@ -19,7 +19,6 @@ export class MailService {
   }
   async sendVerificationCode(to: string, code: string): Promise<void> {
     const fromEmail = this.configService.getOrThrow<string>('SMTP_FROM_EMAIL');
-
     const fromName = this.configService.getOrThrow<string>('SMTP_FROM_NAME');
 
     await this.transporter.sendMail({
@@ -31,6 +30,25 @@ export class MailService {
       <p>Your verification code is:</p>
       <p><strong>${code}</strong></p>
       <p>The code expires in 15 minutes.</p>
+    `,
+    });
+  }
+
+  async sendGallerySharedNotification(
+    to: string,
+    galleryTitle: string,
+  ): Promise<void> {
+    const fromEmail = this.configService.getOrThrow<string>('SMTP_FROM_EMAIL');
+    const fromName = this.configService.getOrThrow<string>('SMTP_FROM_NAME');
+
+    await this.transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to,
+      subject: 'A gallery was shared with you',
+      text: `You now have access to the gallery "${galleryTitle}".`,
+      html: `
+      <p>A gallery was shared with you.</p>
+      <p>You now have access to <strong>${galleryTitle}</strong>.</p>
     `,
     });
   }

@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -19,6 +20,7 @@ import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { GalleryResponseDto } from './dto/gallery-response.dto';
 import { GalleryRole } from './enums/gallery-role.enum';
 import { GalleryAccess } from './entities/gallery-access.entity';
+import { MailService } from '../mail/mail.service';
 import { GalleryImage } from '../images/entities/image.entity';
 import { removeStoredImageFile } from '../images/images-storage.utils';
 import { User } from '../users/entities/user.entity';
@@ -48,6 +50,8 @@ type AccessibleGalleryData = {
 
 @Injectable()
 export class GalleriesService {
+  private readonly logger = new Logger(GalleriesService.name);
+
   constructor(
     @InjectRepository(Gallery)
     private readonly galleriesRepository: Repository<Gallery>,
@@ -62,6 +66,8 @@ export class GalleriesService {
     private readonly usersRepository: Repository<User>,
 
     private readonly dataSource: DataSource,
+
+    private readonly mailService: MailService,
   ) {}
 
   async createGallery(
@@ -200,7 +206,7 @@ export class GalleriesService {
     currentUserId: number,
     dto: CreateGalleryAccessDto,
   ): Promise<GalleryAccess> {
-    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+    const gallery = await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
 
     const targetUser = await this.usersRepository.findOne({
       where: {
@@ -233,7 +239,23 @@ export class GalleriesService {
       role: dto.role,
     });
 
-    return this.galleryAccessRepository.save(access);
+    const savedAccess = await this.galleryAccessRepository.save(access);
+
+    if (dto.sendNotification) {
+      try {
+        await this.mailService.sendGallerySharedNotification(
+          targetUser.email,
+          gallery.title,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to send gallery notification for gallery ${galleryId}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
+    }
+
+    return savedAccess;
   }
 
   async findAllAccesses(

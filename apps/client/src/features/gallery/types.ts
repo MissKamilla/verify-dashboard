@@ -47,6 +47,7 @@ export type UpdateGalleryAccessPayload = {
 
 export type CreateGalleryAccessPayload = UpdateGalleryAccessPayload & {
   email: string;
+  sendNotification: boolean;
 };
 
 export type GalleriesListResponse = {

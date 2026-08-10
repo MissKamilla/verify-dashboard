@@ -124,14 +124,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    if (!user.verifiedAt) {
-      throw new ForbiddenException('Email is not verified');
-    }
-
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (!user.verifiedAt) {
+      throw new ForbiddenException('Email is not verified');
     }
 
     const token = await this.jwtService.signAsync({

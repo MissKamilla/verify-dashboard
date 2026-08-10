@@ -57,6 +57,7 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
         payload: {
           email: values.email.trim(),
           role: values.role,
+          sendNotification,
         },
       });
 
@@ -151,11 +152,9 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
                         }
                         className="peer sr-only"
                       />
-
                       <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-border-default bg-white transition-colors peer-checked:border-brand peer-checked:bg-brand peer-disabled:opacity-60 group-hover:border-brand">
                         <span className="absolute left-1/2 top-1/2 h-2.5 w-1.5 -translate-x-1/2 -translate-y-[60%] rotate-45 border-b-2 border-r-2 border-white opacity-0 transition-opacity group-has-[:checked]:opacity-100" />
                       </span>
-
                       Send notification
                     </label>
                   </div>

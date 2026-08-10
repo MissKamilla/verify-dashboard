@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsIn } from 'class-validator';
+import { IsEmail, IsIn, IsBoolean } from 'class-validator';
 
 import { GalleryRole, GALLERY_ACCESS_ROLES } from '../enums/gallery-role.enum';
 
@@ -20,4 +20,10 @@ export class CreateGalleryAccessDto extends UpdateGalleryAccessDto {
   })
   @IsEmail()
   email!: string;
+
+  @ApiProperty({
+    example: true,
+  })
+  @IsBoolean()
+  sendNotification!: boolean;
 }
