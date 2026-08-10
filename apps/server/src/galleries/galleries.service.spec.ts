@@ -11,6 +11,7 @@ import { GalleryAccess } from './entities/gallery-access.entity';
 import { Gallery } from './entities/gallery.entity';
 import { GalleryRole } from './enums/gallery-role.enum';
 import { GalleriesService } from './galleries.service';
+import { MailService } from '../mail/mail.service';
 import { removeStoredImageFile } from '../images/images-storage.utils';
 import { User } from '../users/entities/user.entity';
 
@@ -45,6 +46,10 @@ describe('GalleriesService', () => {
     transaction: jest.Mock;
   };
 
+  let mailServiceMock: {
+    sendGallerySharedNotification: jest.Mock;
+  };
+
   beforeEach(() => {
     galleriesRepositoryMock = {
       findOne: jest.fn(),
@@ -73,12 +78,17 @@ describe('GalleriesService', () => {
       transaction: jest.fn(),
     };
 
+    mailServiceMock = {
+      sendGallerySharedNotification: jest.fn(),
+    };
+
     galleriesService = new GalleriesService(
       galleriesRepositoryMock as unknown as Repository<Gallery>,
       galleryAccessRepositoryMock as unknown as Repository<GalleryAccess>,
       imagesRepositoryMock as unknown as Repository<GalleryImage>,
       usersRepositoryMock as unknown as Repository<User>,
       dataSourceMock as unknown as DataSource,
+      mailServiceMock as unknown as MailService,
     );
   });
 
@@ -702,6 +712,100 @@ describe('GalleriesService', () => {
           title: dto.title,
         },
       });
+    });
+  });
+
+  describe('createAccess', () => {
+    it('creates gallery access without sending notification when disabled', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const targetUser = {
+        id: 2,
+        email: 'bob@test.com',
+      };
+
+      const access = {
+        id: 100,
+        galleryId: gallery.id,
+        userId: targetUser.id,
+        role: GalleryRole.VIEWER,
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      usersRepositoryMock.findOne.mockResolvedValue(targetUser);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue(null);
+
+      galleryAccessRepositoryMock.create.mockReturnValue(access);
+
+      galleryAccessRepositoryMock.save.mockResolvedValue(access);
+
+      const result = await galleriesService.createAccess(gallery.id, 1, {
+        email: targetUser.email,
+        role: GalleryRole.VIEWER,
+        sendNotification: false,
+      });
+
+      expect(galleryAccessRepositoryMock.create).toHaveBeenCalledWith({
+        galleryId: gallery.id,
+        userId: targetUser.id,
+        role: GalleryRole.VIEWER,
+      });
+
+      expect(galleryAccessRepositoryMock.save).toHaveBeenCalledWith(access);
+
+      expect(
+        mailServiceMock.sendGallerySharedNotification,
+      ).not.toHaveBeenCalled();
+
+      expect(result).toEqual(access);
+    });
+
+    it('sends gallery shared notification when enabled', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const targetUser = {
+        id: 2,
+        email: 'bob@test.com',
+      };
+
+      const access = {
+        id: 100,
+        galleryId: gallery.id,
+        userId: targetUser.id,
+        role: GalleryRole.EDITOR,
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      usersRepositoryMock.findOne.mockResolvedValue(targetUser);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue(null);
+
+      galleryAccessRepositoryMock.create.mockReturnValue(access);
+
+      galleryAccessRepositoryMock.save.mockResolvedValue(access);
+
+      const result = await galleriesService.createAccess(gallery.id, 1, {
+        email: targetUser.email,
+        role: GalleryRole.EDITOR,
+        sendNotification: true,
+      });
+
+      expect(
+        mailServiceMock.sendGallerySharedNotification,
+      ).toHaveBeenCalledWith(targetUser.email, gallery.title);
+
+      expect(result).toEqual(access);
     });
   });
 

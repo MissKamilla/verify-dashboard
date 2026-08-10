@@ -6,6 +6,8 @@ describe('AuthController', () => {
 
   let authServiceMock: {
     register: jest.Mock;
+    verifyEmail: jest.Mock;
+    resendVerification: jest.Mock;
     login: jest.Mock;
   };
 
@@ -14,6 +16,8 @@ describe('AuthController', () => {
 
     authServiceMock = {
       register: jest.fn(),
+      verifyEmail: jest.fn(),
+      resendVerification: jest.fn(),
       login: jest.fn(),
     };
 
@@ -31,17 +35,58 @@ describe('AuthController', () => {
         password: 'Password123',
       };
 
-      const authResponse = {
-        token: 'register-token',
+      const registerResponse = {
+        message: 'Verification code sent',
       };
 
-      authServiceMock.register.mockResolvedValue(authResponse);
+      authServiceMock.register.mockResolvedValue(registerResponse);
 
       const result = await authController.register(dto);
 
       expect(authServiceMock.register).toHaveBeenCalledWith(dto);
 
+      expect(result).toEqual(registerResponse);
+    });
+  });
+
+  describe('verifyEmail', () => {
+    it('verifies email through service', async () => {
+      const dto = {
+        email: 'anna@test.com',
+        code: '123456',
+      };
+
+      const authResponse = {
+        token: 'verify-token',
+      };
+
+      authServiceMock.verifyEmail.mockResolvedValue(authResponse);
+
+      const result = await authController.verifyEmail(dto);
+
+      expect(authServiceMock.verifyEmail).toHaveBeenCalledWith(dto);
+
       expect(result).toEqual(authResponse);
+    });
+  });
+
+  describe('resendVerification', () => {
+    it('resends verification through service', async () => {
+      const dto = {
+        email: 'anna@test.com',
+      };
+
+      const registerResponse = {
+        message: 'Verification code sent',
+      };
+
+      authServiceMock.resendVerification.mockResolvedValue(registerResponse);
+
+      const result = await authController.resendVerification(dto);
+
+      expect(authServiceMock.resendVerification).toHaveBeenCalledWith(dto);
+
+      expect(result).toEqual(registerResponse);
     });
   });
 

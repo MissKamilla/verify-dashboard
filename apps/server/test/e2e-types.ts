@@ -2,6 +2,10 @@ export type AuthResponseBody = {
   token: string;
 };
 
+export type RegisterResponseBody = {
+  message: string;
+};
+
 export type ProfileResponseBody = {
   id: number;
   firstname: string;
