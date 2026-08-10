@@ -56,3 +56,8 @@ export class RegisterDto {
   @MaxLength(100)
   password!: string;
 }
+
+export class RegisterResponseDto {
+  @ApiProperty({ example: 'Verification code sent' })
+  message!: string;
+}

@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { GalleriesModule } from './galleries/galleries.module';
 import { ImagesModule } from './images/images.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
@@ -27,12 +28,10 @@ import { ImagesModule } from './images/images.module';
     }),
 
     AuthModule,
-
     UsersModule,
-
     GalleriesModule,
-
     ImagesModule,
+    MailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
