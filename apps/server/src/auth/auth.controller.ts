@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Param,
+  Get,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -11,6 +19,7 @@ import {
 
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
+import { InvitationResponseDto } from './dto/invitation.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
@@ -64,6 +73,19 @@ export class AuthController {
     @Body() dto: ResendVerificationDto,
   ): Promise<RegisterResponseDto> {
     return this.authService.resendVerification(dto);
+  }
+
+  @ApiOperation({ summary: 'Get gallery invitation details' })
+  @ApiOkResponse({
+    description: 'Invitation details',
+    type: InvitationResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid or expired invitation',
+  })
+  @Get('invitations/:token')
+  getInvitation(@Param('token') token: string): Promise<InvitationResponseDto> {
+    return this.authService.getInvitation(token);
   }
 
   @ApiOperation({ summary: 'Login user' })

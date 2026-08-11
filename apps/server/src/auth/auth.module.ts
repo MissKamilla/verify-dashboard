@@ -9,11 +9,13 @@ import { UsersModule } from '../users/users.module';
 import { MailModule } from '../mail/mail.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { EmailVerification } from './entities/email-verification.entity';
+import { GalleriesModule } from '../galleries/galleries.module';
 
 @Global()
 @Module({
   imports: [
     MailModule,
+    GalleriesModule,
     UsersModule,
     TypeOrmModule.forFeature([EmailVerification]),
     JwtModule.registerAsync({

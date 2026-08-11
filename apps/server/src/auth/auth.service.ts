@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
 import { Repository } from 'typeorm';
 
+import { GalleriesService } from '../galleries/galleries.service';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
@@ -22,6 +23,7 @@ import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly galleriesService: GalleriesService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
@@ -113,6 +115,10 @@ export class AuthService {
     return {
       message: 'Verification code sent',
     };
+  }
+
+  getInvitation(token: string) {
+    return this.galleriesService.getInvitation(token);
   }
 
   async login(dto: LoginDto): Promise<{ token: string }> {

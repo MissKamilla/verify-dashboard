@@ -77,6 +77,37 @@ export class GalleriesService {
     private readonly mailService: MailService,
   ) {}
 
+  async getInvitation(token: string): Promise<{
+    email: string;
+    galleryTitle: string;
+    role: GalleryAccessRole;
+  }> {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const invitation = await this.galleryInvitationRepository.findOne({
+      where: { tokenHash },
+      relations: {
+        gallery: true,
+      },
+    });
+
+    if (!invitation) {
+      throw new BadRequestException('Invalid invitation');
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      await this.galleryInvitationRepository.remove(invitation);
+
+      throw new BadRequestException('Invitation expired');
+    }
+
+    return {
+      email: invitation.email,
+      galleryTitle: invitation.gallery.title,
+      role: invitation.role,
+    };
+  }
+
   async createGallery(
     userId: number,
     dto: CreateGalleryDto,
