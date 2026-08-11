@@ -3,6 +3,7 @@ import { httpClient } from "@/shared/api/httpClient";
 import type {
   CreateGalleryPayload,
   CreateGalleryAccessPayload,
+  CreateGalleryAccessResponse,
   GalleryAccess,
   GalleryAccessListItem,
   GalleriesListResponse,
@@ -62,8 +63,8 @@ export const getGalleryAccesses = async (
 export const createGalleryAccess = async (
   galleryId: number,
   payload: CreateGalleryAccessPayload,
-): Promise<GalleryAccess> => {
-  const response = await httpClient.post<GalleryAccess>(
+): Promise<CreateGalleryAccessResponse> => {
+  const response = await httpClient.post<CreateGalleryAccessResponse>(
     `/galleries/${galleryId}/access`,
     payload,
   );

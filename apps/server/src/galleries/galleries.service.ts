@@ -1,3 +1,5 @@
+import { createHash, randomBytes } from 'crypto';
+import { DataSource, FindOptionsWhere, ILike, In, Repository } from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -7,19 +9,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Gallery } from './entities/gallery.entity';
-import { DataSource, FindOptionsWhere, ILike, In, Repository } from 'typeorm';
+
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import {
   CreateGalleryAccessDto,
+  CreateGalleryAccessResponseDto,
   UpdateGalleryAccessDto,
 } from './dto/gallery-access.dto';
 import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
 import { GalleryListItemResponseDto } from './dto/gallery-list-item-response.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { GalleryResponseDto } from './dto/gallery-response.dto';
-import { GalleryRole } from './enums/gallery-role.enum';
+import { GalleryRole, GalleryAccessRole } from './enums/gallery-role.enum';
+import { Gallery } from './entities/gallery.entity';
 import { GalleryAccess } from './entities/gallery-access.entity';
+import { GalleryInvitation } from './entities/gallery-invitation.entity';
 import { MailService } from '../mail/mail.service';
 import { GalleryImage } from '../images/entities/image.entity';
 import { removeStoredImageFile } from '../images/images-storage.utils';
@@ -61,6 +65,9 @@ export class GalleriesService {
 
     @InjectRepository(GalleryImage)
     private readonly imagesRepository: Repository<GalleryImage>,
+
+    @InjectRepository(GalleryInvitation)
+    private readonly galleryInvitationRepository: Repository<GalleryInvitation>,
 
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
@@ -205,7 +212,7 @@ export class GalleriesService {
     galleryId: number,
     currentUserId: number,
     dto: CreateGalleryAccessDto,
-  ): Promise<GalleryAccess> {
+  ): Promise<CreateGalleryAccessResponseDto> {
     const gallery = await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
 
     const targetUser = await this.usersRepository.findOne({
@@ -215,7 +222,17 @@ export class GalleriesService {
     });
 
     if (!targetUser) {
-      throw new NotFoundException('User not found');
+      const token = await this.createInvitation(galleryId, dto.email, dto.role);
+
+      await this.mailService.sendGalleryInvitation(
+        dto.email,
+        gallery.title,
+        token,
+      );
+
+      return {
+        status: 'invitation_sent',
+      };
     }
 
     if (targetUser.id === currentUserId) {
@@ -239,7 +256,7 @@ export class GalleriesService {
       role: dto.role,
     });
 
-    const savedAccess = await this.galleryAccessRepository.save(access);
+    await this.galleryAccessRepository.save(access);
 
     if (dto.sendNotification) {
       try {
@@ -255,7 +272,9 @@ export class GalleriesService {
       }
     }
 
-    return savedAccess;
+    return {
+      status: 'access_granted',
+    };
   }
 
   async findAllAccesses(
@@ -361,6 +380,43 @@ export class GalleriesService {
     }
 
     return accessibleGallery;
+  }
+
+  private async createInvitation(
+    galleryId: number,
+    email: string,
+    role: GalleryAccessRole,
+  ): Promise<string> {
+    const token = randomBytes(32).toString('hex');
+
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    let invitation = await this.galleryInvitationRepository.findOne({
+      where: {
+        galleryId,
+        email,
+      },
+    });
+
+    if (invitation) {
+      invitation.role = role;
+      invitation.tokenHash = tokenHash;
+      invitation.expiresAt = expiresAt;
+    } else {
+      invitation = this.galleryInvitationRepository.create({
+        galleryId,
+        email,
+        role,
+        tokenHash,
+        expiresAt,
+      });
+    }
+
+    await this.galleryInvitationRepository.save(invitation);
+
+    return token;
   }
 
   private async getGalleryAccessData(

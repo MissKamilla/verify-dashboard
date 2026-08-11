@@ -29,6 +29,7 @@ import { GalleryResponseDto } from './dto/gallery-response.dto';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import {
   CreateGalleryAccessDto,
+  CreateGalleryAccessResponseDto,
   UpdateGalleryAccessDto,
 } from './dto/gallery-access.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
@@ -167,7 +168,8 @@ export class GalleriesController {
     description: 'Gallery id',
   })
   @ApiCreatedResponse({
-    description: 'Gallery access granted',
+    description: 'Gallery access granted or invitation sent',
+    type: CreateGalleryAccessResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid request body or attempt to share with yourself',
@@ -179,7 +181,7 @@ export class GalleriesController {
     description: 'Missing or invalid token',
   })
   @ApiNotFoundResponse({
-    description: 'Gallery or user not found',
+    description: 'Gallery not found',
   })
   @Post(':galleryId/access')
   createAccess(

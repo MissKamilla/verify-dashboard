@@ -27,3 +27,11 @@ export class CreateGalleryAccessDto extends UpdateGalleryAccessDto {
   @IsBoolean()
   sendNotification!: boolean;
 }
+
+export class CreateGalleryAccessResponseDto {
+  @ApiProperty({
+    enum: ['access_granted', 'invitation_sent'],
+    example: 'access_granted',
+  })
+  status!: 'access_granted' | 'invitation_sent';
+}

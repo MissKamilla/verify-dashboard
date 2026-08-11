@@ -52,4 +52,30 @@ export class MailService {
     `,
     });
   }
+
+  async sendGalleryInvitation(
+    to: string,
+    galleryTitle: string,
+    token: string,
+  ): Promise<void> {
+    const fromEmail = this.configService.getOrThrow<string>('SMTP_FROM_EMAIL');
+    const fromName = this.configService.getOrThrow<string>('SMTP_FROM_NAME');
+    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
+
+    const invitationUrl = `${frontendUrl}/register?invite=${token}`;
+
+    await this.transporter.sendMail({
+      from: `"${fromName}" <${fromEmail}>`,
+      to,
+      subject: 'You have been invited to a gallery',
+      text: `You have been invited to "${galleryTitle}". Register here: ${invitationUrl}`,
+      html: `
+      <p>You have been invited to <strong>${galleryTitle}</strong>.</p>
+      <p>
+        <a href="${invitationUrl}">Register and view gallery</a>
+      </p>
+      <p>This invitation expires in 7 days.</p>
+    `,
+    });
+  }
 }

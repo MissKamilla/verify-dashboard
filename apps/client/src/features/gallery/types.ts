@@ -93,3 +93,7 @@ export type GalleryAccessFormValues = {
 export type GalleryAccessFormErrors = Partial<
   Record<keyof GalleryAccessFormValues, string>
 >;
+
+export type CreateGalleryAccessResponse = {
+  status: "access_granted" | "invitation_sent";
+};
