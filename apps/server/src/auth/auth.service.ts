@@ -8,13 +8,16 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { randomInt } from 'crypto';
-import { Repository } from 'typeorm';
+import { createHash, randomInt } from 'crypto';
+import { DataSource, Repository } from 'typeorm';
 
 import { GalleriesService } from '../galleries/galleries.service';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
+import { GalleryAccess } from '../galleries/entities/gallery-access.entity';
+import { GalleryInvitation } from '../galleries/entities/gallery-invitation.entity';
+import { RegisterByInviteDto } from './dto/invitation.dto';
 import { EmailVerification } from './entities/email-verification.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -23,6 +26,7 @@ import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
 @Injectable()
 export class AuthService {
   constructor(
+    private readonly dataSource: DataSource,
     private readonly galleriesService: GalleriesService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -119,6 +123,69 @@ export class AuthService {
 
   getInvitation(token: string) {
     return this.galleriesService.getInvitation(token);
+  }
+
+  async registerByInvite(dto: RegisterByInviteDto): Promise<{ token: string }> {
+    await this.galleriesService.getInvitation(dto.token);
+
+    const password = await bcrypt.hash(dto.password, 10);
+
+    const tokenHash = createHash('sha256').update(dto.token).digest('hex');
+
+    const user = await this.dataSource.transaction(async (manager) => {
+      const usersRepository = manager.getRepository(User);
+      const accessRepository = manager.getRepository(GalleryAccess);
+      const invitationRepository = manager.getRepository(GalleryInvitation);
+
+      const invitation = await invitationRepository.findOne({
+        where: { tokenHash },
+      });
+
+      if (!invitation) {
+        throw new BadRequestException('Invalid invitation');
+      }
+
+      if (invitation.expiresAt < new Date()) {
+        throw new BadRequestException('Invitation expired');
+      }
+
+      const existingUser = await usersRepository.findOne({
+        where: { email: invitation.email },
+      });
+
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
+
+      const newUser = usersRepository.create({
+        firstname: dto.firstname,
+        lastname: dto.lastname,
+        email: invitation.email,
+        password,
+        verifiedAt: new Date(),
+      });
+
+      const savedUser = await usersRepository.save(newUser);
+
+      const access = accessRepository.create({
+        galleryId: invitation.galleryId,
+        userId: savedUser.id,
+        role: invitation.role,
+      });
+
+      await accessRepository.save(access);
+
+      await invitationRepository.remove(invitation);
+
+      return savedUser;
+    });
+
+    const token = await this.jwtService.signAsync({
+      sub: user.id,
+      email: user.email,
+    });
+
+    return { token };
   }
 
   async login(dto: LoginDto): Promise<{ token: string }> {

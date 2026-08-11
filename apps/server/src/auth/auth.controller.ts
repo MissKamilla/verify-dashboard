@@ -19,7 +19,10 @@ import {
 
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
-import { InvitationResponseDto } from './dto/invitation.dto';
+import {
+  InvitationResponseDto,
+  RegisterByInviteDto,
+} from './dto/invitation.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
@@ -86,6 +89,22 @@ export class AuthController {
   @Get('invitations/:token')
   getInvitation(@Param('token') token: string): Promise<InvitationResponseDto> {
     return this.authService.getInvitation(token);
+  }
+
+  @ApiOperation({ summary: 'Register user by gallery invitation' })
+  @ApiCreatedResponse({
+    description: 'User registered successfully',
+    type: AuthResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid or expired invitation',
+  })
+  @ApiConflictResponse({
+    description: 'User with this email already exists',
+  })
+  @Post('register-by-invite')
+  registerByInvite(@Body() dto: RegisterByInviteDto): Promise<AuthResponseDto> {
+    return this.authService.registerByInvite(dto);
   }
 
   @ApiOperation({ summary: 'Login user' })
