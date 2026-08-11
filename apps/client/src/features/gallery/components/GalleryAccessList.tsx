@@ -102,7 +102,10 @@ export function GalleryAccessList({ galleryId }: GalleryAccessListProps) {
 
           <div className="scrollbar-gallery-visible-desktop px-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:px-0 md:pr-2">
             {accesses.map((access) => (
-              <GalleryAccessRow key={access.id} access={access} />
+              <GalleryAccessRow
+                key={`${access.status}-${access.id}`}
+                access={access}
+              />
             ))}
           </div>
         </div>

@@ -1,5 +1,12 @@
 import { createHash, randomBytes } from 'crypto';
-import { DataSource, FindOptionsWhere, ILike, In, Repository } from 'typeorm';
+import {
+  DataSource,
+  FindOptionsWhere,
+  ILike,
+  In,
+  MoreThan,
+  Repository,
+} from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
@@ -45,6 +52,20 @@ type GalleryListOptions = {
   sortOrder: 'ASC' | 'DESC';
   search?: string;
 };
+
+type GalleryAccessListItem =
+  | (GalleryAccess & {
+      status: 'active';
+    })
+  | {
+      id: number;
+      galleryId: number;
+      email: string;
+      role: GalleryAccessRole;
+      createdAt: Date;
+      status: 'pending';
+    };
+
 type GalleryListWhere = FindOptionsWhere<Gallery> | FindOptionsWhere<Gallery>[];
 
 type AccessibleGalleryData = {
@@ -311,13 +332,11 @@ export class GalleriesService {
   async findAllAccesses(
     galleryId: number,
     currentUserId: number,
-  ): Promise<GalleryAccess[]> {
+  ): Promise<GalleryAccessListItem[]> {
     await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
 
-    return this.galleryAccessRepository.find({
-      where: {
-        galleryId,
-      },
+    const accesses = await this.galleryAccessRepository.find({
+      where: { galleryId },
       relations: {
         user: true,
       },
@@ -325,6 +344,32 @@ export class GalleriesService {
         createdAt: 'ASC',
       },
     });
+
+    const invitations = await this.galleryInvitationRepository.find({
+      where: {
+        galleryId,
+        expiresAt: MoreThan(new Date()),
+      },
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+
+    return [
+      ...accesses.map((access) => ({
+        ...access,
+        status: 'active' as const,
+      })),
+
+      ...invitations.map((invitation) => ({
+        id: invitation.id,
+        galleryId: invitation.galleryId,
+        email: invitation.email,
+        role: invitation.role,
+        createdAt: invitation.createdAt,
+        status: 'pending' as const,
+      })),
+    ];
   }
 
   async updateAccess(

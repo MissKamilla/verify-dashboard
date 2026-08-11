@@ -37,9 +37,19 @@ export type GalleryAccess = {
   createdAt: string;
 };
 
-export type GalleryAccessListItem = GalleryAccess & {
-  user: GalleryAccessUser;
-};
+export type GalleryAccessListItem =
+  | (GalleryAccess & {
+      status: "active";
+      user: GalleryAccessUser;
+    })
+  | {
+      id: number;
+      galleryId: number;
+      email: string;
+      role: GalleryAccessRole;
+      createdAt: string;
+      status: "pending";
+    };
 
 export type UpdateGalleryAccessPayload = {
   role: GalleryAccessRole;
