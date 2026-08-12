@@ -2,7 +2,9 @@ import { httpClient } from "@/shared/api/httpClient";
 
 import type {
   AuthResponse,
+  InvitationResponse,
   LoginFormValues,
+  RegisterByInvitePayload,
   RegisterPayload,
   RegisterResponse,
   ResendVerificationPayload,
@@ -36,6 +38,27 @@ export const resendVerification = async (
 ): Promise<RegisterResponse> => {
   const response = await httpClient.post<RegisterResponse>(
     "/auth/resend-verification",
+    payload,
+  );
+
+  return response.data;
+};
+
+export const getInvitation = async (
+  token: string,
+): Promise<InvitationResponse> => {
+  const response = await httpClient.get<InvitationResponse>(
+    `/auth/invitations/${token}`,
+  );
+
+  return response.data;
+};
+
+export const registerByInvite = async (
+  payload: RegisterByInvitePayload,
+): Promise<AuthResponse> => {
+  const response = await httpClient.post<AuthResponse>(
+    "/auth/register-by-invite",
     payload,
   );
 

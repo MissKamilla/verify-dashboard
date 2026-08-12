@@ -1,3 +1,5 @@
+import type { GalleryAccessRole } from "@/features/gallery/types";
+
 export type RegisterFormValues = {
   firstname: string;
   lastname: string;
@@ -33,5 +35,15 @@ export type ResendVerificationPayload = {
 };
 
 export type AuthResponse = {
+  token: string;
+};
+
+export type InvitationResponse = {
+  email: string;
+  galleryTitle: string;
+  role: GalleryAccessRole;
+};
+
+export type RegisterByInvitePayload = Omit<RegisterPayload, "email"> & {
   token: string;
 };

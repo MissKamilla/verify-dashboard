@@ -1,9 +1,14 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
-import { useMutation } from "@tanstack/react-query";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Form, Formik } from "formik";
 
-import { registerUser } from "@/features/auth/authApi";
+import {
+  getInvitation,
+  registerByInvite,
+  registerUser,
+} from "@/features/auth/authApi";
+import { setAuthToken } from "@/features/auth/authToken";
 import type { RegisterFormValues } from "@/features/auth/types";
 import { validateRegisterForm } from "@/features/auth/validateAuthForms";
 
@@ -24,7 +29,18 @@ const initialFormValues: RegisterFormValues = {
 export function RegisterPage() {
   const [apiError, setApiError] = useState("");
 
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const inviteToken = searchParams.get("invite") ?? "";
+  const isInviteRegistration = Boolean(inviteToken);
+
+  const invitationQuery = useQuery({
+    queryKey: ["auth", "invitation", inviteToken],
+    queryFn: () => getInvitation(inviteToken),
+    enabled: isInviteRegistration,
+    retry: false,
+  });
 
   const registerMutation = useMutation({
     mutationFn: registerUser,
@@ -37,6 +53,51 @@ export function RegisterPage() {
       setApiError(getApiErrorMessage(error));
     },
   });
+
+  const registerByInviteMutation = useMutation({
+    mutationFn: registerByInvite,
+    onSuccess: ({ token }) => {
+      setAuthToken(token);
+      navigate("/galleries", { replace: true });
+    },
+    onError: (error) => {
+      setApiError(getApiErrorMessage(error));
+    },
+  });
+
+  const isRegistrationPending =
+    registerMutation.isPending || registerByInviteMutation.isPending;
+
+  if (isInviteRegistration && invitationQuery.isPending) {
+    return (
+      <AuthLayout heroVariant="register">
+        <p className="text-sm text-text-secondary">Loading invitation...</p>
+      </AuthLayout>
+    );
+  }
+
+  if (isInviteRegistration && invitationQuery.isError) {
+    return (
+      <AuthLayout heroVariant="register">
+        <div>
+          <h1 className="mb-4 text-4xl font-bold text-text-main">
+            Invalid invitation
+          </h1>
+
+          <p className="text-sm text-text-secondary">
+            This invitation is invalid or has expired.
+          </p>
+
+          <Link
+            to="/register"
+            className="mt-6 inline-block text-sm font-bold text-brand"
+          >
+            Sign Up
+          </Link>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout heroVariant="register">
@@ -53,11 +114,26 @@ export function RegisterPage() {
         </header>
 
         <Formik<RegisterFormValues>
-          initialValues={initialFormValues}
+          initialValues={{
+            ...initialFormValues,
+            email: invitationQuery.data?.email ?? "",
+          }}
           validate={validateRegisterForm}
           validateOnMount
           onSubmit={(values) => {
             setApiError("");
+
+            if (isInviteRegistration) {
+              registerByInviteMutation.mutate({
+                firstname: values.firstname,
+                lastname: values.lastname,
+                password: values.password,
+                token: inviteToken,
+              });
+
+              return;
+            }
+
             registerMutation.mutate({
               firstname: values.firstname,
               lastname: values.lastname,
@@ -74,7 +150,7 @@ export function RegisterPage() {
               !values.password ||
               !values.confirmPassword ||
               !isValid ||
-              registerMutation.isPending;
+              isRegistrationPending;
             return (
               <Form noValidate className="flex flex-col gap-6">
                 <FormInputField
@@ -113,6 +189,7 @@ export function RegisterPage() {
                   error={touched.email ? errors.email : undefined}
                   autoComplete="email"
                   placeholder="mail@simmmple.com"
+                  readOnly={isInviteRegistration}
                   required
                 />
 
