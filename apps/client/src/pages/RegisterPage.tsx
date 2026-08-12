@@ -4,7 +4,6 @@ import { useMutation } from "@tanstack/react-query";
 import { Form, Formik } from "formik";
 
 import { registerUser } from "@/features/auth/authApi";
-import { setAuthToken } from "@/features/auth/authToken";
 import type { RegisterFormValues } from "@/features/auth/types";
 import { validateRegisterForm } from "@/features/auth/validateAuthForms";
 
@@ -29,9 +28,10 @@ export function RegisterPage() {
 
   const registerMutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: ({ token }) => {
-      setAuthToken(token);
-      navigate("/galleries", { replace: true });
+    onSuccess: (_data, variables) => {
+      navigate(`/verify-email?email=${encodeURIComponent(variables.email)}`, {
+        replace: true,
+      });
     },
     onError: (error) => {
       setApiError(getApiErrorMessage(error));
