@@ -67,11 +67,13 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("formik", () => ({
   Formik: ({
     initialValues,
+    enableReinitialize,
     validate,
     onSubmit,
     children,
   }: {
     initialValues: RegisterFormValues;
+    enableReinitialize?: boolean;
     validate: typeof validateRegisterForm;
     onSubmit: (values: RegisterFormValues) => void;
     children: (props: FormikRenderProps) => ReactNode;
@@ -81,6 +83,7 @@ vi.mock("formik", () => ({
     return (
       <div
         data-initial-email={initialValues.email}
+        data-enable-reinitialize={String(Boolean(enableReinitialize))}
         data-has-validation={String(validate === validateRegisterForm)}
       >
         {children({
@@ -392,6 +395,11 @@ describe("RegisterPage", () => {
         queryKey: ["auth", "invitation", "invite-token"],
       }),
     );
+    expect(
+      container
+        .querySelector("[data-enable-reinitialize]")
+        ?.getAttribute("data-enable-reinitialize"),
+    ).toBe("true");
 
     const emailInput = container.querySelector(
       "input[name='email']",

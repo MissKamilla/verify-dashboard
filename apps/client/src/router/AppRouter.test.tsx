@@ -133,6 +133,12 @@ describe("AppRouter", () => {
     expect(container.textContent).toContain("Register page");
   });
 
+  it("renders invite registration page for authenticated user", () => {
+    const { container } = renderAppRouter("/register?invite=invite-token", true);
+
+    expect(container.textContent).toContain("Register page");
+  });
+
   it("redirects authenticated user from login to galleries", () => {
     const { container } = renderAppRouter("/login", true);
 

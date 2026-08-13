@@ -118,6 +118,7 @@ export function RegisterPage() {
             ...initialFormValues,
             email: invitationQuery.data?.email ?? "",
           }}
+          enableReinitialize
           validate={validateRegisterForm}
           validateOnMount
           onSubmit={(values) => {

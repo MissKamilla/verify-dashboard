@@ -40,6 +40,16 @@ export class AuthService {
     const existingUser = await this.usersService.findByEmail(dto.email);
 
     if (existingUser) {
+      if (!existingUser.verifiedAt) {
+        const code = await this.createVerification(existingUser);
+
+        await this.mailService.sendVerificationCode(existingUser.email, code);
+
+        return {
+          message: 'Verification code sent',
+        };
+      }
+
       throw new ConflictException('User with this email already exists');
     }
 
@@ -137,6 +147,8 @@ export class AuthService {
       const accessRepository = manager.getRepository(GalleryAccess);
       const invitationRepository = manager.getRepository(GalleryInvitation);
 
+      const now = new Date();
+
       const invitation = await invitationRepository.findOne({
         where: { tokenHash },
       });
@@ -145,7 +157,7 @@ export class AuthService {
         throw new BadRequestException('Invalid invitation');
       }
 
-      if (invitation.expiresAt < new Date()) {
+      if (invitation.expiresAt < now) {
         throw new BadRequestException('Invitation expired');
       }
 
@@ -167,15 +179,33 @@ export class AuthService {
 
       const savedUser = await usersRepository.save(newUser);
 
-      const access = accessRepository.create({
-        galleryId: invitation.galleryId,
-        userId: savedUser.id,
-        role: invitation.role,
+      const invitations = await invitationRepository.find({
+        where: {
+          email: invitation.email,
+        },
       });
 
-      await accessRepository.save(access);
+      const invitationsToApply = invitations.some(
+        (pendingInvitation) => pendingInvitation.id === invitation.id,
+      )
+        ? invitations
+        : [invitation, ...invitations];
 
-      await invitationRepository.remove(invitation);
+      const activeInvitations = invitationsToApply.filter(
+        (pendingInvitation) => pendingInvitation.expiresAt >= now,
+      );
+
+      for (const pendingInvitation of activeInvitations) {
+        const access = accessRepository.create({
+          galleryId: pendingInvitation.galleryId,
+          userId: savedUser.id,
+          role: pendingInvitation.role,
+        });
+
+        await accessRepository.save(access);
+      }
+
+      await invitationRepository.remove(invitationsToApply);
 
       return savedUser;
     });

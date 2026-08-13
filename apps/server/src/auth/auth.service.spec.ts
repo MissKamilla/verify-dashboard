@@ -109,7 +109,7 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
-    it('throws ConflictException when user with email already exists', async () => {
+    it('throws ConflictException when user with email already exists and is verified', async () => {
       const dto: RegisterDto = {
         firstname: 'John',
         lastname: 'Doe',
@@ -120,6 +120,7 @@ describe('AuthService', () => {
       usersServiceMock.findByEmail.mockResolvedValue({
         id: 1,
         email: dto.email,
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
       });
 
       const registerPromise = authService.register(dto);
@@ -137,6 +138,60 @@ describe('AuthService', () => {
       expect(verificationRepositoryMock.save).not.toHaveBeenCalled();
 
       expect(mailServiceMock.sendVerificationCode).not.toHaveBeenCalled();
+
+      expect(jwtServiceMock.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('sends new verification code when existing user is not verified', async () => {
+      const dto: RegisterDto = {
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john@example.com',
+        password: 'Password1',
+      };
+
+      const existingUser = {
+        id: 1,
+        email: dto.email,
+        verifiedAt: null,
+      };
+
+      const verification = {
+        id: 1,
+        user: existingUser,
+        codeHash: 'old-code-hash',
+        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      usersServiceMock.findByEmail.mockResolvedValue(existingUser);
+      verificationRepositoryMock.findOne.mockResolvedValue(verification);
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-code-hash');
+
+      const result = await authService.register(dto);
+
+      expect(result).toEqual({
+        message: 'Verification code sent',
+      });
+
+      expect(usersServiceMock.createUser).not.toHaveBeenCalled();
+
+      expect(bcrypt.hash).toHaveBeenCalledWith(
+        expect.stringMatching(/^\d{6}$/),
+        10,
+      );
+
+      expect(verification.codeHash).toBe('new-code-hash');
+      expect(verification.expiresAt).toBeInstanceOf(Date);
+
+      expect(verificationRepositoryMock.save).toHaveBeenCalledWith(
+        verification,
+      );
+
+      expect(mailServiceMock.sendVerificationCode).toHaveBeenCalledWith(
+        existingUser.email,
+        expect.stringMatching(/^\d{6}$/),
+      );
 
       expect(jwtServiceMock.signAsync).not.toHaveBeenCalled();
     });
@@ -553,6 +608,7 @@ describe('AuthService', () => {
 
     let invitationRepositoryMock: {
       findOne: jest.Mock;
+      find: jest.Mock;
       remove: jest.Mock;
     };
 
@@ -570,6 +626,7 @@ describe('AuthService', () => {
 
       invitationRepositoryMock = {
         findOne: jest.fn(),
+        find: jest.fn(),
         remove: jest.fn(),
       };
 
@@ -643,6 +700,7 @@ describe('AuthService', () => {
       });
 
       invitationRepositoryMock.findOne.mockResolvedValue(invitation);
+      invitationRepositoryMock.find.mockResolvedValue([invitation]);
 
       usersRepositoryMock.findOne.mockResolvedValue(null);
 
@@ -666,6 +724,12 @@ describe('AuthService', () => {
 
       expect(invitationRepositoryMock.findOne).toHaveBeenCalledWith({
         where: { tokenHash },
+      });
+
+      expect(invitationRepositoryMock.find).toHaveBeenCalledWith({
+        where: {
+          email: invitation.email,
+        },
       });
 
       expect(usersRepositoryMock.findOne).toHaveBeenCalledWith({
@@ -695,12 +759,115 @@ describe('AuthService', () => {
 
       expect(accessRepositoryMock.save).toHaveBeenCalledWith(access);
 
-      expect(invitationRepositoryMock.remove).toHaveBeenCalledWith(invitation);
+      expect(invitationRepositoryMock.remove).toHaveBeenCalledWith([
+        invitation,
+      ]);
 
       expect(jwtServiceMock.signAsync).toHaveBeenCalledWith({
         sub: savedUser.id,
         email: savedUser.email,
       });
+
+      expect(result).toEqual({
+        token: 'invite-auth-token',
+      });
+    });
+
+    it('grants access for all active pending invitations with the same email', async () => {
+      const dto: RegisterByInviteDto = {
+        firstname: 'Bob',
+        lastname: 'Brown',
+        password: 'Password123',
+        token: 'invite-token',
+      };
+
+      const tokenHash = createHash('sha256').update(dto.token).digest('hex');
+
+      const invitation = {
+        id: 10,
+        galleryId: 20,
+        email: 'bob@test.com',
+        role: GalleryRole.EDITOR,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      const secondInvitation = {
+        id: 11,
+        galleryId: 21,
+        email: invitation.email,
+        role: GalleryRole.VIEWER,
+        tokenHash: 'second-token-hash',
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      const expiredInvitation = {
+        id: 12,
+        galleryId: 22,
+        email: invitation.email,
+        role: GalleryRole.VIEWER,
+        tokenHash: 'expired-token-hash',
+        expiresAt: new Date(Date.now() - 60_000),
+      };
+
+      const savedUser = {
+        id: 30,
+        firstname: dto.firstname,
+        lastname: dto.lastname,
+        email: invitation.email,
+        password: 'hashed-password',
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      galleriesServiceMock.getInvitation.mockResolvedValue({
+        email: invitation.email,
+        galleryTitle: 'Nature',
+        role: invitation.role,
+      });
+
+      invitationRepositoryMock.findOne.mockResolvedValue(invitation);
+      invitationRepositoryMock.find.mockResolvedValue([
+        invitation,
+        secondInvitation,
+        expiredInvitation,
+      ]);
+
+      usersRepositoryMock.findOne.mockResolvedValue(null);
+      usersRepositoryMock.create.mockReturnValue(savedUser);
+      usersRepositoryMock.save.mockResolvedValue(savedUser);
+
+      accessRepositoryMock.create.mockImplementation(
+        (payload: { galleryId: number; userId: number; role: GalleryRole }) =>
+          payload,
+      );
+
+      jwtServiceMock.signAsync.mockResolvedValue('invite-auth-token');
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+
+      const result = await authService.registerByInvite(dto);
+
+      expect(accessRepositoryMock.create).toHaveBeenCalledTimes(2);
+
+      expect(accessRepositoryMock.create).toHaveBeenNthCalledWith(1, {
+        galleryId: invitation.galleryId,
+        userId: savedUser.id,
+        role: invitation.role,
+      });
+
+      expect(accessRepositoryMock.create).toHaveBeenNthCalledWith(2, {
+        galleryId: secondInvitation.galleryId,
+        userId: savedUser.id,
+        role: secondInvitation.role,
+      });
+
+      expect(accessRepositoryMock.save).toHaveBeenCalledTimes(2);
+
+      expect(invitationRepositoryMock.remove).toHaveBeenCalledWith([
+        invitation,
+        secondInvitation,
+        expiredInvitation,
+      ]);
 
       expect(result).toEqual({
         token: 'invite-auth-token',
