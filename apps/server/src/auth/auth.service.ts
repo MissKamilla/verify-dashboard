@@ -101,6 +101,8 @@ export class AuthService {
 
     await this.verificationRepository.remove(verification);
 
+    await this.applyPendingInvitations(user);
+
     const token = await this.jwtService.signAsync({
       sub: user.id,
       email: user.email,
@@ -268,5 +270,51 @@ export class AuthService {
     await this.verificationRepository.save(verification);
 
     return code;
+  }
+
+  private async applyPendingInvitations(user: User): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const accessRepository = manager.getRepository(GalleryAccess);
+      const invitationRepository = manager.getRepository(GalleryInvitation);
+
+      const invitations = await invitationRepository.find({
+        where: {
+          email: user.email,
+        },
+      });
+
+      if (!invitations.length) {
+        return;
+      }
+
+      const now = new Date();
+
+      for (const invitation of invitations) {
+        if (invitation.expiresAt < now) {
+          continue;
+        }
+
+        const existingAccess = await accessRepository.findOne({
+          where: {
+            galleryId: invitation.galleryId,
+            userId: user.id,
+          },
+        });
+
+        if (existingAccess) {
+          continue;
+        }
+
+        const access = accessRepository.create({
+          galleryId: invitation.galleryId,
+          userId: user.id,
+          role: invitation.role,
+        });
+
+        await accessRepository.save(access);
+      }
+
+      await invitationRepository.remove(invitations);
+    });
   }
 }

@@ -144,6 +144,7 @@ export function RegisterPage() {
           }}
         >
           {({ values, errors, touched, handleChange, handleBlur, isValid }) => {
+            const verificationEmail = values.email.trim();
             const isSubmitDisabled =
               !values.firstname.trim() ||
               !values.lastname.trim() ||
@@ -238,6 +239,21 @@ export function RegisterPage() {
                     className="text-xs font-normal leading-6 text-error"
                   >
                     {apiError}
+                  </p>
+                )}
+
+                {apiError && !isInviteRegistration && verificationEmail && (
+                  <p className="text-xs font-normal leading-6 text-text-secondary">
+                    If your account was created but is not verified,{" "}
+                    <Link
+                      to={`/verify-email?email=${encodeURIComponent(
+                        verificationEmail,
+                      )}`}
+                      className="font-bold text-brand"
+                    >
+                      verify your email
+                    </Link>
+                    .
                   </p>
                 )}
 

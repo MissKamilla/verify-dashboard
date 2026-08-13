@@ -488,6 +488,113 @@ describe('AuthService', () => {
         email: user.email,
       });
     });
+
+    it('grants active pending invitations when email is verified', async () => {
+      const dto: VerifyEmailDto = {
+        email: 'john@example.com',
+        code: '123456',
+      };
+
+      const user = {
+        id: 1,
+        email: dto.email,
+      };
+
+      const verification = {
+        id: 1,
+        codeHash: 'hashed-code',
+        expiresAt: new Date(Date.now() + 60_000),
+        user,
+      };
+
+      const invitation = {
+        id: 10,
+        galleryId: 20,
+        email: user.email,
+        role: GalleryRole.EDITOR,
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      const expiredInvitation = {
+        id: 11,
+        galleryId: 21,
+        email: user.email,
+        role: GalleryRole.VIEWER,
+        expiresAt: new Date(Date.now() - 60_000),
+      };
+
+      const accessRepositoryMock = {
+        findOne: jest.fn().mockResolvedValue(null),
+        create: jest.fn(
+          (payload: { galleryId: number; userId: number; role: GalleryRole }) =>
+            payload,
+        ),
+        save: jest.fn(),
+      };
+
+      const invitationRepositoryMock = {
+        find: jest.fn().mockResolvedValue([invitation, expiredInvitation]),
+        remove: jest.fn(),
+      };
+
+      const managerMock = {
+        getRepository: jest.fn((entity: unknown) => {
+          if (entity === GalleryAccess) {
+            return accessRepositoryMock;
+          }
+
+          if (entity === GalleryInvitation) {
+            return invitationRepositoryMock;
+          }
+
+          throw new Error('Unexpected repository');
+        }),
+      };
+
+      dataSourceMock.transaction.mockImplementation(
+        async (callback: (manager: typeof managerMock) => Promise<unknown>) =>
+          callback(managerMock),
+      );
+
+      usersServiceMock.findByEmail.mockResolvedValue(user);
+      verificationRepositoryMock.findOne.mockResolvedValue(verification);
+
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+
+      jwtServiceMock.signAsync.mockResolvedValue('test-token');
+
+      const result = await authService.verifyEmail(dto);
+
+      expect(result).toEqual({
+        token: 'test-token',
+      });
+
+      expect(invitationRepositoryMock.find).toHaveBeenCalledWith({
+        where: {
+          email: user.email,
+        },
+      });
+
+      expect(accessRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: {
+          galleryId: invitation.galleryId,
+          userId: user.id,
+        },
+      });
+
+      expect(accessRepositoryMock.create).toHaveBeenCalledTimes(1);
+      expect(accessRepositoryMock.create).toHaveBeenCalledWith({
+        galleryId: invitation.galleryId,
+        userId: user.id,
+        role: invitation.role,
+      });
+      expect(accessRepositoryMock.save).toHaveBeenCalledTimes(1);
+
+      expect(invitationRepositoryMock.remove).toHaveBeenCalledWith([
+        invitation,
+        expiredInvitation,
+      ]);
+    });
   });
 
   describe('resendVerification', () => {

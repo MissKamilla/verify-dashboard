@@ -259,6 +259,80 @@ describe('Auth integration', () => {
     );
   });
 
+  it('grants pending invitation access when regular registration is verified', async () => {
+    const ownerToken = await registerUser(app);
+
+    const gallery = await createGallery(app, ownerToken, {
+      title: 'Shared gallery',
+      description: 'Invite-only photos',
+    });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: 'invitee@test.com',
+        role: 'viewer',
+        sendNotification: true,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          status: 'invitation_sent',
+        });
+      });
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        firstname: 'Ivan',
+        lastname: 'Invitee',
+        email: 'invitee@test.com',
+        password: 'Password123',
+      })
+      .expect(201);
+
+    const verificationCode = sentVerificationCodes.get('invitee@test.com');
+
+    expect(verificationCode).toEqual(expect.stringMatching(/^\d{6}$/));
+
+    const verifyResponse = await request(app.getHttpServer())
+      .post('/auth/verify-email')
+      .send({
+        email: 'invitee@test.com',
+        code: verificationCode,
+      })
+      .expect(200);
+
+    const verifyBody = verifyResponse.body as AuthResponseBody;
+
+    const galleriesResponse = await request(app.getHttpServer())
+      .get('/galleries')
+      .set('Authorization', `Bearer ${verifyBody.token}`)
+      .expect(200);
+
+    const galleriesBody =
+      galleriesResponse.body as unknown as GalleriesListResponseBody;
+
+    expect(galleriesBody.total).toBe(1);
+    expect(galleriesBody.items[0]).toEqual(
+      expect.objectContaining({
+        id: gallery.id,
+        title: gallery.title,
+        role: 'viewer',
+      }),
+    );
+
+    const remainingInvitations = await dataSource.query<
+      Array<{ count: number }>
+    >(
+      'SELECT COUNT(*)::int AS count FROM "gallery_invitations" WHERE "email" = $1',
+      ['invitee@test.com'],
+    );
+
+    expect(remainingInvitations[0]?.count).toBe(0);
+  });
+
   it('registers invited user with verified email and gallery access', async () => {
     const ownerToken = await registerUser(app);
 
