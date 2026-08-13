@@ -291,4 +291,17 @@ export class GalleriesController {
       currentUserId,
     );
   }
+
+  @Get(':id/access/recipient')
+  checkAccessRecipient(
+    @Param('id', ParseIntPipe) galleryId: number,
+    @CurrentUser('sub') currentUserId: number,
+    @Query('email') email: string,
+  ) {
+    return this.galleriesService.checkAccessRecipient(
+      galleryId,
+      currentUserId,
+      email,
+    );
+  }
 }

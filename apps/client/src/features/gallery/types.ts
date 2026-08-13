@@ -107,3 +107,7 @@ export type GalleryAccessFormErrors = Partial<
 export type CreateGalleryAccessResponse = {
   status: "access_granted" | "invitation_sent";
 };
+
+export type GalleryAccessRecipientResponse = {
+  registered: boolean;
+};

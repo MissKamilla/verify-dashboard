@@ -6,6 +6,7 @@ import type {
   CreateGalleryAccessResponse,
   GalleryAccess,
   GalleryAccessListItem,
+  GalleryAccessRecipientResponse,
   GalleriesListResponse,
   Gallery,
   GetGalleriesParams,
@@ -90,4 +91,20 @@ export const deleteGalleryAccess = async (
   userId: number,
 ): Promise<void> => {
   await httpClient.delete(`/galleries/${galleryId}/access/${userId}`);
+};
+
+export const getGalleryAccessRecipient = async (
+  galleryId: number,
+  email: string,
+): Promise<GalleryAccessRecipientResponse> => {
+  const response = await httpClient.get<GalleryAccessRecipientResponse>(
+    `/galleries/${galleryId}/access/recipient`,
+    {
+      params: {
+        email,
+      },
+    },
+  );
+
+  return response.data;
 };

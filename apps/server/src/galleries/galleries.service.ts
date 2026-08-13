@@ -458,6 +458,24 @@ export class GalleriesService {
     return accessibleGallery;
   }
 
+  async checkAccessRecipient(
+    galleryId: number,
+    currentUserId: number,
+    email: string,
+  ): Promise<{ registered: boolean }> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    const user = await this.usersRepository.findOne({
+      where: {
+        email: email.trim().toLowerCase(),
+      },
+    });
+
+    return {
+      registered: Boolean(user),
+    };
+  }
+
   private async createInvitation(
     galleryId: number,
     email: string,
