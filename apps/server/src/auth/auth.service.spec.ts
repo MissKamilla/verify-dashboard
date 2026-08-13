@@ -6,12 +6,19 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
+import { createHash } from 'crypto';
+import { DataSource, Repository } from 'typeorm';
 
+import { GalleriesService } from '../galleries/galleries.service';
 import { MailService } from '../mail/mail.service';
 import { UsersService } from '../users/users.service';
+import { User } from '../users/entities/user.entity';
+import { GalleryAccess } from '../galleries/entities/gallery-access.entity';
+import { GalleryInvitation } from '../galleries/entities/gallery-invitation.entity';
+import { GalleryRole } from '../galleries/enums/gallery-role.enum';
 import { EmailVerification } from './entities/email-verification.entity';
 import { AuthService } from './auth.service';
+import { RegisterByInviteDto } from './dto/invitation.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
@@ -21,8 +28,22 @@ jest.mock('bcrypt', () => ({
   compare: jest.fn(),
 }));
 
+function getFirstMockCallArg<T>(mock: jest.Mock): T {
+  const [arg] = mock.mock.calls[0] as [T];
+
+  return arg;
+}
+
 describe('AuthService', () => {
   let authService: AuthService;
+
+  let dataSourceMock: {
+    transaction: jest.Mock;
+  };
+
+  let galleriesServiceMock: {
+    getInvitation: jest.Mock;
+  };
 
   let usersServiceMock: {
     findByEmail: jest.Mock;
@@ -48,6 +69,14 @@ describe('AuthService', () => {
   beforeEach(() => {
     jest.resetAllMocks();
 
+    dataSourceMock = {
+      transaction: jest.fn(),
+    };
+
+    galleriesServiceMock = {
+      getInvitation: jest.fn(),
+    };
+
     usersServiceMock = {
       findByEmail: jest.fn(),
       createUser: jest.fn(),
@@ -70,6 +99,8 @@ describe('AuthService', () => {
     };
 
     authService = new AuthService(
+      dataSourceMock as unknown as DataSource,
+      galleriesServiceMock as unknown as GalleriesService,
       usersServiceMock as unknown as UsersService,
       jwtServiceMock as unknown as JwtService,
       mailServiceMock as unknown as MailService,
@@ -137,7 +168,7 @@ describe('AuthService', () => {
         id: 1,
         user,
         codeHash: 'hashed-code',
-        expiresAt: expect.any(Date),
+        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
       };
 
       verificationRepositoryMock.create.mockReturnValue(verification);
@@ -169,11 +200,18 @@ describe('AuthService', () => {
         10,
       );
 
-      expect(verificationRepositoryMock.create).toHaveBeenCalledWith({
+      const createPayload = getFirstMockCallArg<{
+        user: typeof user;
+        codeHash: string;
+        expiresAt: Date;
+      }>(verificationRepositoryMock.create);
+
+      expect(createPayload).toMatchObject({
         user,
         codeHash: 'hashed-code',
-        expiresAt: expect.any(Date),
       });
+
+      expect(createPayload.expiresAt).toBeInstanceOf(Date);
 
       expect(verificationRepositoryMock.save).toHaveBeenCalledWith(
         verification,
@@ -221,11 +259,13 @@ describe('AuthService', () => {
 
       expect(verificationRepositoryMock.create).not.toHaveBeenCalled();
 
-      expect(verificationRepositoryMock.save).toHaveBeenCalledWith({
-        ...verification,
-        codeHash: 'new-code-hash',
-        expiresAt: expect.any(Date),
-      });
+      expect(verification.codeHash).toBe('new-code-hash');
+
+      expect(verification.expiresAt).toBeInstanceOf(Date);
+
+      expect(verificationRepositoryMock.save).toHaveBeenCalledWith(
+        verification,
+      );
     });
   });
 
@@ -451,7 +491,7 @@ describe('AuthService', () => {
         id: 1,
         user,
         codeHash: 'hashed-code',
-        expiresAt: expect.any(Date),
+        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
       };
 
       usersServiceMock.findByEmail.mockResolvedValue(user);
@@ -476,6 +516,244 @@ describe('AuthService', () => {
         dto.email,
         expect.stringMatching(/^\d{6}$/),
       );
+    });
+  });
+
+  describe('getInvitation', () => {
+    it('returns invitation details from galleries service', async () => {
+      const invitation = {
+        email: 'invitee@test.com',
+        galleryTitle: 'Nature',
+        role: GalleryRole.VIEWER,
+      };
+
+      galleriesServiceMock.getInvitation.mockResolvedValue(invitation);
+
+      const result = await authService.getInvitation('invite-token');
+
+      expect(galleriesServiceMock.getInvitation).toHaveBeenCalledWith(
+        'invite-token',
+      );
+
+      expect(result).toEqual(invitation);
+    });
+  });
+
+  describe('registerByInvite', () => {
+    let usersRepositoryMock: {
+      findOne: jest.Mock;
+      create: jest.Mock;
+      save: jest.Mock;
+    };
+
+    let accessRepositoryMock: {
+      create: jest.Mock;
+      save: jest.Mock;
+    };
+
+    let invitationRepositoryMock: {
+      findOne: jest.Mock;
+      remove: jest.Mock;
+    };
+
+    beforeEach(() => {
+      usersRepositoryMock = {
+        findOne: jest.fn(),
+        create: jest.fn(),
+        save: jest.fn(),
+      };
+
+      accessRepositoryMock = {
+        create: jest.fn(),
+        save: jest.fn(),
+      };
+
+      invitationRepositoryMock = {
+        findOne: jest.fn(),
+        remove: jest.fn(),
+      };
+
+      const managerMock = {
+        getRepository: jest.fn((entity: unknown) => {
+          if (entity === User) {
+            return usersRepositoryMock;
+          }
+
+          if (entity === GalleryAccess) {
+            return accessRepositoryMock;
+          }
+
+          if (entity === GalleryInvitation) {
+            return invitationRepositoryMock;
+          }
+
+          throw new Error('Unexpected repository');
+        }),
+      };
+
+      dataSourceMock.transaction.mockImplementation(
+        async (callback: (manager: typeof managerMock) => Promise<unknown>) =>
+          callback(managerMock),
+      );
+    });
+
+    it('creates verified user, grants access, removes invitation and returns token', async () => {
+      const dto: RegisterByInviteDto = {
+        firstname: 'Bob',
+        lastname: 'Brown',
+        password: 'Password123',
+        token: 'invite-token',
+      };
+
+      const tokenHash = createHash('sha256').update(dto.token).digest('hex');
+
+      const invitation = {
+        id: 10,
+        galleryId: 20,
+        email: 'bob@test.com',
+        role: GalleryRole.EDITOR,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      const createdUser = {
+        firstname: dto.firstname,
+        lastname: dto.lastname,
+        email: invitation.email,
+        password: 'hashed-password',
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      const savedUser = {
+        id: 30,
+        ...createdUser,
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      const access = {
+        galleryId: invitation.galleryId,
+        userId: savedUser.id,
+        role: invitation.role,
+      };
+
+      galleriesServiceMock.getInvitation.mockResolvedValue({
+        email: invitation.email,
+        galleryTitle: 'Nature',
+        role: invitation.role,
+      });
+
+      invitationRepositoryMock.findOne.mockResolvedValue(invitation);
+
+      usersRepositoryMock.findOne.mockResolvedValue(null);
+
+      usersRepositoryMock.create.mockReturnValue(createdUser);
+
+      usersRepositoryMock.save.mockResolvedValue(savedUser);
+
+      accessRepositoryMock.create.mockReturnValue(access);
+
+      jwtServiceMock.signAsync.mockResolvedValue('invite-auth-token');
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+
+      const result = await authService.registerByInvite(dto);
+
+      expect(galleriesServiceMock.getInvitation).toHaveBeenCalledWith(
+        dto.token,
+      );
+
+      expect(bcrypt.hash).toHaveBeenCalledWith(dto.password, 10);
+
+      expect(invitationRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: { tokenHash },
+      });
+
+      expect(usersRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: { email: invitation.email },
+      });
+
+      const createUserPayload = getFirstMockCallArg<{
+        firstname: string;
+        lastname: string;
+        email: string;
+        password: string;
+        verifiedAt: Date;
+      }>(usersRepositoryMock.create);
+
+      expect(createUserPayload).toMatchObject({
+        firstname: dto.firstname,
+        lastname: dto.lastname,
+        email: invitation.email,
+        password: 'hashed-password',
+      });
+
+      expect(createUserPayload.verifiedAt).toBeInstanceOf(Date);
+
+      expect(usersRepositoryMock.save).toHaveBeenCalledWith(createdUser);
+
+      expect(accessRepositoryMock.create).toHaveBeenCalledWith(access);
+
+      expect(accessRepositoryMock.save).toHaveBeenCalledWith(access);
+
+      expect(invitationRepositoryMock.remove).toHaveBeenCalledWith(invitation);
+
+      expect(jwtServiceMock.signAsync).toHaveBeenCalledWith({
+        sub: savedUser.id,
+        email: savedUser.email,
+      });
+
+      expect(result).toEqual({
+        token: 'invite-auth-token',
+      });
+    });
+
+    it('throws ConflictException when invitation email already has an account', async () => {
+      const dto: RegisterByInviteDto = {
+        firstname: 'Bob',
+        lastname: 'Brown',
+        password: 'Password123',
+        token: 'invite-token',
+      };
+
+      const invitation = {
+        id: 10,
+        galleryId: 20,
+        email: 'bob@test.com',
+        role: GalleryRole.VIEWER,
+        tokenHash: createHash('sha256').update(dto.token).digest('hex'),
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      galleriesServiceMock.getInvitation.mockResolvedValue({
+        email: invitation.email,
+        galleryTitle: 'Nature',
+        role: invitation.role,
+      });
+
+      invitationRepositoryMock.findOne.mockResolvedValue(invitation);
+
+      usersRepositoryMock.findOne.mockResolvedValue({
+        id: 30,
+        email: invitation.email,
+      });
+
+      (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
+
+      const registerPromise = authService.registerByInvite(dto);
+
+      await expect(registerPromise).rejects.toBeInstanceOf(ConflictException);
+
+      await expect(registerPromise).rejects.toThrow(
+        'User with this email already exists',
+      );
+
+      expect(usersRepositoryMock.create).not.toHaveBeenCalled();
+
+      expect(accessRepositoryMock.save).not.toHaveBeenCalled();
+
+      expect(invitationRepositoryMock.remove).not.toHaveBeenCalled();
+
+      expect(jwtServiceMock.signAsync).not.toHaveBeenCalled();
     });
   });
 

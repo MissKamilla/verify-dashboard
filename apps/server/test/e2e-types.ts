@@ -19,6 +19,7 @@ export type GalleryResponseBody = {
   description: string;
   userId: number;
   createdAt: string;
+  role: 'owner' | 'editor' | 'viewer';
 };
 
 export type ValidationErrorResponseBody = {

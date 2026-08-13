@@ -14,6 +14,7 @@ process.env.SMTP_USER = 'test-user';
 process.env.SMTP_PASSWORD = 'test-password';
 process.env.SMTP_FROM_EMAIL = 'noreply@test.com';
 process.env.SMTP_FROM_NAME = 'Verify Dashboard Test';
+process.env.FRONTEND_URL = 'http://localhost:5173';
 
 process.env.UPLOAD_IMAGES_DIR = 'uploads/test-images';
 process.env.UPLOAD_IMAGES_PUBLIC_PATH = '/uploads/test-images';

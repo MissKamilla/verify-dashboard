@@ -5,14 +5,17 @@ import { DataSource } from 'typeorm';
 
 import {
   cleanupUploads,
+  createGallery,
   createE2eApp,
   registerUser,
   resetE2eState,
+  sentGalleryInvitations,
   sentVerificationCodes,
 } from './e2e-utils';
 import {
   AuthResponseBody,
   ErrorResponseBody,
+  GalleriesListResponseBody,
   RegisterResponseBody,
   ValidationErrorResponseBody,
 } from './e2e-types';
@@ -171,6 +174,93 @@ describe('Auth integration', () => {
     expect(sentVerificationCodes.get('anna@test.com')).toEqual(
       expect.stringMatching(/^\d{6}$/),
     );
+  });
+
+  it('registers invited user with verified email and gallery access', async () => {
+    const ownerToken = await registerUser(app);
+
+    const gallery = await createGallery(app, ownerToken, {
+      title: 'Shared gallery',
+      description: 'Invite-only photos',
+    });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: 'invitee@test.com',
+        role: 'viewer',
+        sendNotification: true,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          status: 'invitation_sent',
+        });
+      });
+
+    const invitationToken = sentGalleryInvitations.get('invitee@test.com');
+
+    expect(invitationToken).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
+
+    await request(app.getHttpServer())
+      .get(`/auth/invitations/${invitationToken}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          email: 'invitee@test.com',
+          galleryTitle: gallery.title,
+          role: 'viewer',
+        });
+      });
+
+    const registerResponse = await request(app.getHttpServer())
+      .post('/auth/register-by-invite')
+      .send({
+        firstname: 'Ivan',
+        lastname: 'Invitee',
+        password: 'Password123',
+        token: invitationToken,
+      })
+      .expect(201);
+
+    const registerBody = registerResponse.body as AuthResponseBody;
+
+    expect(registerBody.token).toEqual(expect.any(String));
+
+    const galleriesResponse = await request(app.getHttpServer())
+      .get('/galleries')
+      .set('Authorization', `Bearer ${registerBody.token}`)
+      .expect(200);
+
+    const galleriesBody =
+      galleriesResponse.body as unknown as GalleriesListResponseBody;
+
+    expect(galleriesBody.total).toBe(1);
+
+    expect(galleriesBody.items[0]).toEqual(
+      expect.objectContaining({
+        id: gallery.id,
+        title: gallery.title,
+        role: 'viewer',
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'invitee@test.com',
+        password: 'Password123',
+      })
+      .expect(200);
+
+    const expiredInvitationResponse = await request(app.getHttpServer())
+      .get(`/auth/invitations/${invitationToken}`)
+      .expect(400);
+
+    const responseBody = expiredInvitationResponse.body as ErrorResponseBody;
+
+    expect(responseBody.message).toBe('Invalid invitation');
   });
 
   it('logs in registered user', async () => {

@@ -8,6 +8,8 @@ describe('AuthController', () => {
     register: jest.Mock;
     verifyEmail: jest.Mock;
     resendVerification: jest.Mock;
+    getInvitation: jest.Mock;
+    registerByInvite: jest.Mock;
     login: jest.Mock;
   };
 
@@ -18,6 +20,8 @@ describe('AuthController', () => {
       register: jest.fn(),
       verifyEmail: jest.fn(),
       resendVerification: jest.fn(),
+      getInvitation: jest.fn(),
+      registerByInvite: jest.fn(),
       login: jest.fn(),
     };
 
@@ -87,6 +91,49 @@ describe('AuthController', () => {
       expect(authServiceMock.resendVerification).toHaveBeenCalledWith(dto);
 
       expect(result).toEqual(registerResponse);
+    });
+  });
+
+  describe('getInvitation', () => {
+    it('gets gallery invitation through service', async () => {
+      const invitation = {
+        email: 'invitee@test.com',
+        galleryTitle: 'Nature',
+        role: 'viewer',
+      };
+
+      authServiceMock.getInvitation.mockResolvedValue(invitation);
+
+      const result = await authController.getInvitation('invite-token');
+
+      expect(authServiceMock.getInvitation).toHaveBeenCalledWith(
+        'invite-token',
+      );
+
+      expect(result).toEqual(invitation);
+    });
+  });
+
+  describe('registerByInvite', () => {
+    it('registers invited user through service', async () => {
+      const dto = {
+        firstname: 'Bob',
+        lastname: 'Brown',
+        password: 'Password123',
+        token: 'invite-token',
+      };
+
+      const authResponse = {
+        token: 'invite-auth-token',
+      };
+
+      authServiceMock.registerByInvite.mockResolvedValue(authResponse);
+
+      const result = await authController.registerByInvite(dto);
+
+      expect(authServiceMock.registerByInvite).toHaveBeenCalledWith(dto);
+
+      expect(result).toEqual(authResponse);
     });
   });
 

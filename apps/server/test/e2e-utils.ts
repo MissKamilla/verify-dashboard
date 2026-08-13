@@ -19,6 +19,7 @@ import {
 } from './e2e-types';
 
 export const sentVerificationCodes = new Map<string, string>();
+export const sentGalleryInvitations = new Map<string, string>();
 
 export const uploadImagesDir = join(
   process.cwd(),
@@ -39,6 +40,14 @@ export async function createE2eApp(): Promise<{
 
       return Promise.resolve();
     }),
+    sendGallerySharedNotification: jest.fn(() => Promise.resolve()),
+    sendGalleryInvitation: jest.fn(
+      (to: string, _title: string, token: string) => {
+        sentGalleryInvitations.set(to, token);
+
+        return Promise.resolve();
+      },
+    ),
   });
 
   const moduleFixture: TestingModule = await moduleBuilder.compile();
@@ -62,9 +71,10 @@ export async function createE2eApp(): Promise<{
 
 export async function resetE2eState(dataSource: DataSource): Promise<void> {
   sentVerificationCodes.clear();
+  sentGalleryInvitations.clear();
 
   await dataSource.query(
-    'TRUNCATE TABLE "email_verifications", "images", "galleries", "users" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "email_verifications", "gallery_invitations", "images", "galleries", "users" RESTART IDENTITY CASCADE',
   );
 
   await rm(uploadImagesDir, {

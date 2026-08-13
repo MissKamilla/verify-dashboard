@@ -1,13 +1,16 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
+import { createHash } from 'crypto';
 import { DataSource, ILike, In, Repository } from 'typeorm';
 
 import { GalleryImage } from '../images/entities/image.entity';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { GalleryAccess } from './entities/gallery-access.entity';
+import { GalleryInvitation } from './entities/gallery-invitation.entity';
 import { Gallery } from './entities/gallery.entity';
 import { GalleryRole } from './enums/gallery-role.enum';
 import { GalleriesService } from './galleries.service';
@@ -18,6 +21,12 @@ import { User } from '../users/entities/user.entity';
 jest.mock('../images/images-storage.utils', () => ({
   removeStoredImageFile: jest.fn(),
 }));
+
+function getFirstMockCallArg<T>(mock: jest.Mock): T {
+  const [arg] = mock.mock.calls[0] as [T];
+
+  return arg;
+}
 
 describe('GalleriesService', () => {
   let galleriesService: GalleriesService;
@@ -38,6 +47,13 @@ describe('GalleriesService', () => {
   let imagesRepositoryMock: {
     find: jest.Mock;
   };
+  let galleryInvitationRepositoryMock: {
+    find: jest.Mock;
+    findOne: jest.Mock;
+    create: jest.Mock;
+    save: jest.Mock;
+    remove: jest.Mock;
+  };
   let usersRepositoryMock: {
     findOne: jest.Mock;
   };
@@ -47,6 +63,7 @@ describe('GalleriesService', () => {
   };
 
   let mailServiceMock: {
+    sendGalleryInvitation: jest.Mock;
     sendGallerySharedNotification: jest.Mock;
   };
 
@@ -70,6 +87,14 @@ describe('GalleriesService', () => {
       find: jest.fn(),
     };
 
+    galleryInvitationRepositoryMock = {
+      find: jest.fn().mockResolvedValue([]),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      remove: jest.fn(),
+    };
+
     usersRepositoryMock = {
       findOne: jest.fn(),
     };
@@ -79,6 +104,7 @@ describe('GalleriesService', () => {
     };
 
     mailServiceMock = {
+      sendGalleryInvitation: jest.fn(),
       sendGallerySharedNotification: jest.fn(),
     };
 
@@ -86,10 +112,88 @@ describe('GalleriesService', () => {
       galleriesRepositoryMock as unknown as Repository<Gallery>,
       galleryAccessRepositoryMock as unknown as Repository<GalleryAccess>,
       imagesRepositoryMock as unknown as Repository<GalleryImage>,
+      galleryInvitationRepositoryMock as unknown as Repository<GalleryInvitation>,
       usersRepositoryMock as unknown as Repository<User>,
       dataSourceMock as unknown as DataSource,
       mailServiceMock as unknown as MailService,
     );
+  });
+
+  describe('getInvitation', () => {
+    it('returns invitation details for valid token', async () => {
+      const token = 'invite-token';
+      const tokenHash = createHash('sha256').update(token).digest('hex');
+
+      const invitation = {
+        id: 100,
+        email: 'invitee@test.com',
+        role: GalleryRole.VIEWER,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 60_000),
+        gallery: {
+          id: 10,
+          title: 'Nature',
+        },
+      };
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(invitation);
+
+      const result = await galleriesService.getInvitation(token);
+
+      expect(galleryInvitationRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: { tokenHash },
+        relations: {
+          gallery: true,
+        },
+      });
+
+      expect(result).toEqual({
+        email: invitation.email,
+        galleryTitle: invitation.gallery.title,
+        role: invitation.role,
+      });
+    });
+
+    it('throws BadRequestException when invitation token is invalid', async () => {
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(null);
+
+      const invitationPromise = galleriesService.getInvitation('bad-token');
+
+      await expect(invitationPromise).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      await expect(invitationPromise).rejects.toThrow('Invalid invitation');
+
+      expect(galleryInvitationRepositoryMock.remove).not.toHaveBeenCalled();
+    });
+
+    it('removes expired invitation and throws BadRequestException', async () => {
+      const invitation = {
+        id: 100,
+        email: 'invitee@test.com',
+        role: GalleryRole.EDITOR,
+        expiresAt: new Date(Date.now() - 1000),
+        gallery: {
+          id: 10,
+          title: 'Nature',
+        },
+      };
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(invitation);
+
+      const invitationPromise = galleriesService.getInvitation('expired-token');
+
+      await expect(invitationPromise).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+
+      await expect(invitationPromise).rejects.toThrow('Invitation expired');
+
+      expect(galleryInvitationRepositoryMock.remove).toHaveBeenCalledWith(
+        invitation,
+      );
+    });
   });
 
   describe('createGallery', () => {
@@ -716,6 +820,77 @@ describe('GalleriesService', () => {
   });
 
   describe('createAccess', () => {
+    it('creates invitation and sends invite email when target user is not registered', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const invitation = {
+        id: 100,
+        galleryId: gallery.id,
+        email: 'new-user@test.com',
+        role: GalleryRole.VIEWER,
+        tokenHash: 'token-hash',
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      usersRepositoryMock.findOne.mockResolvedValue(null);
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(null);
+
+      galleryInvitationRepositoryMock.create.mockReturnValue(invitation);
+
+      galleryInvitationRepositoryMock.save.mockResolvedValue(invitation);
+
+      const result = await galleriesService.createAccess(gallery.id, 1, {
+        email: invitation.email,
+        role: GalleryRole.VIEWER,
+        sendNotification: true,
+      });
+
+      const [, , sentToken] = mailServiceMock.sendGalleryInvitation.mock
+        .calls[0] as [string, string, string];
+
+      expect(sentToken).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
+
+      const createInvitationPayload = getFirstMockCallArg<{
+        galleryId: number;
+        email: string;
+        role: GalleryRole;
+        tokenHash: string;
+        expiresAt: Date;
+      }>(galleryInvitationRepositoryMock.create);
+
+      expect(createInvitationPayload).toMatchObject({
+        galleryId: gallery.id,
+        email: invitation.email,
+        role: GalleryRole.VIEWER,
+        tokenHash: createHash('sha256').update(sentToken).digest('hex'),
+      });
+
+      expect(createInvitationPayload.expiresAt).toBeInstanceOf(Date);
+
+      expect(galleryInvitationRepositoryMock.save).toHaveBeenCalledWith(
+        invitation,
+      );
+
+      expect(mailServiceMock.sendGalleryInvitation).toHaveBeenCalledWith(
+        invitation.email,
+        gallery.title,
+        sentToken,
+      );
+
+      expect(galleryAccessRepositoryMock.create).not.toHaveBeenCalled();
+
+      expect(result).toEqual({
+        status: 'invitation_sent',
+      });
+    });
+
     it('creates gallery access without sending notification when disabled', async () => {
       const gallery = {
         id: 10,
@@ -763,7 +938,9 @@ describe('GalleriesService', () => {
         mailServiceMock.sendGallerySharedNotification,
       ).not.toHaveBeenCalled();
 
-      expect(result).toEqual(access);
+      expect(result).toEqual({
+        status: 'access_granted',
+      });
     });
 
     it('sends gallery shared notification when enabled', async () => {
@@ -805,7 +982,90 @@ describe('GalleriesService', () => {
         mailServiceMock.sendGallerySharedNotification,
       ).toHaveBeenCalledWith(targetUser.email, gallery.title);
 
-      expect(result).toEqual(access);
+      expect(result).toEqual({
+        status: 'access_granted',
+      });
+    });
+  });
+
+  describe('findAllAccesses', () => {
+    it('returns active accesses and pending non-expired invitations', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const access = {
+        id: 100,
+        galleryId: gallery.id,
+        userId: 2,
+        role: GalleryRole.EDITOR,
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+        user: {
+          id: 2,
+          email: 'editor@test.com',
+        },
+      };
+
+      const invitation = {
+        id: 200,
+        galleryId: gallery.id,
+        email: 'pending@test.com',
+        role: GalleryRole.VIEWER,
+        createdAt: new Date('2026-06-04T10:00:00.000Z'),
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryAccessRepositoryMock.find.mockResolvedValue([access]);
+
+      galleryInvitationRepositoryMock.find.mockResolvedValue([invitation]);
+
+      const result = await galleriesService.findAllAccesses(gallery.id, 1);
+
+      expect(galleryAccessRepositoryMock.find).toHaveBeenCalledWith({
+        where: { galleryId: gallery.id },
+        relations: {
+          user: true,
+        },
+        order: {
+          createdAt: 'ASC',
+        },
+      });
+
+      const invitationsQuery = getFirstMockCallArg<{
+        where: {
+          galleryId: number;
+          expiresAt: object;
+        };
+        order: {
+          createdAt: 'ASC';
+        };
+      }>(galleryInvitationRepositoryMock.find);
+
+      expect(invitationsQuery.where.galleryId).toBe(gallery.id);
+
+      expect(invitationsQuery.where.expiresAt).toBeDefined();
+
+      expect(invitationsQuery.order).toEqual({
+        createdAt: 'ASC',
+      });
+
+      expect(result).toEqual([
+        {
+          ...access,
+          status: 'active',
+        },
+        {
+          id: invitation.id,
+          galleryId: invitation.galleryId,
+          email: invitation.email,
+          role: invitation.role,
+          createdAt: invitation.createdAt,
+          status: 'pending',
+        },
+      ]);
     });
   });
 

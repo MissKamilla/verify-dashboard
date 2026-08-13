@@ -1,6 +1,7 @@
 import { GalleriesController } from './galleries.controller';
 import type { GalleriesService } from './galleries.service';
 import type { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
+import { GalleryRole } from './enums/gallery-role.enum';
 
 describe('GalleriesController', () => {
   let galleriesController: GalleriesController;
@@ -11,6 +12,11 @@ describe('GalleriesController', () => {
     findById: jest.Mock;
     updateGallery: jest.Mock;
     removeGallery: jest.Mock;
+    createAccess: jest.Mock;
+    findAllAccesses: jest.Mock;
+    updateAccess: jest.Mock;
+    removeAccess: jest.Mock;
+    checkAccessRecipient: jest.Mock;
   };
 
   beforeEach(() => {
@@ -22,6 +28,11 @@ describe('GalleriesController', () => {
       findById: jest.fn(),
       updateGallery: jest.fn(),
       removeGallery: jest.fn(),
+      createAccess: jest.fn(),
+      findAllAccesses: jest.fn(),
+      updateAccess: jest.fn(),
+      removeAccess: jest.fn(),
+      checkAccessRecipient: jest.fn(),
     };
 
     galleriesController = new GalleriesController(
@@ -141,6 +152,117 @@ describe('GalleriesController', () => {
       expect(galleriesServiceMock.removeGallery).toHaveBeenCalledWith(10, 1);
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe('createAccess', () => {
+    it('creates gallery access or invitation through service', async () => {
+      const dto = {
+        email: 'invitee@test.com',
+        role: GalleryRole.VIEWER,
+        sendNotification: true,
+      };
+
+      const response = {
+        status: 'invitation_sent',
+      };
+
+      galleriesServiceMock.createAccess.mockResolvedValue(response);
+
+      const result = await galleriesController.createAccess(1, 10, dto);
+
+      expect(galleriesServiceMock.createAccess).toHaveBeenCalledWith(
+        10,
+        1,
+        dto,
+      );
+
+      expect(result).toEqual(response);
+    });
+  });
+
+  describe('findAllAccesses', () => {
+    it('returns gallery access list through service', async () => {
+      const accesses = [
+        {
+          id: 100,
+          galleryId: 10,
+          email: 'pending@test.com',
+          role: 'viewer',
+          status: 'pending',
+        },
+      ];
+
+      galleriesServiceMock.findAllAccesses.mockResolvedValue(accesses);
+
+      const result = await galleriesController.findAllAccesses(1, 10);
+
+      expect(galleriesServiceMock.findAllAccesses).toHaveBeenCalledWith(10, 1);
+
+      expect(result).toEqual(accesses);
+    });
+  });
+
+  describe('updateAccess', () => {
+    it('updates gallery access through service', async () => {
+      const dto = {
+        role: GalleryRole.EDITOR,
+      };
+
+      const access = {
+        galleryId: 10,
+        userId: 2,
+        role: GalleryRole.EDITOR,
+      };
+
+      galleriesServiceMock.updateAccess.mockResolvedValue(access);
+
+      const result = await galleriesController.updateAccess(1, 10, 2, dto);
+
+      expect(galleriesServiceMock.updateAccess).toHaveBeenCalledWith(
+        10,
+        2,
+        1,
+        dto,
+      );
+
+      expect(result).toEqual(access);
+    });
+  });
+
+  describe('removeAccess', () => {
+    it('removes gallery access through service', async () => {
+      galleriesServiceMock.removeAccess.mockResolvedValue(undefined);
+
+      const result = await galleriesController.removeAccess(1, 10, 2);
+
+      expect(galleriesServiceMock.removeAccess).toHaveBeenCalledWith(10, 2, 1);
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('checkAccessRecipient', () => {
+    it('checks recipient registration status through service', async () => {
+      const response = {
+        registered: false,
+      };
+
+      galleriesServiceMock.checkAccessRecipient.mockResolvedValue(response);
+
+      const result = await galleriesController.checkAccessRecipient(
+        10,
+        1,
+        'invitee@test.com',
+      );
+
+      expect(galleriesServiceMock.checkAccessRecipient).toHaveBeenCalledWith(
+        10,
+        1,
+        'invitee@test.com',
+      );
+
+      expect(result).toEqual(response);
     });
   });
 });
