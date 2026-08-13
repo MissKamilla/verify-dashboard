@@ -1,8 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEmail, Matches } from 'class-validator';
 
 export class VerifyEmailDto {
   @ApiProperty({ example: 'anna@test.com' })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail()
   email!: string;
 
@@ -15,6 +19,9 @@ export class VerifyEmailDto {
 
 export class ResendVerificationDto {
   @ApiProperty({ example: 'anna@test.com' })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail()
   email!: string;
 }

@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsIn, IsBoolean } from 'class-validator';
 
 import { GalleryRole, GALLERY_ACCESS_ROLES } from '../enums/gallery-role.enum';
@@ -18,6 +19,9 @@ export class CreateGalleryAccessDto extends UpdateGalleryAccessDto {
   @ApiProperty({
     example: 'user@example.com',
   })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   @IsEmail()
   email!: string;
 

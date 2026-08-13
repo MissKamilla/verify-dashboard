@@ -299,6 +299,8 @@ export class GalleriesService {
     });
 
     if (existingAccess) {
+      await this.removePendingInvitation(galleryId, targetUser.email);
+
       throw new ConflictException('User already has access to this gallery');
     }
 
@@ -309,6 +311,8 @@ export class GalleriesService {
     });
 
     await this.galleryAccessRepository.save(access);
+
+    await this.removePendingInvitation(galleryId, targetUser.email);
 
     if (dto.sendNotification) {
       try {
@@ -511,6 +515,22 @@ export class GalleriesService {
     await this.galleryInvitationRepository.save(invitation);
 
     return token;
+  }
+
+  private async removePendingInvitation(
+    galleryId: number,
+    email: string,
+  ): Promise<void> {
+    const pendingInvitation = await this.galleryInvitationRepository.findOne({
+      where: {
+        galleryId,
+        email,
+      },
+    });
+
+    if (pendingInvitation) {
+      await this.galleryInvitationRepository.remove(pendingInvitation);
+    }
   }
 
   private async getGalleryAccessData(

@@ -943,6 +943,123 @@ describe('GalleriesService', () => {
       });
     });
 
+    it('removes pending invitation when registered user receives access', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const targetUser = {
+        id: 2,
+        email: 'bob@test.com',
+      };
+
+      const access = {
+        id: 100,
+        galleryId: gallery.id,
+        userId: targetUser.id,
+        role: GalleryRole.VIEWER,
+      };
+
+      const pendingInvitation = {
+        id: 200,
+        galleryId: gallery.id,
+        email: targetUser.email,
+        role: GalleryRole.VIEWER,
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      usersRepositoryMock.findOne.mockResolvedValue(targetUser);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue(null);
+
+      galleryAccessRepositoryMock.create.mockReturnValue(access);
+
+      galleryAccessRepositoryMock.save.mockResolvedValue(access);
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(
+        pendingInvitation,
+      );
+
+      const result = await galleriesService.createAccess(gallery.id, 1, {
+        email: targetUser.email,
+        role: GalleryRole.VIEWER,
+        sendNotification: false,
+      });
+
+      expect(galleryInvitationRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: {
+          galleryId: gallery.id,
+          email: targetUser.email,
+        },
+      });
+
+      expect(galleryInvitationRepositoryMock.remove).toHaveBeenCalledWith(
+        pendingInvitation,
+      );
+
+      expect(result).toEqual({
+        status: 'access_granted',
+      });
+    });
+
+    it('removes stale pending invitation when registered user already has access', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const targetUser = {
+        id: 2,
+        email: 'bob@test.com',
+      };
+
+      const existingAccess = {
+        id: 100,
+        galleryId: gallery.id,
+        userId: targetUser.id,
+        role: GalleryRole.VIEWER,
+      };
+
+      const pendingInvitation = {
+        id: 200,
+        galleryId: gallery.id,
+        email: targetUser.email,
+        role: GalleryRole.VIEWER,
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      usersRepositoryMock.findOne.mockResolvedValue(targetUser);
+
+      galleryAccessRepositoryMock.findOne.mockResolvedValue(existingAccess);
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(
+        pendingInvitation,
+      );
+
+      const createPromise = galleriesService.createAccess(gallery.id, 1, {
+        email: targetUser.email,
+        role: GalleryRole.VIEWER,
+        sendNotification: false,
+      });
+
+      await expect(createPromise).rejects.toBeInstanceOf(ConflictException);
+
+      await expect(createPromise).rejects.toThrow(
+        'User already has access to this gallery',
+      );
+
+      expect(galleryInvitationRepositoryMock.remove).toHaveBeenCalledWith(
+        pendingInvitation,
+      );
+
+      expect(galleryAccessRepositoryMock.create).not.toHaveBeenCalled();
+    });
+
     it('sends gallery shared notification when enabled', async () => {
       const gallery = {
         id: 10,

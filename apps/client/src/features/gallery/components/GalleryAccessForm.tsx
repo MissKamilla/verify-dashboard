@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Form, Formik, type FormikHelpers, useFormikContext } from "formik";
 
 import {
@@ -138,6 +138,12 @@ function GalleryAccessFormContent({
   const isDisabled = isCreatingAccess || isSubmitting || isCheckingRecipient;
 
   const isNotificationChecked = isUnregisteredUser || sendNotification;
+
+  useEffect(() => {
+    if (isUnregisteredUser && !sendNotification) {
+      setSendNotification(true);
+    }
+  }, [isUnregisteredUser, sendNotification, setSendNotification]);
 
   return (
     <Form noValidate className="flex flex-col gap-4">
