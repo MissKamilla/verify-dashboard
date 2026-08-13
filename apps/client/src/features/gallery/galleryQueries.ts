@@ -9,6 +9,7 @@ import {
   getGalleryAccesses,
   getGalleryAccessRecipient,
   getGalleryById,
+  revokeGalleryInvitation,
   updateGallery,
   updateGalleryAccess,
 } from "./galleryApi";
@@ -41,6 +42,11 @@ type UpdateGalleryAccessVariables = {
 type DeleteGalleryAccessVariables = {
   galleryId: number;
   userId: number;
+};
+
+type DeleteGalleryInvitationVariables = {
+  galleryId: number;
+  invitationId: number;
 };
 
 export const galleryQueryKeys = {
@@ -214,6 +220,20 @@ export const useDeleteGalleryAccessMutation = () => {
   return useMutation({
     mutationFn: ({ galleryId, userId }: DeleteGalleryAccessVariables) =>
       deleteGalleryAccess(galleryId, userId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: galleryQueryKeys.accessList(variables.galleryId),
+      });
+    },
+  });
+};
+
+export const useRevokeGalleryInvitationMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ galleryId, invitationId }: DeleteGalleryInvitationVariables) =>
+      revokeGalleryInvitation(galleryId, invitationId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: galleryQueryKeys.accessList(variables.galleryId),

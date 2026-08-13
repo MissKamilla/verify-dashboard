@@ -293,6 +293,42 @@ export class GalleriesController {
     );
   }
 
+  @ApiOperation({ summary: 'Revoke pending gallery invitation' })
+  @ApiParam({
+    name: 'galleryId',
+    type: Number,
+    example: 1,
+    description: 'Gallery id',
+  })
+  @ApiParam({
+    name: 'invitationId',
+    type: Number,
+    example: 2,
+    description: 'Gallery invitation id',
+  })
+  @ApiNoContentResponse({
+    description: 'Gallery invitation revoked',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid token',
+  })
+  @ApiNotFoundResponse({
+    description: 'Gallery or gallery invitation not found',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':galleryId/access/invitations/:invitationId')
+  removePendingInvitation(
+    @CurrentUser('sub') currentUserId: number,
+    @Param('galleryId', ParseIntPipe) galleryId: number,
+    @Param('invitationId', ParseIntPipe) invitationId: number,
+  ) {
+    return this.galleriesService.removePendingInvitation(
+      galleryId,
+      invitationId,
+      currentUserId,
+    );
+  }
+
   @Get(':galleryId/access/recipient')
   checkAccessRecipient(
     @Param('galleryId', ParseIntPipe) galleryId: number,

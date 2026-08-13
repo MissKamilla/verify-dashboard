@@ -3,6 +3,7 @@ import { useState } from "react";
 import { RevokeGalleryAccessModal } from "./RevokeGalleryAccessModal";
 import {
   useDeleteGalleryAccessMutation,
+  useRevokeGalleryInvitationMutation,
   useUpdateGalleryAccessMutation,
 } from "@/features/gallery/galleryQueries";
 import type {
@@ -50,8 +51,6 @@ function ActiveGalleryAccessRow({
   access: Extract<GalleryAccessListItem, { status: "active" }>;
 }) {
   const [apiError, setApiError] = useState("");
-  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
-  const [revokeError, setRevokeError] = useState("");
 
   const updateAccessMutation = useUpdateGalleryAccessMutation();
   const deleteAccessMutation = useDeleteGalleryAccessMutation();
@@ -78,21 +77,6 @@ function ActiveGalleryAccessRow({
       });
     } catch (error) {
       setApiError(getApiErrorMessage(error));
-    }
-  };
-
-  const handleRevoke = async () => {
-    setRevokeError("");
-
-    try {
-      await deleteAccessMutation.mutateAsync({
-        galleryId: access.galleryId,
-        userId: access.userId,
-      });
-
-      setIsRevokeModalOpen(false);
-    } catch (error) {
-      setRevokeError(getApiErrorMessage(error));
     }
   };
 
@@ -166,46 +150,17 @@ function ActiveGalleryAccessRow({
         </DropdownMenu>
       </div>
 
-      <div className="col-start-2 flex items-end justify-center md:col-auto md:items-center">
-        <DropdownMenu
-          rootClassName="relative inline-block"
-          menuClassName="z-[60] w-[132px] rounded-2xl"
-          renderInPortal
-          portalAlign="end"
-          trigger={({ isOpen, toggle }) => (
-            <button
-              type="button"
-              onClick={toggle}
-              disabled={isMutationPending}
-              className="flex h-6 w-6 cursor-pointer items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
-              aria-label={`Open actions for ${access.user.email}`}
-              aria-expanded={isOpen}
-              aria-haspopup="menu"
-            >
-              <img
-                src={dotsVerticalIconUrl}
-                alt=""
-                className="h-6 w-6"
-                aria-hidden="true"
-              />
-            </button>
-          )}
-        >
-          {({ close }) => (
-            <DropdownMenuItem
-              iconSrc={actionDeleteIconUrl}
-              className="text-error"
-              onClick={() => {
-                close();
-                setRevokeError("");
-                setIsRevokeModalOpen(true);
-              }}
-            >
-              Revoke
-            </DropdownMenuItem>
-          )}
-        </DropdownMenu>
-      </div>
+      <RevokeGalleryAccessAction
+        userEmail={access.user.email}
+        isActionDisabled={isMutationPending}
+        isRevoking={deleteAccessMutation.isPending}
+        onRevoke={() =>
+          deleteAccessMutation.mutateAsync({
+            galleryId: access.galleryId,
+            userId: access.userId,
+          })
+        }
+      />
 
       {apiError && (
         <p
@@ -216,19 +171,6 @@ function ActiveGalleryAccessRow({
           {apiError}
         </p>
       )}
-
-      <RevokeGalleryAccessModal
-        isOpen={isRevokeModalOpen}
-        userEmail={access.user.email}
-        isRevoking={deleteAccessMutation.isPending}
-        error={revokeError}
-        onConfirm={() => void handleRevoke()}
-        onClose={() => {
-          if (!deleteAccessMutation.isPending) {
-            setIsRevokeModalOpen(false);
-          }
-        }}
-      />
     </div>
   );
 }
@@ -238,13 +180,15 @@ function PendingGalleryAccessRow({
 }: {
   access: Extract<GalleryAccessListItem, { status: "pending" }>;
 }) {
+  const revokeInvitationMutation = useRevokeGalleryInvitationMutation();
+
   const currentRoleLabel =
     roleOptions.find((option) => option.value === access.role)?.label ??
     access.role;
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)_40px] gap-x-3 gap-y-4 border-b border-border-default py-5 opacity-60 last:border-b-0 md:grid-cols-[1fr_1.4fr_140px_48px] md:items-center md:gap-4 md:px-4 md:py-4">
-      <div className="col-span-2 md:col-span-1">
+    <div className="grid grid-cols-[minmax(0,1fr)_40px] gap-x-3 gap-y-4 border-b border-border-default py-5 last:border-b-0 md:grid-cols-[1fr_1.4fr_140px_48px] md:items-center md:gap-4 md:px-4 md:py-4">
+      <div className="col-span-2 opacity-60 md:col-span-1">
         <span
           title="Awaiting registration"
           className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-text-secondary text-xs text-text-secondary"
@@ -257,11 +201,11 @@ function PendingGalleryAccessRow({
         </p>
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden opacity-60 md:block">
         <p className="break-all text-sm text-text-secondary">{access.email}</p>
       </div>
 
-      <div className="col-start-1 md:col-auto">
+      <div className="col-start-1 opacity-60 md:col-auto">
         <span className="mb-2 block text-xs font-bold text-text-secondary md:hidden">
           Role
         </span>
@@ -269,7 +213,100 @@ function PendingGalleryAccessRow({
         <span className="text-sm text-text-secondary">{currentRoleLabel}</span>
       </div>
 
-      <div />
+      <RevokeGalleryAccessAction
+        userEmail={access.email}
+        isActionDisabled={revokeInvitationMutation.isPending}
+        isRevoking={revokeInvitationMutation.isPending}
+        onRevoke={() =>
+          revokeInvitationMutation.mutateAsync({
+            galleryId: access.galleryId,
+            invitationId: access.id,
+          })
+        }
+      />
+    </div>
+  );
+}
+
+function RevokeGalleryAccessAction({
+  userEmail,
+  isActionDisabled,
+  isRevoking,
+  onRevoke,
+}: {
+  userEmail: string;
+  isActionDisabled: boolean;
+  isRevoking: boolean;
+  onRevoke: () => Promise<unknown>;
+}) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleRevoke = async () => {
+    setError("");
+
+    try {
+      await onRevoke();
+
+      setIsModalOpen(false);
+    } catch (revokeError) {
+      setError(getApiErrorMessage(revokeError));
+    }
+  };
+
+  return (
+    <div className="col-start-2 flex items-end justify-center md:col-auto md:items-center">
+      <DropdownMenu
+        rootClassName="relative inline-block"
+        menuClassName="z-[60] w-[132px] rounded-2xl"
+        renderInPortal
+        portalAlign="end"
+        trigger={({ isOpen, toggle }) => (
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={isActionDisabled}
+            className="flex h-6 w-6 cursor-pointer items-center justify-center disabled:cursor-not-allowed disabled:opacity-60"
+            aria-label={`Open actions for ${userEmail}`}
+            aria-expanded={isOpen}
+            aria-haspopup="menu"
+          >
+            <img
+              src={dotsVerticalIconUrl}
+              alt=""
+              className="h-6 w-6"
+              aria-hidden="true"
+            />
+          </button>
+        )}
+      >
+        {({ close }) => (
+          <DropdownMenuItem
+            iconSrc={actionDeleteIconUrl}
+            className="text-error"
+            onClick={() => {
+              close();
+              setError("");
+              setIsModalOpen(true);
+            }}
+          >
+            Revoke
+          </DropdownMenuItem>
+        )}
+      </DropdownMenu>
+
+      <RevokeGalleryAccessModal
+        isOpen={isModalOpen}
+        userEmail={userEmail}
+        isRevoking={isRevoking}
+        error={error}
+        onConfirm={() => void handleRevoke()}
+        onClose={() => {
+          if (!isRevoking) {
+            setIsModalOpen(false);
+          }
+        }}
+      />
     </div>
   );
 }
