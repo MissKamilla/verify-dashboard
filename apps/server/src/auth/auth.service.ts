@@ -40,6 +40,16 @@ export class AuthService {
     const existingUser = await this.usersService.findByEmail(dto.email);
 
     if (existingUser) {
+      if (!existingUser.verifiedAt) {
+        const code = await this.createVerification(existingUser);
+
+        await this.mailService.sendVerificationCode(existingUser.email, code);
+
+        return {
+          message: 'Verification code sent',
+        };
+      }
+
       throw new ConflictException('User with this email already exists');
     }
 
@@ -91,6 +101,8 @@ export class AuthService {
 
     await this.verificationRepository.remove(verification);
 
+    await this.applyPendingInvitations(user);
+
     const token = await this.jwtService.signAsync({
       sub: user.id,
       email: user.email,
@@ -137,6 +149,8 @@ export class AuthService {
       const accessRepository = manager.getRepository(GalleryAccess);
       const invitationRepository = manager.getRepository(GalleryInvitation);
 
+      const now = new Date();
+
       const invitation = await invitationRepository.findOne({
         where: { tokenHash },
       });
@@ -145,7 +159,7 @@ export class AuthService {
         throw new BadRequestException('Invalid invitation');
       }
 
-      if (invitation.expiresAt < new Date()) {
+      if (invitation.expiresAt < now) {
         throw new BadRequestException('Invitation expired');
       }
 
@@ -167,15 +181,33 @@ export class AuthService {
 
       const savedUser = await usersRepository.save(newUser);
 
-      const access = accessRepository.create({
-        galleryId: invitation.galleryId,
-        userId: savedUser.id,
-        role: invitation.role,
+      const invitations = await invitationRepository.find({
+        where: {
+          email: invitation.email,
+        },
       });
 
-      await accessRepository.save(access);
+      const invitationsToApply = invitations.some(
+        (pendingInvitation) => pendingInvitation.id === invitation.id,
+      )
+        ? invitations
+        : [invitation, ...invitations];
 
-      await invitationRepository.remove(invitation);
+      const activeInvitations = invitationsToApply.filter(
+        (pendingInvitation) => pendingInvitation.expiresAt >= now,
+      );
+
+      for (const pendingInvitation of activeInvitations) {
+        const access = accessRepository.create({
+          galleryId: pendingInvitation.galleryId,
+          userId: savedUser.id,
+          role: pendingInvitation.role,
+        });
+
+        await accessRepository.save(access);
+      }
+
+      await invitationRepository.remove(invitationsToApply);
 
       return savedUser;
     });
@@ -238,5 +270,51 @@ export class AuthService {
     await this.verificationRepository.save(verification);
 
     return code;
+  }
+
+  private async applyPendingInvitations(user: User): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const accessRepository = manager.getRepository(GalleryAccess);
+      const invitationRepository = manager.getRepository(GalleryInvitation);
+
+      const invitations = await invitationRepository.find({
+        where: {
+          email: user.email,
+        },
+      });
+
+      if (!invitations.length) {
+        return;
+      }
+
+      const now = new Date();
+
+      for (const invitation of invitations) {
+        if (invitation.expiresAt < now) {
+          continue;
+        }
+
+        const existingAccess = await accessRepository.findOne({
+          where: {
+            galleryId: invitation.galleryId,
+            userId: user.id,
+          },
+        });
+
+        if (existingAccess) {
+          continue;
+        }
+
+        const access = accessRepository.create({
+          galleryId: invitation.galleryId,
+          userId: user.id,
+          role: invitation.role,
+        });
+
+        await accessRepository.save(access);
+      }
+
+      await invitationRepository.remove(invitations);
+    });
   }
 }

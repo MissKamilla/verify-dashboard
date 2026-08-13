@@ -25,6 +25,7 @@ describe('MailService', () => {
   let sendMailMock: jest.Mock;
 
   let configServiceMock: {
+    get: jest.Mock;
     getOrThrow: jest.Mock;
   };
 
@@ -45,10 +46,11 @@ describe('MailService', () => {
       ['SMTP_PASSWORD', 'smtp-password'],
       ['SMTP_FROM_EMAIL', 'noreply@test.com'],
       ['SMTP_FROM_NAME', 'Verify Test'],
-      ['FRONTEND_URL', 'https://app.test'],
+      ['FRONTEND_URL', 'https://app.test/'],
     ]);
 
     configServiceMock = {
+      get: jest.fn((key: string) => config.get(key)),
       getOrThrow: jest.fn((key: string) => {
         const value = config.get(key);
 

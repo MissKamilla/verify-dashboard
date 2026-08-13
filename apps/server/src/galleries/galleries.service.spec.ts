@@ -1186,6 +1186,70 @@ describe('GalleriesService', () => {
     });
   });
 
+  describe('removePendingInvitation', () => {
+    it('removes pending gallery invitation for gallery owner', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      const invitation = {
+        id: 200,
+        galleryId: gallery.id,
+        email: 'pending@test.com',
+        role: GalleryRole.VIEWER,
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(invitation);
+
+      await galleriesService.removePendingInvitation(
+        gallery.id,
+        invitation.id,
+        1,
+      );
+
+      expect(galleryInvitationRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: {
+          id: invitation.id,
+          galleryId: gallery.id,
+        },
+      });
+
+      expect(galleryInvitationRepositoryMock.remove).toHaveBeenCalledWith(
+        invitation,
+      );
+    });
+
+    it('throws NotFoundException when pending gallery invitation does not exist', async () => {
+      const gallery = {
+        id: 10,
+        userId: 1,
+        title: 'Nature',
+      };
+
+      galleriesRepositoryMock.findOne.mockResolvedValue(gallery);
+
+      galleryInvitationRepositoryMock.findOne.mockResolvedValue(null);
+
+      const removePromise = galleriesService.removePendingInvitation(
+        gallery.id,
+        999,
+        1,
+      );
+
+      await expect(removePromise).rejects.toBeInstanceOf(NotFoundException);
+
+      await expect(removePromise).rejects.toThrow(
+        'Gallery invitation not found',
+      );
+
+      expect(galleryInvitationRepositoryMock.remove).not.toHaveBeenCalled();
+    });
+  });
+
   describe('removeGallery', () => {
     let galleryQueryBuilderMock: {
       setLock: jest.Mock;

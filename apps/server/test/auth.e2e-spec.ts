@@ -15,6 +15,7 @@ import {
 import {
   AuthResponseBody,
   ErrorResponseBody,
+  GalleryAccessListItemResponseBody,
   GalleriesListResponseBody,
   RegisterResponseBody,
   ValidationErrorResponseBody,
@@ -97,6 +98,49 @@ describe('Auth integration', () => {
         password: 'Password123',
       })
       .expect(200);
+  });
+
+  it('resends verification code when unverified user registers again', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        firstname: 'Anna',
+        lastname: 'Smith',
+        email: 'anna@test.com',
+        password: 'Password123',
+      })
+      .expect(201);
+
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        firstname: 'Anna',
+        lastname: 'Smith',
+        email: 'anna@test.com',
+        password: 'Password123',
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          message: 'Verification code sent',
+        });
+      });
+
+    const verificationCode = sentVerificationCodes.get('anna@test.com');
+
+    expect(verificationCode).toEqual(expect.stringMatching(/^\d{6}$/));
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/verify-email')
+      .send({
+        email: 'anna@test.com',
+        code: verificationCode,
+      })
+      .expect(200);
+
+    const responseBody = response.body as AuthResponseBody;
+
+    expect(responseBody.token).toEqual(expect.any(String));
   });
 
   it('verifies and resends using normalized email casing', async () => {
@@ -215,7 +259,7 @@ describe('Auth integration', () => {
     );
   });
 
-  it('registers invited user with verified email and gallery access', async () => {
+  it('grants pending invitation access when regular registration is verified', async () => {
     const ownerToken = await registerUser(app);
 
     const gallery = await createGallery(app, ownerToken, {
@@ -238,6 +282,99 @@ describe('Auth integration', () => {
         });
       });
 
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        firstname: 'Ivan',
+        lastname: 'Invitee',
+        email: 'invitee@test.com',
+        password: 'Password123',
+      })
+      .expect(201);
+
+    const verificationCode = sentVerificationCodes.get('invitee@test.com');
+
+    expect(verificationCode).toEqual(expect.stringMatching(/^\d{6}$/));
+
+    const verifyResponse = await request(app.getHttpServer())
+      .post('/auth/verify-email')
+      .send({
+        email: 'invitee@test.com',
+        code: verificationCode,
+      })
+      .expect(200);
+
+    const verifyBody = verifyResponse.body as AuthResponseBody;
+
+    const galleriesResponse = await request(app.getHttpServer())
+      .get('/galleries')
+      .set('Authorization', `Bearer ${verifyBody.token}`)
+      .expect(200);
+
+    const galleriesBody =
+      galleriesResponse.body as unknown as GalleriesListResponseBody;
+
+    expect(galleriesBody.total).toBe(1);
+    expect(galleriesBody.items[0]).toEqual(
+      expect.objectContaining({
+        id: gallery.id,
+        title: gallery.title,
+        role: 'viewer',
+      }),
+    );
+
+    const remainingInvitations = await dataSource.query<
+      Array<{ count: number }>
+    >(
+      'SELECT COUNT(*)::int AS count FROM "gallery_invitations" WHERE "email" = $1',
+      ['invitee@test.com'],
+    );
+
+    expect(remainingInvitations[0]?.count).toBe(0);
+  });
+
+  it('registers invited user with verified email and gallery access', async () => {
+    const ownerToken = await registerUser(app);
+
+    const gallery = await createGallery(app, ownerToken, {
+      title: 'Shared gallery',
+      description: 'Invite-only photos',
+    });
+    const secondGallery = await createGallery(app, ownerToken, {
+      title: 'Second shared gallery',
+      description: 'More invite-only photos',
+    });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: 'invitee@test.com',
+        role: 'viewer',
+        sendNotification: true,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          status: 'invitation_sent',
+        });
+      });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${secondGallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: 'invitee@test.com',
+        role: 'editor',
+        sendNotification: true,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          status: 'invitation_sent',
+        });
+      });
+
     const invitationToken = sentGalleryInvitations.get('invitee@test.com');
 
     expect(invitationToken).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
@@ -248,8 +385,8 @@ describe('Auth integration', () => {
       .expect(({ body }) => {
         expect(body).toEqual({
           email: 'invitee@test.com',
-          galleryTitle: gallery.title,
-          role: 'viewer',
+          galleryTitle: secondGallery.title,
+          role: 'editor',
         });
       });
 
@@ -275,15 +412,83 @@ describe('Auth integration', () => {
     const galleriesBody =
       galleriesResponse.body as unknown as GalleriesListResponseBody;
 
-    expect(galleriesBody.total).toBe(1);
+    expect(galleriesBody.total).toBe(2);
 
-    expect(galleriesBody.items[0]).toEqual(
+    expect(galleriesBody.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: gallery.id,
+          title: gallery.title,
+          role: 'viewer',
+        }),
+        expect.objectContaining({
+          id: secondGallery.id,
+          title: secondGallery.title,
+          role: 'editor',
+        }),
+      ]),
+    );
+
+    const remainingInvitations = await dataSource.query<
+      Array<{ count: number }>
+    >(
+      'SELECT COUNT(*)::int AS count FROM "gallery_invitations" WHERE "email" = $1',
+      ['invitee@test.com'],
+    );
+
+    expect(remainingInvitations[0]?.count).toBe(0);
+
+    const galleryAccessResponse = await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+
+    const galleryAccessBody =
+      galleryAccessResponse.body as unknown as GalleryAccessListItemResponseBody[];
+
+    const galleryInviteeAccess = galleryAccessBody.find(
+      (access) =>
+        access.status === 'active' && access.user.email === 'invitee@test.com',
+    );
+
+    expect(galleryInviteeAccess).toEqual(
       expect.objectContaining({
-        id: gallery.id,
-        title: gallery.title,
+        status: 'active',
         role: 'viewer',
       }),
     );
+    expect(
+      galleryAccessBody.some(
+        (access) =>
+          access.status === 'pending' && access.email === 'invitee@test.com',
+      ),
+    ).toBe(false);
+
+    const secondGalleryAccessResponse = await request(app.getHttpServer())
+      .get(`/galleries/${secondGallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+
+    const secondGalleryAccessBody =
+      secondGalleryAccessResponse.body as unknown as GalleryAccessListItemResponseBody[];
+
+    const secondGalleryInviteeAccess = secondGalleryAccessBody.find(
+      (access) =>
+        access.status === 'active' && access.user.email === 'invitee@test.com',
+    );
+
+    expect(secondGalleryInviteeAccess).toEqual(
+      expect.objectContaining({
+        status: 'active',
+        role: 'editor',
+      }),
+    );
+    expect(
+      secondGalleryAccessBody.some(
+        (access) =>
+          access.status === 'pending' && access.email === 'invitee@test.com',
+      ),
+    ).toBe(false);
 
     await request(app.getHttpServer())
       .post('/auth/login')

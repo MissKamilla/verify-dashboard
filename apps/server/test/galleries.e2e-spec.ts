@@ -9,9 +9,11 @@ import {
   createGallery,
   registerUser,
   resetE2eState,
+  sentGalleryInvitations,
 } from './e2e-utils';
 import {
   ErrorResponseBody,
+  GalleryAccessListItemResponseBody,
   GalleriesListResponseBody,
   GalleryResponseBody,
   ValidationErrorResponseBody,
@@ -454,6 +456,78 @@ describe('Galleries integration', () => {
         role: 'viewer',
       }),
     );
+  });
+
+  it('revokes pending gallery invitation', async () => {
+    const ownerToken = await registerUser(app);
+
+    const gallery = await createGallery(app, ownerToken, {
+      title: 'Shared gallery',
+    });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: 'invitee@test.com',
+        role: 'viewer',
+        sendNotification: true,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          status: 'invitation_sent',
+        });
+      });
+
+    const accessListResponse = await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200);
+
+    const accessList =
+      accessListResponse.body as unknown as GalleryAccessListItemResponseBody[];
+
+    const pendingInvitation = accessList.find(
+      (access) =>
+        access.status === 'pending' && access.email === 'invitee@test.com',
+    );
+
+    expect(pendingInvitation).toEqual(
+      expect.objectContaining({
+        galleryId: gallery.id,
+        role: 'viewer',
+        status: 'pending',
+      }),
+    );
+
+    if (!pendingInvitation) {
+      throw new Error('Expected pending invitation');
+    }
+
+    await request(app.getHttpServer())
+      .delete(`/galleries/${gallery.id}/access/invitations/${pendingInvitation.id}`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(204);
+
+    await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual([]);
+      });
+
+    const invitationToken = sentGalleryInvitations.get('invitee@test.com');
+
+    expect(invitationToken).toEqual(expect.any(String));
+
+    await request(app.getHttpServer())
+      .get(`/auth/invitations/${invitationToken}`)
+      .expect(400)
+      .expect(({ body }) => {
+        expect((body as ErrorResponseBody).message).toBe('Invalid invitation');
+      });
   });
 
   it('validates gallery access recipient email query', async () => {

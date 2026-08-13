@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   useDeleteGalleryAccessMutation,
+  useRevokeGalleryInvitationMutation,
   useUpdateGalleryAccessMutation,
 } from "@/features/gallery/galleryQueries";
 import type { GalleryAccessListItem } from "@/features/gallery/types";
@@ -13,6 +14,7 @@ import { GalleryAccessRow } from "./GalleryAccessRow";
 
 vi.mock("@/features/gallery/galleryQueries", () => ({
   useDeleteGalleryAccessMutation: vi.fn(),
+  useRevokeGalleryInvitationMutation: vi.fn(),
   useUpdateGalleryAccessMutation: vi.fn(),
 }));
 
@@ -23,6 +25,9 @@ vi.mock("@/shared/api/getApiErrorMessage", () => ({
 const useDeleteGalleryAccessMutationMock = vi.mocked(
   useDeleteGalleryAccessMutation,
 );
+const useRevokeGalleryInvitationMutationMock = vi.mocked(
+  useRevokeGalleryInvitationMutation,
+);
 const useUpdateGalleryAccessMutationMock = vi.mocked(
   useUpdateGalleryAccessMutation,
 );
@@ -30,6 +35,7 @@ const getApiErrorMessageMock = vi.mocked(getApiErrorMessage);
 
 const updateMutateAsyncMock = vi.fn();
 const deleteMutateAsyncMock = vi.fn();
+const revokeInvitationMutateAsyncMock = vi.fn();
 const mountedCleanups: Array<() => void> = [];
 
 const access: GalleryAccessListItem = {
@@ -48,14 +54,25 @@ const access: GalleryAccessListItem = {
   },
 };
 
+const pendingAccess: GalleryAccessListItem = {
+  id: 2,
+  galleryId: 7,
+  email: "pending@example.com",
+  role: "editor",
+  createdAt: "2026-08-04T11:00:00.000Z",
+  status: "pending",
+};
+
 const renderGalleryAccessRow = ({
   accessOverride,
   isUpdating = false,
   isDeleting = false,
+  isDeletingInvitation = false,
 }: {
   accessOverride?: GalleryAccessListItem;
   isUpdating?: boolean;
   isDeleting?: boolean;
+  isDeletingInvitation?: boolean;
 } = {}) => {
   useUpdateGalleryAccessMutationMock.mockReturnValue({
     mutateAsync: updateMutateAsyncMock,
@@ -66,6 +83,11 @@ const renderGalleryAccessRow = ({
     mutateAsync: deleteMutateAsyncMock,
     isPending: isDeleting,
   } as unknown as ReturnType<typeof useDeleteGalleryAccessMutation>);
+
+  useRevokeGalleryInvitationMutationMock.mockReturnValue({
+    mutateAsync: revokeInvitationMutateAsyncMock,
+    isPending: isDeletingInvitation,
+  } as unknown as ReturnType<typeof useRevokeGalleryInvitationMutation>);
 
   const container = document.createElement("div");
   document.body.appendChild(container);
@@ -112,10 +134,27 @@ const openActionsMenu = async (container: HTMLElement) => {
   );
 };
 
+const openPendingActionsMenu = async (container: HTMLElement) => {
+  await clickElement(
+    container.querySelector(
+      "button[aria-label='Open actions for pending@example.com']",
+    ),
+  );
+};
+
 const findMenuItem = (text: string) =>
   Array.from(document.body.querySelectorAll("[role='menuitem']")).find(
     (item) => item.textContent === text,
   );
+
+const findModalConfirmButton = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll("button")).find(
+    (button) => button.textContent === "Revoke",
+  );
+
+const confirmRevoke = async (container: HTMLElement) => {
+  await clickElement(findModalConfirmButton(container));
+};
 
 describe("GalleryAccessRow", () => {
   beforeEach(() => {
@@ -127,6 +166,7 @@ describe("GalleryAccessRow", () => {
 
     updateMutateAsyncMock.mockResolvedValue(undefined);
     deleteMutateAsyncMock.mockResolvedValue(undefined);
+    revokeInvitationMutateAsyncMock.mockResolvedValue(undefined);
     getApiErrorMessageMock.mockReturnValue("Backend error");
   });
 
@@ -146,16 +186,7 @@ describe("GalleryAccessRow", () => {
     expect(container.textContent).toContain("Viewer");
   });
 
-  it("renders pending invitation without role or action controls", () => {
-    const pendingAccess: GalleryAccessListItem = {
-      id: 2,
-      galleryId: 7,
-      email: "pending@example.com",
-      role: "editor",
-      createdAt: "2026-08-04T11:00:00.000Z",
-      status: "pending",
-    };
-
+  it("renders pending invitation with revoke action and without role controls", () => {
     const container = renderGalleryAccessRow({
       accessOverride: pendingAccess,
     });
@@ -172,9 +203,12 @@ describe("GalleryAccessRow", () => {
     ).toBeNull();
     expect(
       container.querySelector(
-        "button[aria-label='Open actions for jane@example.com']",
+        "button[aria-label='Open actions for pending@example.com']",
       ),
-    ).toBeNull();
+    ).not.toBeNull();
+    expect(container.firstElementChild?.firstElementChild?.className).toContain(
+      "opacity-60",
+    );
   });
 
   it("updates access role when a different role is selected", async () => {
@@ -224,11 +258,7 @@ describe("GalleryAccessRow", () => {
     expect(container.textContent).toContain("Revoke access");
     expect(container.textContent).toContain("jane@example.com");
 
-    const confirmButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Revoke",
-    );
-
-    await clickElement(confirmButton);
+    await confirmRevoke(container);
 
     expect(deleteMutateAsyncMock).toHaveBeenCalledWith({
       galleryId: 7,
@@ -245,11 +275,46 @@ describe("GalleryAccessRow", () => {
     await openActionsMenu(container);
     await clickElement(findMenuItem("Revoke"));
 
-    const confirmButton = Array.from(container.querySelectorAll("button")).find(
-      (button) => button.textContent === "Revoke",
+    await confirmRevoke(container);
+
+    expect(getApiErrorMessageMock).toHaveBeenCalledWith(expect.any(Error));
+    expect(container.querySelector("[role='dialog']")).not.toBeNull();
+    expect(container.textContent).toContain("Backend error");
+  });
+
+  it("revokes pending invitation and closes the confirm modal on success", async () => {
+    const container = renderGalleryAccessRow({
+      accessOverride: pendingAccess,
+    });
+
+    await openPendingActionsMenu(container);
+    await clickElement(findMenuItem("Revoke"));
+
+    expect(container.textContent).toContain("Revoke access");
+    expect(container.textContent).toContain("pending@example.com");
+
+    await confirmRevoke(container);
+
+    expect(revokeInvitationMutateAsyncMock).toHaveBeenCalledWith({
+      galleryId: 7,
+      invitationId: 2,
+    });
+    expect(container.querySelector("[role='dialog']")).toBeNull();
+  });
+
+  it("keeps pending invitation revoke modal open and shows backend error when revoke fails", async () => {
+    revokeInvitationMutateAsyncMock.mockRejectedValueOnce(
+      new Error("Not found"),
     );
 
-    await clickElement(confirmButton);
+    const container = renderGalleryAccessRow({
+      accessOverride: pendingAccess,
+    });
+
+    await openPendingActionsMenu(container);
+    await clickElement(findMenuItem("Revoke"));
+
+    await confirmRevoke(container);
 
     expect(getApiErrorMessageMock).toHaveBeenCalledWith(expect.any(Error));
     expect(container.querySelector("[role='dialog']")).not.toBeNull();
@@ -270,6 +335,19 @@ describe("GalleryAccessRow", () => {
     expect(
       container.querySelector<HTMLButtonElement>(
         "button[aria-label='Open actions for jane@example.com']",
+      )?.disabled,
+    ).toBe(true);
+  });
+
+  it("disables pending invitation actions while revoke is pending", () => {
+    const container = renderGalleryAccessRow({
+      accessOverride: pendingAccess,
+      isDeletingInvitation: true,
+    });
+
+    expect(
+      container.querySelector<HTMLButtonElement>(
+        "button[aria-label='Open actions for pending@example.com']",
       )?.disabled,
     ).toBe(true);
   });

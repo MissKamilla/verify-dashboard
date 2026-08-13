@@ -22,6 +22,7 @@ const {
   getGalleryAccessesMock,
   getGalleryAccessRecipientMock,
   getGalleryByIdMock,
+  revokeGalleryInvitationMock,
   updateGalleryMock,
   updateGalleryAccessMock,
 } = vi.hoisted(() => ({
@@ -38,6 +39,7 @@ const {
   getGalleryAccessesMock: vi.fn(),
   getGalleryAccessRecipientMock: vi.fn(),
   getGalleryByIdMock: vi.fn(),
+  revokeGalleryInvitationMock: vi.fn(),
   updateGalleryMock: vi.fn(),
   updateGalleryAccessMock: vi.fn(),
 }));
@@ -57,6 +59,7 @@ vi.mock("./galleryApi", () => ({
   getGalleryAccesses: getGalleryAccessesMock,
   getGalleryAccessRecipient: getGalleryAccessRecipientMock,
   getGalleryById: getGalleryByIdMock,
+  revokeGalleryInvitation: revokeGalleryInvitationMock,
   updateGallery: updateGalleryMock,
   updateGalleryAccess: updateGalleryAccessMock,
 }));
@@ -72,6 +75,7 @@ import {
   useGalleryAccessesQuery,
   useGalleryAccessRecipientQuery,
   useGalleryQuery,
+  useRevokeGalleryInvitationMutation,
   useUpdateGalleryAccessMutation,
   useUpdateGalleryMutation,
 } from "./galleryQueries";
@@ -484,6 +488,34 @@ describe("galleryQueries", () => {
     expect(deleteGalleryAccessMock).toHaveBeenCalledWith(
       variables.galleryId,
       variables.userId,
+    );
+
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: galleryQueryKeys.accessList(variables.galleryId),
+    });
+  });
+
+  it("invalidates gallery access list after revoking pending invitation", async () => {
+    const variables = {
+      galleryId: 10,
+      invitationId: 30,
+    };
+
+    revokeGalleryInvitationMock.mockResolvedValue(undefined);
+
+    useRevokeGalleryInvitationMutation();
+
+    const options = useMutationMock.mock.calls[0]?.[0] as MutationOptions<
+      typeof variables
+    >;
+
+    await options.mutationFn(variables);
+
+    options.onSuccess(undefined, variables);
+
+    expect(revokeGalleryInvitationMock).toHaveBeenCalledWith(
+      variables.galleryId,
+      variables.invitationId,
     );
 
     expect(invalidateQueriesMock).toHaveBeenCalledWith({

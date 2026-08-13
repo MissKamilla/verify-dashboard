@@ -22,6 +22,26 @@ export type GalleryResponseBody = {
   role: 'owner' | 'editor' | 'viewer';
 };
 
+export type GalleryAccessListItemResponseBody =
+  | {
+      id: number;
+      galleryId: number;
+      userId: number;
+      role: 'editor' | 'viewer';
+      status: 'active';
+      user: {
+        id: number;
+        email: string;
+      };
+    }
+  | {
+      id: number;
+      galleryId: number;
+      email: string;
+      role: 'editor' | 'viewer';
+      status: 'pending';
+    };
+
 export type ValidationErrorResponseBody = {
   statusCode: number;
   message: string[];

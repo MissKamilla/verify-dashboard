@@ -16,6 +16,7 @@ describe('GalleriesController', () => {
     findAllAccesses: jest.Mock;
     updateAccess: jest.Mock;
     removeAccess: jest.Mock;
+    removePendingInvitation: jest.Mock;
     checkAccessRecipient: jest.Mock;
   };
 
@@ -32,6 +33,7 @@ describe('GalleriesController', () => {
       findAllAccesses: jest.fn(),
       updateAccess: jest.fn(),
       removeAccess: jest.fn(),
+      removePendingInvitation: jest.fn(),
       checkAccessRecipient: jest.fn(),
     };
 
@@ -237,6 +239,26 @@ describe('GalleriesController', () => {
       const result = await galleriesController.removeAccess(1, 10, 2);
 
       expect(galleriesServiceMock.removeAccess).toHaveBeenCalledWith(10, 2, 1);
+
+      expect(result).toBeUndefined();
+    });
+  });
+
+  describe('removePendingInvitation', () => {
+    it('removes pending gallery invitation through service', async () => {
+      galleriesServiceMock.removePendingInvitation.mockResolvedValue(undefined);
+
+      const result = await galleriesController.removePendingInvitation(
+        1,
+        10,
+        30,
+      );
+
+      expect(galleriesServiceMock.removePendingInvitation).toHaveBeenCalledWith(
+        10,
+        30,
+        1,
+      );
 
       expect(result).toBeUndefined();
     });

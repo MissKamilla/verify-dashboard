@@ -93,6 +93,15 @@ export const deleteGalleryAccess = async (
   await httpClient.delete(`/galleries/${galleryId}/access/${userId}`);
 };
 
+export const revokeGalleryInvitation = async (
+  galleryId: number,
+  invitationId: number,
+): Promise<void> => {
+  await httpClient.delete(
+    `/galleries/${galleryId}/access/invitations/${invitationId}`,
+  );
+};
+
 export const getGalleryAccessRecipient = async (
   galleryId: number,
   email: string,

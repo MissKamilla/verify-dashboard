@@ -11,6 +11,7 @@ import {
   getGalleryById,
   getGalleryAccesses,
   getGalleryAccessRecipient,
+  revokeGalleryInvitation,
   updateGallery,
   updateGalleryAccess,
 } from "./galleryApi";
@@ -217,6 +218,18 @@ describe("galleryApi", () => {
     await deleteGalleryAccess(10, 20);
 
     expect(httpClient.delete).toHaveBeenCalledWith("/galleries/10/access/20");
+  });
+
+  it("revokes gallery invitation", async () => {
+    vi.mocked(httpClient.delete).mockResolvedValue({
+      data: undefined,
+    });
+
+    await revokeGalleryInvitation(10, 30);
+
+    expect(httpClient.delete).toHaveBeenCalledWith(
+      "/galleries/10/access/invitations/30",
+    );
   });
 
   it("checks gallery access recipient by email", async () => {

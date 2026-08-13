@@ -67,11 +67,13 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("formik", () => ({
   Formik: ({
     initialValues,
+    enableReinitialize,
     validate,
     onSubmit,
     children,
   }: {
     initialValues: RegisterFormValues;
+    enableReinitialize?: boolean;
     validate: typeof validateRegisterForm;
     onSubmit: (values: RegisterFormValues) => void;
     children: (props: FormikRenderProps) => ReactNode;
@@ -81,6 +83,7 @@ vi.mock("formik", () => ({
     return (
       <div
         data-initial-email={initialValues.email}
+        data-enable-reinitialize={String(Boolean(enableReinitialize))}
         data-has-validation={String(validate === validateRegisterForm)}
       >
         {children({
@@ -392,6 +395,11 @@ describe("RegisterPage", () => {
         queryKey: ["auth", "invitation", "invite-token"],
       }),
     );
+    expect(
+      container
+        .querySelector("[data-enable-reinitialize]")
+        ?.getAttribute("data-enable-reinitialize"),
+    ).toBe("true");
 
     const emailInput = container.querySelector(
       "input[name='email']",
@@ -468,6 +476,14 @@ describe("RegisterPage", () => {
   });
 
   it("shows api error from failed registration", () => {
+    formValues = {
+      firstname: "John",
+      lastname: "Doe",
+      email: "john@example.com",
+      password: "password123",
+      confirmPassword: "password123",
+    };
+
     const container = renderPage();
     const error = new Error("Duplicate email");
     const registerOptions = mutationOptions.find(
@@ -480,5 +496,16 @@ describe("RegisterPage", () => {
 
     expect(getApiErrorMessageMock).toHaveBeenCalledWith(error);
     expect(container.textContent).toContain("Email already exists");
+    expect(container.textContent).toContain(
+      "If your account was created but is not verified",
+    );
+    expect(
+      Array.from(container.querySelectorAll("a")).some(
+        (link) =>
+          link.textContent === "verify your email" &&
+          link.getAttribute("href") ===
+            "/verify-email?email=john%40example.com",
+      ),
+    ).toBe(true);
   });
 });

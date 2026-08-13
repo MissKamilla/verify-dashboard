@@ -57,7 +57,9 @@ export class MailService {
     galleryTitle: string,
     token: string,
   ): Promise<void> {
-    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
+    const frontendUrl = this.configService
+      .getOrThrow<string>('FRONTEND_URL')
+      .replace(/\/$/, '');
     const invitationUrl = `${frontendUrl}/register?invite=${token}`;
 
     await this.sendMail({

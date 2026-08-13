@@ -299,7 +299,7 @@ export class GalleriesService {
     });
 
     if (existingAccess) {
-      await this.removePendingInvitation(galleryId, targetUser.email);
+      await this.removePendingInvitationByEmail(galleryId, targetUser.email);
 
       throw new ConflictException('User already has access to this gallery');
     }
@@ -312,7 +312,7 @@ export class GalleriesService {
 
     await this.galleryAccessRepository.save(access);
 
-    await this.removePendingInvitation(galleryId, targetUser.email);
+    await this.removePendingInvitationByEmail(galleryId, targetUser.email);
 
     if (dto.sendNotification) {
       try {
@@ -401,6 +401,27 @@ export class GalleriesService {
     const access = await this.getAccessOrThrow(galleryId, targetUserId);
 
     await this.galleryAccessRepository.remove(access);
+  }
+
+  async removePendingInvitation(
+    galleryId: number,
+    invitationId: number,
+    currentUserId: number,
+  ): Promise<void> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    const invitation = await this.galleryInvitationRepository.findOne({
+      where: {
+        id: invitationId,
+        galleryId,
+      },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Gallery invitation not found');
+    }
+
+    await this.galleryInvitationRepository.remove(invitation);
   }
 
   async getAccessibleGalleryOrThrow(
@@ -517,7 +538,7 @@ export class GalleriesService {
     return token;
   }
 
-  private async removePendingInvitation(
+  private async removePendingInvitationByEmail(
     galleryId: number,
     email: string,
   ): Promise<void> {
