@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { httpClient } from "@/shared/api/httpClient";
 
 import {
+  getInvitation,
   loginUser,
+  registerByInvite,
   registerUser,
   resendVerification,
   verifyEmail,
@@ -11,6 +13,7 @@ import {
 
 vi.mock("@/shared/api/httpClient", () => ({
   httpClient: {
+    get: vi.fn(),
     post: vi.fn(),
   },
 }));
@@ -85,6 +88,52 @@ describe("authApi", () => {
     );
 
     expect(result).toEqual(registerResponse);
+  });
+
+  it("gets invitation details and returns response data", async () => {
+    const invitationResponse = {
+      email: "invitee@test.com",
+      galleryTitle: "Shared gallery",
+      role: "viewer",
+    };
+
+    vi.mocked(httpClient.get).mockResolvedValue({
+      data: invitationResponse,
+    });
+
+    const result = await getInvitation("invite-token");
+
+    expect(httpClient.get).toHaveBeenCalledWith(
+      "/auth/invitations/invite-token",
+    );
+
+    expect(result).toEqual(invitationResponse);
+  });
+
+  it("registers by invitation and returns response data", async () => {
+    const payload = {
+      firstname: "Bob",
+      lastname: "Brown",
+      password: "Password123",
+      token: "invite-token",
+    };
+
+    const authResponse = {
+      token: "invite-auth-token",
+    };
+
+    vi.mocked(httpClient.post).mockResolvedValue({
+      data: authResponse,
+    });
+
+    const result = await registerByInvite(payload);
+
+    expect(httpClient.post).toHaveBeenCalledWith(
+      "/auth/register-by-invite",
+      payload,
+    );
+
+    expect(result).toEqual(authResponse);
   });
 
   it("logs in user and returns response data", async () => {

@@ -2,13 +2,17 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useCreateGalleryAccessMutation } from "@/features/gallery/galleryQueries";
+import {
+  useCreateGalleryAccessMutation,
+  useGalleryAccessRecipientQuery,
+} from "@/features/gallery/galleryQueries";
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
 
 import { GalleryAccessForm } from "./GalleryAccessForm";
 
 vi.mock("@/features/gallery/galleryQueries", () => ({
   useCreateGalleryAccessMutation: vi.fn(),
+  useGalleryAccessRecipientQuery: vi.fn(),
 }));
 
 vi.mock("@/shared/api/getApiErrorMessage", () => ({
@@ -18,10 +22,15 @@ vi.mock("@/shared/api/getApiErrorMessage", () => ({
 const useCreateGalleryAccessMutationMock = vi.mocked(
   useCreateGalleryAccessMutation,
 );
+const useGalleryAccessRecipientQueryMock = vi.mocked(
+  useGalleryAccessRecipientQuery,
+);
 const getApiErrorMessageMock = vi.mocked(getApiErrorMessage);
 
 const mutateAsyncMock = vi.fn();
 const mountedCleanups: Array<() => void> = [];
+let recipientRegistered = true;
+let isRecipientPending = false;
 
 const renderGalleryAccessForm = () => {
   const container = document.createElement("div");
@@ -71,6 +80,9 @@ const getShareButton = (container: HTMLElement) =>
     (button) => button.textContent === "Share",
   ) as HTMLButtonElement | undefined;
 
+const getNotificationCheckbox = (container: HTMLElement) =>
+  container.querySelector<HTMLInputElement>("input[type='checkbox']");
+
 describe("GalleryAccessForm", () => {
   beforeEach(() => {
     Object.assign(globalThis, {
@@ -79,12 +91,26 @@ describe("GalleryAccessForm", () => {
 
     vi.clearAllMocks();
 
+    recipientRegistered = true;
+    isRecipientPending = false;
+
     mutateAsyncMock.mockResolvedValue(undefined);
     getApiErrorMessageMock.mockReturnValue("User already has access");
     useCreateGalleryAccessMutationMock.mockReturnValue({
       mutateAsync: mutateAsyncMock,
       isPending: false,
     } as unknown as ReturnType<typeof useCreateGalleryAccessMutation>);
+    useGalleryAccessRecipientQueryMock.mockImplementation(
+      (_galleryId, _email, enabled) =>
+        ({
+          data: enabled
+            ? {
+                registered: recipientRegistered,
+              }
+            : undefined,
+          isPending: isRecipientPending,
+        }) as unknown as ReturnType<typeof useGalleryAccessRecipientQuery>,
+    );
   });
 
   afterEach(() => {
@@ -97,9 +123,7 @@ describe("GalleryAccessForm", () => {
     const container = renderGalleryAccessForm();
 
     expect(
-      container
-        .querySelector("[aria-hidden]")
-        ?.getAttribute("aria-hidden"),
+      container.querySelector("[aria-hidden]")?.getAttribute("aria-hidden"),
     ).toBe("true");
     expect(
       (
@@ -116,14 +140,17 @@ describe("GalleryAccessForm", () => {
     );
 
     expect(
-      container
-        .querySelector("[aria-hidden]")
-        ?.getAttribute("aria-hidden"),
+      container.querySelector("[aria-hidden]")?.getAttribute("aria-hidden"),
     ).toBe("true");
     expect(getShareButton(container)?.disabled).toBe(true);
+    expect(useGalleryAccessRecipientQueryMock).toHaveBeenLastCalledWith(
+      7,
+      "invalid-email",
+      false,
+    );
   });
 
-  it("submits trimmed email with viewer role by default", async () => {
+  it("submits trimmed registered email with viewer role and notification disabled by default", async () => {
     const container = renderGalleryAccessForm();
 
     await setInputValue(
@@ -132,9 +159,7 @@ describe("GalleryAccessForm", () => {
     );
 
     expect(
-      container
-        .querySelector("[aria-hidden]")
-        ?.getAttribute("aria-hidden"),
+      container.querySelector("[aria-hidden]")?.getAttribute("aria-hidden"),
     ).toBe("false");
     expect(
       (
@@ -144,6 +169,13 @@ describe("GalleryAccessForm", () => {
       ).disabled,
     ).toBe(false);
     expect(getShareButton(container)?.disabled).toBe(false);
+    expect(getNotificationCheckbox(container)?.checked).toBe(false);
+    expect(getNotificationCheckbox(container)?.disabled).toBe(false);
+    expect(useGalleryAccessRecipientQueryMock).toHaveBeenLastCalledWith(
+      7,
+      "user@example.com",
+      true,
+    );
 
     await submitForm(container);
 
@@ -152,12 +184,79 @@ describe("GalleryAccessForm", () => {
       payload: {
         email: "user@example.com",
         role: "viewer",
+        sendNotification: false,
       },
     });
     expect(
       (container.querySelector("input[name='email']") as HTMLInputElement)
         .value,
     ).toBe("");
+    expect(getShareButton(container)?.disabled).toBe(true);
+  });
+
+  it("submits registered email with notification enabled when checkbox is checked", async () => {
+    const container = renderGalleryAccessForm();
+    const emailInput = container.querySelector(
+      "input[name='email']",
+    ) as HTMLInputElement;
+
+    await setInputValue(emailInput, "user@example.com");
+
+    await act(async () => {
+      getNotificationCheckbox(container)?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    });
+
+    expect(getNotificationCheckbox(container)?.checked).toBe(true);
+
+    await submitForm(container);
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith({
+      galleryId: 7,
+      payload: {
+        email: "user@example.com",
+        role: "viewer",
+        sendNotification: true,
+      },
+    });
+  });
+
+  it("forces notification for unregistered recipient invitations", async () => {
+    recipientRegistered = false;
+
+    const container = renderGalleryAccessForm();
+
+    await setInputValue(
+      container.querySelector("input[name='email']") as HTMLInputElement,
+      "new-user@example.com",
+    );
+
+    expect(getNotificationCheckbox(container)?.checked).toBe(true);
+    expect(getNotificationCheckbox(container)?.disabled).toBe(true);
+
+    await submitForm(container);
+
+    expect(mutateAsyncMock).toHaveBeenCalledWith({
+      galleryId: 7,
+      payload: {
+        email: "new-user@example.com",
+        role: "viewer",
+        sendNotification: true,
+      },
+    });
+  });
+
+  it("disables sharing while recipient lookup is pending", async () => {
+    isRecipientPending = true;
+
+    const container = renderGalleryAccessForm();
+
+    await setInputValue(
+      container.querySelector("input[name='email']") as HTMLInputElement,
+      "user@example.com",
+    );
+
     expect(getShareButton(container)?.disabled).toBe(true);
   });
 

@@ -20,6 +20,7 @@ const {
   deleteGalleryAccessMock,
   getGalleriesMock,
   getGalleryAccessesMock,
+  getGalleryAccessRecipientMock,
   getGalleryByIdMock,
   updateGalleryMock,
   updateGalleryAccessMock,
@@ -35,6 +36,7 @@ const {
   deleteGalleryAccessMock: vi.fn(),
   getGalleriesMock: vi.fn(),
   getGalleryAccessesMock: vi.fn(),
+  getGalleryAccessRecipientMock: vi.fn(),
   getGalleryByIdMock: vi.fn(),
   updateGalleryMock: vi.fn(),
   updateGalleryAccessMock: vi.fn(),
@@ -53,6 +55,7 @@ vi.mock("./galleryApi", () => ({
   deleteGalleryAccess: deleteGalleryAccessMock,
   getGalleries: getGalleriesMock,
   getGalleryAccesses: getGalleryAccessesMock,
+  getGalleryAccessRecipient: getGalleryAccessRecipientMock,
   getGalleryById: getGalleryByIdMock,
   updateGallery: updateGalleryMock,
   updateGalleryAccess: updateGalleryAccessMock,
@@ -67,6 +70,7 @@ import {
   useDeleteGalleryMutation,
   useGalleriesQuery,
   useGalleryAccessesQuery,
+  useGalleryAccessRecipientQuery,
   useGalleryQuery,
   useUpdateGalleryAccessMutation,
   useUpdateGalleryMutation,
@@ -117,11 +121,11 @@ describe("galleryQueries", () => {
 
     expect(galleryQueryKeys.detail(10)).toEqual(["gallery", "detail", 10]);
 
-    expect(galleryQueryKeys.accessList(10)).toEqual([
-      "gallery",
-      "access",
-      10,
-    ]);
+    expect(galleryQueryKeys.accessList(10)).toEqual(["gallery", "access", 10]);
+
+    expect(galleryQueryKeys.accessRecipient(10, "invitee@example.com")).toEqual(
+      ["gallery", "access", 10, "recipient", "invitee@example.com"],
+    );
   });
 
   it("configures galleries query", async () => {
@@ -350,6 +354,36 @@ describe("galleryQueries", () => {
     expect(getGalleryAccessesMock).toHaveBeenCalledWith(10);
   });
 
+  it("configures gallery access recipient query", async () => {
+    const response = {
+      registered: false,
+    };
+
+    getGalleryAccessRecipientMock.mockResolvedValue(response);
+
+    useGalleryAccessRecipientQuery(10, "invitee@example.com", false);
+
+    const options = useQueryMock.mock.calls[0]?.[0] as {
+      queryKey: readonly unknown[];
+      queryFn: () => Promise<unknown>;
+      enabled: boolean;
+      retry: boolean;
+    };
+
+    expect(options.queryKey).toEqual(
+      galleryQueryKeys.accessRecipient(10, "invitee@example.com"),
+    );
+    expect(options.enabled).toBe(false);
+    expect(options.retry).toBe(false);
+
+    await expect(options.queryFn()).resolves.toEqual(response);
+
+    expect(getGalleryAccessRecipientMock).toHaveBeenCalledWith(
+      10,
+      "invitee@example.com",
+    );
+  });
+
   it("invalidates gallery access list after granting access", async () => {
     const variables: {
       galleryId: number;
@@ -359,15 +393,12 @@ describe("galleryQueries", () => {
       payload: {
         email: "alex@example.com",
         role: "editor",
+        sendNotification: true,
       },
     };
 
     createGalleryAccessMock.mockResolvedValue({
-      id: 1,
-      galleryId: variables.galleryId,
-      userId: 20,
-      role: variables.payload.role,
-      createdAt: "2026-06-09T10:00:00.000Z",
+      status: "access_granted",
     });
 
     useCreateGalleryAccessMutation();

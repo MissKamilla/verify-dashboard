@@ -99,6 +99,45 @@ describe('Auth integration', () => {
       .expect(200);
   });
 
+  it('verifies and resends using normalized email casing', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        firstname: 'Anna',
+        lastname: 'Smith',
+        email: '  Anna@Test.com  ',
+        password: 'Password123',
+      })
+      .expect(201);
+
+    const verificationCode = sentVerificationCodes.get('anna@test.com');
+
+    expect(verificationCode).toEqual(expect.stringMatching(/^\d{6}$/));
+
+    await request(app.getHttpServer())
+      .post('/auth/resend-verification')
+      .send({
+        email: ' ANNA@Test.com ',
+      })
+      .expect(200);
+
+    const resentVerificationCode = sentVerificationCodes.get('anna@test.com');
+
+    expect(resentVerificationCode).toEqual(expect.stringMatching(/^\d{6}$/));
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/verify-email')
+      .send({
+        email: ' ANNA@Test.com ',
+        code: resentVerificationCode,
+      })
+      .expect(200);
+
+    const responseBody = response.body as AuthResponseBody;
+
+    expect(responseBody.token).toEqual(expect.any(String));
+  });
+
   it('rejects login before email is verified', async () => {
     await request(app.getHttpServer())
       .post('/auth/register')
@@ -261,6 +300,46 @@ describe('Auth integration', () => {
     const responseBody = expiredInvitationResponse.body as ErrorResponseBody;
 
     expect(responseBody.message).toBe('Invalid invitation');
+  });
+
+  it('rejects invalid invite registration form', async () => {
+    const ownerToken = await registerUser(app);
+
+    const gallery = await createGallery(app, ownerToken, {
+      title: 'Shared gallery',
+      description: 'Invite-only photos',
+    });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: 'invitee@test.com',
+        role: 'viewer',
+        sendNotification: true,
+      })
+      .expect(201);
+
+    const invitationToken = sentGalleryInvitations.get('invitee@test.com');
+
+    expect(invitationToken).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/register-by-invite')
+      .send({
+        firstname: 'I1',
+        lastname: 'A',
+        password: 'password',
+        token: invitationToken,
+      })
+      .expect(400);
+
+    const responseBody =
+      response.body as unknown as ValidationErrorResponseBody;
+
+    expect(responseBody.statusCode).toBe(400);
+    expect(Array.isArray(responseBody.message)).toBe(true);
+    expect(responseBody.message.length).toBeGreaterThan(0);
   });
 
   it('logs in registered user', async () => {

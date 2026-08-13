@@ -10,6 +10,7 @@ import {
   getGalleries,
   getGalleryById,
   getGalleryAccesses,
+  getGalleryAccessRecipient,
   updateGallery,
   updateGalleryAccess,
 } from "./galleryApi";
@@ -162,18 +163,15 @@ describe("galleryApi", () => {
     const payload = {
       email: "alex@example.com",
       role: "editor" as const,
+      sendNotification: true,
     };
 
-    const access = {
-      id: 1,
-      galleryId: 10,
-      userId: 20,
-      role: payload.role,
-      createdAt: "2026-06-09T10:00:00.000Z",
+    const response = {
+      status: "access_granted" as const,
     };
 
     vi.mocked(httpClient.post).mockResolvedValue({
-      data: access,
+      data: response,
     });
 
     const result = await createGalleryAccess(10, payload);
@@ -182,7 +180,7 @@ describe("galleryApi", () => {
       "/galleries/10/access",
       payload,
     );
-    expect(result).toEqual(access);
+    expect(result).toEqual(response);
   });
 
   it("updates gallery access role", async () => {
@@ -218,8 +216,29 @@ describe("galleryApi", () => {
 
     await deleteGalleryAccess(10, 20);
 
-    expect(httpClient.delete).toHaveBeenCalledWith(
-      "/galleries/10/access/20",
+    expect(httpClient.delete).toHaveBeenCalledWith("/galleries/10/access/20");
+  });
+
+  it("checks gallery access recipient by email", async () => {
+    const response = {
+      registered: false,
+    };
+
+    vi.mocked(httpClient.get).mockResolvedValue({
+      data: response,
+    });
+
+    const result = await getGalleryAccessRecipient(10, "invitee@example.com");
+
+    expect(httpClient.get).toHaveBeenCalledWith(
+      "/galleries/10/access/recipient",
+      {
+        params: {
+          email: "invitee@example.com",
+        },
+      },
     );
+
+    expect(result).toEqual(response);
   });
 });
