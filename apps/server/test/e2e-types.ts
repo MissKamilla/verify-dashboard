@@ -2,6 +2,10 @@ export type AuthResponseBody = {
   token: string;
 };
 
+export type RegisterResponseBody = {
+  message: string;
+};
+
 export type ProfileResponseBody = {
   id: number;
   firstname: string;
@@ -15,6 +19,7 @@ export type GalleryResponseBody = {
   description: string;
   userId: number;
   createdAt: string;
+  role: 'owner' | 'editor' | 'viewer';
 };
 
 export type ValidationErrorResponseBody = {

@@ -28,7 +28,9 @@ import { GalleriesService } from './galleries.service';
 import { GalleryResponseDto } from './dto/gallery-response.dto';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import {
+  CheckGalleryAccessRecipientQueryDto,
   CreateGalleryAccessDto,
+  CreateGalleryAccessResponseDto,
   UpdateGalleryAccessDto,
 } from './dto/gallery-access.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
@@ -167,7 +169,8 @@ export class GalleriesController {
     description: 'Gallery id',
   })
   @ApiCreatedResponse({
-    description: 'Gallery access granted',
+    description: 'Gallery access granted or invitation sent',
+    type: CreateGalleryAccessResponseDto,
   })
   @ApiBadRequestResponse({
     description: 'Invalid request body or attempt to share with yourself',
@@ -179,7 +182,7 @@ export class GalleriesController {
     description: 'Missing or invalid token',
   })
   @ApiNotFoundResponse({
-    description: 'Gallery or user not found',
+    description: 'Gallery not found',
   })
   @Post(':galleryId/access')
   createAccess(
@@ -287,6 +290,19 @@ export class GalleriesController {
       galleryId,
       targetUserId,
       currentUserId,
+    );
+  }
+
+  @Get(':galleryId/access/recipient')
+  checkAccessRecipient(
+    @Param('galleryId', ParseIntPipe) galleryId: number,
+    @CurrentUser('sub') currentUserId: number,
+    @Query() query: CheckGalleryAccessRecipientQueryDto,
+  ) {
+    return this.galleriesService.checkAccessRecipient(
+      galleryId,
+      currentUserId,
+      query.email,
     );
   }
 }

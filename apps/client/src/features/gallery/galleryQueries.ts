@@ -7,6 +7,7 @@ import {
   deleteGalleryAccess,
   getGalleries,
   getGalleryAccesses,
+  getGalleryAccessRecipient,
   getGalleryById,
   updateGallery,
   updateGalleryAccess,
@@ -60,6 +61,8 @@ export const galleryQueryKeys = {
   accesses: () => [...galleryQueryKeys.all, "access"] as const,
   accessList: (galleryId: number) =>
     [...galleryQueryKeys.accesses(), galleryId] as const,
+  accessRecipient: (galleryId: number, email: string) =>
+    [...galleryQueryKeys.accesses(), galleryId, "recipient", email] as const,
 };
 
 const ALL_GALLERIES_PAGE_LIMIT = 50;
@@ -218,3 +221,15 @@ export const useDeleteGalleryAccessMutation = () => {
     },
   });
 };
+
+export const useGalleryAccessRecipientQuery = (
+  galleryId: number,
+  email: string,
+  enabled: boolean,
+) =>
+  useQuery({
+    queryKey: galleryQueryKeys.accessRecipient(galleryId, email),
+    queryFn: () => getGalleryAccessRecipient(galleryId, email),
+    enabled,
+    retry: false,
+  });

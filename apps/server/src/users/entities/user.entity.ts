@@ -26,6 +26,12 @@ export class User {
   @Column({ select: false })
   password!: string;
 
+  @Column({
+    type: 'timestamptz',
+    nullable: true,
+  })
+  verifiedAt!: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;
 

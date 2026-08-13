@@ -37,9 +37,19 @@ export type GalleryAccess = {
   createdAt: string;
 };
 
-export type GalleryAccessListItem = GalleryAccess & {
-  user: GalleryAccessUser;
-};
+export type GalleryAccessListItem =
+  | (GalleryAccess & {
+      status: "active";
+      user: GalleryAccessUser;
+    })
+  | {
+      id: number;
+      galleryId: number;
+      email: string;
+      role: GalleryAccessRole;
+      createdAt: string;
+      status: "pending";
+    };
 
 export type UpdateGalleryAccessPayload = {
   role: GalleryAccessRole;
@@ -47,6 +57,7 @@ export type UpdateGalleryAccessPayload = {
 
 export type CreateGalleryAccessPayload = UpdateGalleryAccessPayload & {
   email: string;
+  sendNotification: boolean;
 };
 
 export type GalleriesListResponse = {
@@ -92,3 +103,11 @@ export type GalleryAccessFormValues = {
 export type GalleryAccessFormErrors = Partial<
   Record<keyof GalleryAccessFormValues, string>
 >;
+
+export type CreateGalleryAccessResponse = {
+  status: "access_granted" | "invitation_sent";
+};
+
+export type GalleryAccessRecipientResponse = {
+  registered: boolean;
+};

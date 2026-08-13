@@ -37,6 +37,18 @@ const roleOptions: Array<{
 ];
 
 export function GalleryAccessRow({ access }: GalleryAccessRowProps) {
+  if (access.status === "pending") {
+    return <PendingGalleryAccessRow access={access} />;
+  }
+
+  return <ActiveGalleryAccessRow access={access} />;
+}
+
+function ActiveGalleryAccessRow({
+  access,
+}: {
+  access: Extract<GalleryAccessListItem, { status: "active" }>;
+}) {
   const [apiError, setApiError] = useState("");
   const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
   const [revokeError, setRevokeError] = useState("");
@@ -217,6 +229,47 @@ export function GalleryAccessRow({ access }: GalleryAccessRowProps) {
           }
         }}
       />
+    </div>
+  );
+}
+
+function PendingGalleryAccessRow({
+  access,
+}: {
+  access: Extract<GalleryAccessListItem, { status: "pending" }>;
+}) {
+  const currentRoleLabel =
+    roleOptions.find((option) => option.value === access.role)?.label ??
+    access.role;
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_40px] gap-x-3 gap-y-4 border-b border-border-default py-5 opacity-60 last:border-b-0 md:grid-cols-[1fr_1.4fr_140px_48px] md:items-center md:gap-4 md:px-4 md:py-4">
+      <div className="col-span-2 md:col-span-1">
+        <span
+          title="Awaiting registration"
+          className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-text-secondary text-xs text-text-secondary"
+        >
+          i
+        </span>
+
+        <p className="mt-1 break-all text-base text-text-secondary md:hidden">
+          {access.email}
+        </p>
+      </div>
+
+      <div className="hidden md:block">
+        <p className="break-all text-sm text-text-secondary">{access.email}</p>
+      </div>
+
+      <div className="col-start-1 md:col-auto">
+        <span className="mb-2 block text-xs font-bold text-text-secondary md:hidden">
+          Role
+        </span>
+
+        <span className="text-sm text-text-secondary">{currentRoleLabel}</span>
+      </div>
+
+      <div />
     </div>
   );
 }

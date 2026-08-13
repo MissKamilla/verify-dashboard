@@ -26,6 +26,12 @@ export class UsersService {
     private readonly usersRepository: Repository<User>,
   ) {}
 
+  async markEmailVerified(user: User): Promise<void> {
+    user.verifiedAt = new Date();
+
+    await this.usersRepository.save(user);
+  }
+
   findByEmail(
     email: string,
     options?: { withPassword?: boolean },

@@ -3,8 +3,10 @@ import { httpClient } from "@/shared/api/httpClient";
 import type {
   CreateGalleryPayload,
   CreateGalleryAccessPayload,
+  CreateGalleryAccessResponse,
   GalleryAccess,
   GalleryAccessListItem,
+  GalleryAccessRecipientResponse,
   GalleriesListResponse,
   Gallery,
   GetGalleriesParams,
@@ -62,8 +64,8 @@ export const getGalleryAccesses = async (
 export const createGalleryAccess = async (
   galleryId: number,
   payload: CreateGalleryAccessPayload,
-): Promise<GalleryAccess> => {
-  const response = await httpClient.post<GalleryAccess>(
+): Promise<CreateGalleryAccessResponse> => {
+  const response = await httpClient.post<CreateGalleryAccessResponse>(
     `/galleries/${galleryId}/access`,
     payload,
   );
@@ -89,4 +91,20 @@ export const deleteGalleryAccess = async (
   userId: number,
 ): Promise<void> => {
   await httpClient.delete(`/galleries/${galleryId}/access/${userId}`);
+};
+
+export const getGalleryAccessRecipient = async (
+  galleryId: number,
+  email: string,
+): Promise<GalleryAccessRecipientResponse> => {
+  const response = await httpClient.get<GalleryAccessRecipientResponse>(
+    `/galleries/${galleryId}/access/recipient`,
+    {
+      params: {
+        email,
+      },
+    },
+  );
+
+  return response.data;
 };

@@ -1,24 +1,37 @@
+import { createHash, randomBytes } from 'crypto';
+import {
+  DataSource,
+  FindOptionsWhere,
+  ILike,
+  In,
+  MoreThan,
+  Repository,
+} from 'typeorm';
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Gallery } from './entities/gallery.entity';
-import { DataSource, FindOptionsWhere, ILike, In, Repository } from 'typeorm';
+
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import {
   CreateGalleryAccessDto,
+  CreateGalleryAccessResponseDto,
   UpdateGalleryAccessDto,
 } from './dto/gallery-access.dto';
 import { GetGalleriesQueryDto } from './dto/get-galleries-query.dto';
 import { GalleryListItemResponseDto } from './dto/gallery-list-item-response.dto';
 import { UpdateGalleryDto } from './dto/update-gallery.dto';
 import { GalleryResponseDto } from './dto/gallery-response.dto';
-import { GalleryRole } from './enums/gallery-role.enum';
+import { GalleryRole, GalleryAccessRole } from './enums/gallery-role.enum';
+import { Gallery } from './entities/gallery.entity';
 import { GalleryAccess } from './entities/gallery-access.entity';
+import { GalleryInvitation } from './entities/gallery-invitation.entity';
+import { MailService } from '../mail/mail.service';
 import { GalleryImage } from '../images/entities/image.entity';
 import { removeStoredImageFile } from '../images/images-storage.utils';
 import { User } from '../users/entities/user.entity';
@@ -39,6 +52,20 @@ type GalleryListOptions = {
   sortOrder: 'ASC' | 'DESC';
   search?: string;
 };
+
+type GalleryAccessListItem =
+  | (GalleryAccess & {
+      status: 'active';
+    })
+  | {
+      id: number;
+      galleryId: number;
+      email: string;
+      role: GalleryAccessRole;
+      createdAt: Date;
+      status: 'pending';
+    };
+
 type GalleryListWhere = FindOptionsWhere<Gallery> | FindOptionsWhere<Gallery>[];
 
 type AccessibleGalleryData = {
@@ -48,6 +75,8 @@ type AccessibleGalleryData = {
 
 @Injectable()
 export class GalleriesService {
+  private readonly logger = new Logger(GalleriesService.name);
+
   constructor(
     @InjectRepository(Gallery)
     private readonly galleriesRepository: Repository<Gallery>,
@@ -58,11 +87,47 @@ export class GalleriesService {
     @InjectRepository(GalleryImage)
     private readonly imagesRepository: Repository<GalleryImage>,
 
+    @InjectRepository(GalleryInvitation)
+    private readonly galleryInvitationRepository: Repository<GalleryInvitation>,
+
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
 
     private readonly dataSource: DataSource,
+
+    private readonly mailService: MailService,
   ) {}
+
+  async getInvitation(token: string): Promise<{
+    email: string;
+    galleryTitle: string;
+    role: GalleryAccessRole;
+  }> {
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const invitation = await this.galleryInvitationRepository.findOne({
+      where: { tokenHash },
+      relations: {
+        gallery: true,
+      },
+    });
+
+    if (!invitation) {
+      throw new BadRequestException('Invalid invitation');
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      await this.galleryInvitationRepository.remove(invitation);
+
+      throw new BadRequestException('Invitation expired');
+    }
+
+    return {
+      email: invitation.email,
+      galleryTitle: invitation.gallery.title,
+      role: invitation.role,
+    };
+  }
 
   async createGallery(
     userId: number,
@@ -199,8 +264,8 @@ export class GalleriesService {
     galleryId: number,
     currentUserId: number,
     dto: CreateGalleryAccessDto,
-  ): Promise<GalleryAccess> {
-    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+  ): Promise<CreateGalleryAccessResponseDto> {
+    const gallery = await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
 
     const targetUser = await this.usersRepository.findOne({
       where: {
@@ -209,7 +274,17 @@ export class GalleriesService {
     });
 
     if (!targetUser) {
-      throw new NotFoundException('User not found');
+      const token = await this.createInvitation(galleryId, dto.email, dto.role);
+
+      await this.mailService.sendGalleryInvitation(
+        dto.email,
+        gallery.title,
+        token,
+      );
+
+      return {
+        status: 'invitation_sent',
+      };
     }
 
     if (targetUser.id === currentUserId) {
@@ -224,6 +299,8 @@ export class GalleriesService {
     });
 
     if (existingAccess) {
+      await this.removePendingInvitation(galleryId, targetUser.email);
+
       throw new ConflictException('User already has access to this gallery');
     }
 
@@ -233,19 +310,37 @@ export class GalleriesService {
       role: dto.role,
     });
 
-    return this.galleryAccessRepository.save(access);
+    await this.galleryAccessRepository.save(access);
+
+    await this.removePendingInvitation(galleryId, targetUser.email);
+
+    if (dto.sendNotification) {
+      try {
+        await this.mailService.sendGallerySharedNotification(
+          targetUser.email,
+          gallery.title,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to send gallery notification for gallery ${galleryId}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
+    }
+
+    return {
+      status: 'access_granted',
+    };
   }
 
   async findAllAccesses(
     galleryId: number,
     currentUserId: number,
-  ): Promise<GalleryAccess[]> {
+  ): Promise<GalleryAccessListItem[]> {
     await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
 
-    return this.galleryAccessRepository.find({
-      where: {
-        galleryId,
-      },
+    const accesses = await this.galleryAccessRepository.find({
+      where: { galleryId },
       relations: {
         user: true,
       },
@@ -253,6 +348,32 @@ export class GalleriesService {
         createdAt: 'ASC',
       },
     });
+
+    const invitations = await this.galleryInvitationRepository.find({
+      where: {
+        galleryId,
+        expiresAt: MoreThan(new Date()),
+      },
+      order: {
+        createdAt: 'ASC',
+      },
+    });
+
+    return [
+      ...accesses.map((access) => ({
+        ...access,
+        status: 'active' as const,
+      })),
+
+      ...invitations.map((invitation) => ({
+        id: invitation.id,
+        galleryId: invitation.galleryId,
+        email: invitation.email,
+        role: invitation.role,
+        createdAt: invitation.createdAt,
+        status: 'pending' as const,
+      })),
+    ];
   }
 
   async updateAccess(
@@ -339,6 +460,77 @@ export class GalleriesService {
     }
 
     return accessibleGallery;
+  }
+
+  async checkAccessRecipient(
+    galleryId: number,
+    currentUserId: number,
+    email: string,
+  ): Promise<{ registered: boolean }> {
+    await this.getOwnedGalleryOrThrow(galleryId, currentUserId);
+
+    const user = await this.usersRepository.findOne({
+      where: {
+        email: email.trim().toLowerCase(),
+      },
+    });
+
+    return {
+      registered: Boolean(user),
+    };
+  }
+
+  private async createInvitation(
+    galleryId: number,
+    email: string,
+    role: GalleryAccessRole,
+  ): Promise<string> {
+    const token = randomBytes(32).toString('hex');
+
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    let invitation = await this.galleryInvitationRepository.findOne({
+      where: {
+        galleryId,
+        email,
+      },
+    });
+
+    if (invitation) {
+      invitation.role = role;
+      invitation.tokenHash = tokenHash;
+      invitation.expiresAt = expiresAt;
+    } else {
+      invitation = this.galleryInvitationRepository.create({
+        galleryId,
+        email,
+        role,
+        tokenHash,
+        expiresAt,
+      });
+    }
+
+    await this.galleryInvitationRepository.save(invitation);
+
+    return token;
+  }
+
+  private async removePendingInvitation(
+    galleryId: number,
+    email: string,
+  ): Promise<void> {
+    const pendingInvitation = await this.galleryInvitationRepository.findOne({
+      where: {
+        galleryId,
+        email,
+      },
+    });
+
+    if (pendingInvitation) {
+      await this.galleryInvitationRepository.remove(pendingInvitation);
+    }
   }
 
   private async getGalleryAccessData(

@@ -129,6 +129,26 @@ describe('UsersService', () => {
     });
   });
 
+  describe('markEmailVerified', () => {
+    it('sets verifiedAt and saves user', async () => {
+      const user = {
+        id: 1,
+        firstname: 'John',
+        lastname: 'Doe',
+        email: 'john@example.com',
+        password: 'hashed-password',
+        verifiedAt: null,
+        createdAt: new Date('2026-06-03T10:00:00.000Z'),
+      };
+
+      await usersService.markEmailVerified(user as User);
+
+      expect(user.verifiedAt).toEqual(expect.any(Date));
+
+      expect(usersRepositoryMock.save).toHaveBeenCalledWith(user);
+    });
+  });
+
   describe('findByEmail', () => {
     it('returns user by email', async () => {
       const user = {

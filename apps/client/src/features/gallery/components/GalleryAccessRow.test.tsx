@@ -38,6 +38,7 @@ const access: GalleryAccessListItem = {
   userId: 3,
   role: "viewer",
   createdAt: "2026-08-04T10:00:00.000Z",
+  status: "active",
   user: {
     id: 3,
     firstname: "Jane",
@@ -48,11 +49,11 @@ const access: GalleryAccessListItem = {
 };
 
 const renderGalleryAccessRow = ({
-  accessOverride = {},
+  accessOverride,
   isUpdating = false,
   isDeleting = false,
 }: {
-  accessOverride?: Partial<GalleryAccessListItem>;
+  accessOverride?: GalleryAccessListItem;
   isUpdating?: boolean;
   isDeleting?: boolean;
 } = {}) => {
@@ -72,7 +73,7 @@ const renderGalleryAccessRow = ({
   const root = createRoot(container);
 
   act(() => {
-    root.render(<GalleryAccessRow access={{ ...access, ...accessOverride }} />);
+    root.render(<GalleryAccessRow access={accessOverride ?? access} />);
   });
 
   const unmount = () => {
@@ -97,13 +98,17 @@ const clickElement = async (element: Element | null | undefined) => {
 
 const openRoleMenu = async (container: HTMLElement) => {
   await clickElement(
-    container.querySelector("button[aria-label='Change role for jane@example.com']"),
+    container.querySelector(
+      "button[aria-label='Change role for jane@example.com']",
+    ),
   );
 };
 
 const openActionsMenu = async (container: HTMLElement) => {
   await clickElement(
-    container.querySelector("button[aria-label='Open actions for jane@example.com']"),
+    container.querySelector(
+      "button[aria-label='Open actions for jane@example.com']",
+    ),
   );
 };
 
@@ -139,6 +144,37 @@ describe("GalleryAccessRow", () => {
     expect(container.textContent).toContain("Jane Doe");
     expect(container.textContent).toContain("jane@example.com");
     expect(container.textContent).toContain("Viewer");
+  });
+
+  it("renders pending invitation without role or action controls", () => {
+    const pendingAccess: GalleryAccessListItem = {
+      id: 2,
+      galleryId: 7,
+      email: "pending@example.com",
+      role: "editor",
+      createdAt: "2026-08-04T11:00:00.000Z",
+      status: "pending",
+    };
+
+    const container = renderGalleryAccessRow({
+      accessOverride: pendingAccess,
+    });
+
+    expect(container.textContent).toContain("pending@example.com");
+    expect(container.textContent).toContain("Editor");
+    expect(container.querySelector("[title='Awaiting registration']")).not.toBe(
+      null,
+    );
+    expect(
+      container.querySelector(
+        "button[aria-label='Change role for jane@example.com']",
+      ),
+    ).toBeNull();
+    expect(
+      container.querySelector(
+        "button[aria-label='Open actions for jane@example.com']",
+      ),
+    ).toBeNull();
   });
 
   it("updates access role when a different role is selected", async () => {

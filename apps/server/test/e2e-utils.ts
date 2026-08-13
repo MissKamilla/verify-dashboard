@@ -8,6 +8,7 @@ import { DataSource } from 'typeorm';
 
 import { AppModule } from '../src/app.module';
 import { UPLOAD_IMAGES_FIELD_NAME } from '../src/images/images.constants';
+import { MailService } from '../src/mail/mail.service';
 import {
   AuthResponseBody,
   CreateGalleryPayload,
@@ -16,6 +17,9 @@ import {
   ImagesListResponseBody,
   RegisterUserPayload,
 } from './e2e-types';
+
+export const sentVerificationCodes = new Map<string, string>();
+export const sentGalleryInvitations = new Map<string, string>();
 
 export const uploadImagesDir = join(
   process.cwd(),
@@ -26,9 +30,27 @@ export async function createE2eApp(): Promise<{
   app: INestApplication<App>;
   dataSource: DataSource;
 }> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
+  const moduleBuilder = Test.createTestingModule({
     imports: [AppModule],
-  }).compile();
+  });
+
+  moduleBuilder.overrideProvider(MailService).useValue({
+    sendVerificationCode: jest.fn((to: string, code: string) => {
+      sentVerificationCodes.set(to, code);
+
+      return Promise.resolve();
+    }),
+    sendGallerySharedNotification: jest.fn(() => Promise.resolve()),
+    sendGalleryInvitation: jest.fn(
+      (to: string, _title: string, token: string) => {
+        sentGalleryInvitations.set(to, token);
+
+        return Promise.resolve();
+      },
+    ),
+  });
+
+  const moduleFixture: TestingModule = await moduleBuilder.compile();
 
   const app = moduleFixture.createNestApplication<INestApplication<App>>();
 
@@ -48,8 +70,11 @@ export async function createE2eApp(): Promise<{
 }
 
 export async function resetE2eState(dataSource: DataSource): Promise<void> {
+  sentVerificationCodes.clear();
+  sentGalleryInvitations.clear();
+
   await dataSource.query(
-    'TRUNCATE TABLE "images", "galleries", "users" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "email_verifications", "gallery_invitations", "images", "galleries", "users" RESTART IDENTITY CASCADE',
   );
 
   await rm(uploadImagesDir, {
@@ -86,7 +111,25 @@ export async function registerUser(
     .send(payload)
     .expect(201);
 
-  const responseBody = response.body as unknown as AuthResponseBody;
+  expect(response.body).toEqual({
+    message: 'Verification code sent',
+  });
+
+  const verificationCode = sentVerificationCodes.get(payload.email);
+
+  if (!verificationCode) {
+    throw new Error(`Expected verification code for ${payload.email}`);
+  }
+
+  const verifyResponse = await request(app.getHttpServer())
+    .post('/auth/verify-email')
+    .send({
+      email: payload.email,
+      code: verificationCode,
+    })
+    .expect(200);
+
+  const responseBody = verifyResponse.body as unknown as AuthResponseBody;
 
   return responseBody.token;
 }

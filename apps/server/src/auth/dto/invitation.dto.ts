@@ -1,19 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
-  IsEmail,
+  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
   MinLength,
 } from 'class-validator';
 
-export class RegisterDto {
-  @ApiProperty({ example: 'Anna' })
+import {
+  GALLERY_ACCESS_ROLES,
+  type GalleryAccessRole,
+} from '../../galleries/enums/gallery-role.enum';
+
+export class InvitationResponseDto {
+  @ApiProperty({ example: 'new-user@gmail.com' })
+  email!: string;
+
+  @ApiProperty({ example: 'Summer photos' })
+  galleryTitle!: string;
+
+  @ApiProperty({
+    enum: [...GALLERY_ACCESS_ROLES],
+  })
+  role!: GalleryAccessRole;
+}
+
+export class RegisterByInviteDto {
+  @ApiProperty()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   @IsString()
+  @IsNotEmpty()
   @MinLength(2)
   @MaxLength(50)
   @Matches(/^[^\d]*$/, {
@@ -21,11 +40,12 @@ export class RegisterDto {
   })
   firstname!: string;
 
-  @ApiProperty({ example: 'Smith' })
+  @ApiProperty()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
   @IsString()
+  @IsNotEmpty()
   @MinLength(2)
   @MaxLength(50)
   @Matches(/^[^\d]*$/, {
@@ -33,15 +53,7 @@ export class RegisterDto {
   })
   lastname!: string;
 
-  @ApiProperty({ example: 'anna@test.com' })
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' ? value.trim().toLowerCase() : value,
-  )
-  @IsEmail()
-  @MaxLength(255)
-  email!: string;
-
-  @ApiProperty({ example: 'Password123' })
+  @ApiProperty({ minLength: 8 })
   @IsString()
   @Matches(/[a-z]/, {
     message: 'Password must contain at least one lowercase letter',
@@ -55,9 +67,12 @@ export class RegisterDto {
   @MinLength(8)
   @MaxLength(100)
   password!: string;
-}
 
-export class RegisterResponseDto {
-  @ApiProperty({ example: 'Verification code sent' })
-  message!: string;
+  @ApiProperty()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @IsNotEmpty()
+  token!: string;
 }

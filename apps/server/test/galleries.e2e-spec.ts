@@ -397,4 +397,90 @@ describe('Galleries integration', () => {
 
     expect(ownerGallery.title).toBe('Nature');
   });
+
+  it('shares gallery with registered user using normalized email casing', async () => {
+    const ownerToken = await registerUser(app);
+
+    const targetToken = await registerUser(app, {
+      firstname: 'Bob',
+      lastname: 'Brown',
+      email: 'bob@test.com',
+    });
+
+    const gallery = await createGallery(app, ownerToken, {
+      title: 'Shared gallery',
+    });
+
+    await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access/recipient`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .query({
+        email: ' Bob@Test.com ',
+      })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          registered: true,
+        });
+      });
+
+    await request(app.getHttpServer())
+      .post(`/galleries/${gallery.id}/access`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .send({
+        email: ' Bob@Test.com ',
+        role: 'viewer',
+        sendNotification: false,
+      })
+      .expect(201)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          status: 'access_granted',
+        });
+      });
+
+    const response = await request(app.getHttpServer())
+      .get('/galleries')
+      .set('Authorization', `Bearer ${targetToken}`)
+      .expect(200);
+
+    const responseBody = response.body as unknown as GalleriesListResponseBody;
+
+    expect(responseBody.total).toBe(1);
+    expect(responseBody.items[0]).toEqual(
+      expect.objectContaining({
+        id: gallery.id,
+        title: gallery.title,
+        role: 'viewer',
+      }),
+    );
+  });
+
+  it('validates gallery access recipient email query', async () => {
+    const ownerToken = await registerUser(app);
+    const gallery = await createGallery(app, ownerToken);
+
+    const missingEmailResponse = await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access/recipient`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(400);
+
+    const missingEmailBody =
+      missingEmailResponse.body as unknown as ValidationErrorResponseBody;
+
+    expect(missingEmailBody.message).toContain('email must be an email');
+
+    const invalidEmailResponse = await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access/recipient`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .query({
+        email: 'not-an-email',
+      })
+      .expect(400);
+
+    const invalidEmailBody =
+      invalidEmailResponse.body as unknown as ValidationErrorResponseBody;
+
+    expect(invalidEmailBody.message).toContain('email must be an email');
+  });
 });

@@ -1,3 +1,5 @@
+import type { GalleryAccessRole } from "@/features/gallery/types";
+
 export type RegisterFormValues = {
   firstname: string;
   lastname: string;
@@ -19,6 +21,29 @@ export type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>;
 
 export type RegisterPayload = Omit<RegisterFormValues, "confirmPassword">;
 
+export type RegisterResponse = {
+  message: string;
+};
+
+export type VerifyEmailPayload = {
+  email: string;
+  code: string;
+};
+
+export type ResendVerificationPayload = {
+  email: string;
+};
+
 export type AuthResponse = {
+  token: string;
+};
+
+export type InvitationResponse = {
+  email: string;
+  galleryTitle: string;
+  role: GalleryAccessRole;
+};
+
+export type RegisterByInvitePayload = Omit<RegisterPayload, "email"> & {
   token: string;
 };

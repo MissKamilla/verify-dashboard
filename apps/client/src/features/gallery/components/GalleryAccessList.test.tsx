@@ -12,9 +12,13 @@ vi.mock("@/features/gallery/galleryQueries", () => ({
 }));
 
 vi.mock("./GalleryAccessRow", () => ({
-  GalleryAccessRow: ({ access }: { access: GalleryAccessListItem }) => (
-    <p>{access.user.email}</p>
-  ),
+  GalleryAccessRow: ({ access }: { access: GalleryAccessListItem }) => {
+    if (access.status === "pending") {
+      return <p>Pending: {access.email}</p>;
+    }
+
+    return <p>Active: {access.user.email}</p>;
+  },
 }));
 
 const useGalleryAccessesQueryMock = vi.mocked(useGalleryAccessesQuery);
@@ -27,6 +31,7 @@ const access: GalleryAccessListItem = {
   userId: 3,
   role: "viewer",
   createdAt: "2026-08-04T10:00:00.000Z",
+  status: "active",
   user: {
     id: 3,
     firstname: "Jane",
@@ -171,6 +176,25 @@ describe("GalleryAccessList", () => {
 
     expect(container.textContent).toContain("People with access");
     expect(container.textContent).toContain("1");
-    expect(container.textContent).toContain("jane@example.com");
+    expect(container.textContent).toContain("Active: jane@example.com");
+  });
+
+  it("renders pending invitations in access count", () => {
+    const pendingAccess: GalleryAccessListItem = {
+      id: 2,
+      galleryId: 7,
+      email: "pending@example.com",
+      role: "viewer",
+      createdAt: "2026-08-04T11:00:00.000Z",
+      status: "pending",
+    };
+
+    const container = renderGalleryAccessList({
+      data: [access, pendingAccess],
+    } as Partial<ReturnType<typeof useGalleryAccessesQuery>>);
+
+    expect(container.textContent).toContain("2");
+    expect(container.textContent).toContain("Active: jane@example.com");
+    expect(container.textContent).toContain("Pending: pending@example.com");
   });
 });
