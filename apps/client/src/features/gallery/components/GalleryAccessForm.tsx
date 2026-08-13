@@ -12,6 +12,7 @@ import type {
 import { validateGalleryAccessForm } from "@/features/gallery/validateGalleryAccessForm";
 
 import { getApiErrorMessage } from "@/shared/api/getApiErrorMessage";
+import { useDebouncedValue } from "@/shared/lib/useDebouncedValue";
 import { isValidEmail } from "@/shared/lib/validationRules";
 import { Dropdown, type DropdownOption } from "@/shared/ui/Dropdown";
 import { FormInputField } from "@/shared/ui/FormInputField";
@@ -35,6 +36,8 @@ const initialValues: GalleryAccessFormValues = {
   email: "",
   role: "viewer",
 };
+
+const RECIPIENT_EMAIL_DEBOUNCE_DELAY_MS = 500;
 
 const roleOptions: DropdownOption<GalleryAccessRole>[] = [
   {
@@ -83,7 +86,7 @@ export function GalleryAccessForm({ galleryId }: GalleryAccessFormProps) {
   return (
     <SettingsCard
       title="Grant access"
-      description="Share this gallery with another registered user."
+      description="Share this gallery with another user."
     >
       <Formik<GalleryAccessFormValues>
         initialValues={initialValues}
@@ -123,19 +126,27 @@ function GalleryAccessFormContent({
 
   const trimmedEmail = values.email.trim();
   const isEmailValid = isValidEmail(trimmedEmail);
+  const debouncedEmail = useDebouncedValue(
+    trimmedEmail,
+    RECIPIENT_EMAIL_DEBOUNCE_DELAY_MS,
+  );
+  const isDebouncedEmailCurrent = trimmedEmail === debouncedEmail;
+  const isRecipientQueryEnabled = isEmailValid && isDebouncedEmailCurrent;
 
   const recipientQuery = useGalleryAccessRecipientQuery(
     galleryId,
-    trimmedEmail,
-    isEmailValid,
+    debouncedEmail,
+    isRecipientQueryEnabled,
   );
 
   const isUnregisteredUser =
-    isEmailValid && recipientQuery.data?.registered === false;
+    isRecipientQueryEnabled && recipientQuery.data?.registered === false;
 
-  const isCheckingRecipient = isEmailValid && recipientQuery.isPending;
+  const isCheckingRecipient =
+    isEmailValid && (!isDebouncedEmailCurrent || recipientQuery.isPending);
 
   const isDisabled = isCreatingAccess || isSubmitting || isCheckingRecipient;
+  const isEmailInputDisabled = isCreatingAccess || isSubmitting;
 
   const isNotificationChecked = isUnregisteredUser || sendNotification;
 
@@ -155,12 +166,13 @@ function GalleryAccessFormContent({
         onChange={(event) => {
           handleChange(event);
           setApiError("");
+          setSendNotification(false);
         }}
         onBlur={handleBlur}
         error={touched.email ? errors.email : undefined}
         placeholder="user@example.com"
         autoComplete="email"
-        disabled={isDisabled}
+        disabled={isEmailInputDisabled}
         required
       />
 

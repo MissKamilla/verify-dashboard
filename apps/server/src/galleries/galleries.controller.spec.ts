@@ -250,11 +250,9 @@ describe('GalleriesController', () => {
 
       galleriesServiceMock.checkAccessRecipient.mockResolvedValue(response);
 
-      const result = await galleriesController.checkAccessRecipient(
-        10,
-        1,
-        'invitee@test.com',
-      );
+      const result = await galleriesController.checkAccessRecipient(10, 1, {
+        email: 'invitee@test.com',
+      });
 
       expect(galleriesServiceMock.checkAccessRecipient).toHaveBeenCalledWith(
         10,

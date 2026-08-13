@@ -29,6 +29,7 @@ const getApiErrorMessageMock = vi.mocked(getApiErrorMessage);
 
 const mutateAsyncMock = vi.fn();
 const mountedCleanups: Array<() => void> = [];
+const RECIPIENT_EMAIL_DEBOUNCE_DELAY_MS = 500;
 let recipientRegistered = true;
 let isRecipientPending = false;
 
@@ -67,6 +68,14 @@ const setInputValue = async (input: HTMLInputElement, value: string) => {
   });
 };
 
+const advanceRecipientEmailDebounce = async (
+  milliseconds = RECIPIENT_EMAIL_DEBOUNCE_DELAY_MS,
+) => {
+  await act(async () => {
+    vi.advanceTimersByTime(milliseconds);
+  });
+};
+
 const submitForm = async (container: HTMLElement) => {
   await act(async () => {
     container
@@ -89,6 +98,7 @@ describe("GalleryAccessForm", () => {
       IS_REACT_ACT_ENVIRONMENT: true,
     });
 
+    vi.useFakeTimers();
     vi.clearAllMocks();
 
     recipientRegistered = true;
@@ -117,6 +127,9 @@ describe("GalleryAccessForm", () => {
     mountedCleanups.splice(0).forEach((cleanup) => {
       cleanup();
     });
+
+    vi.clearAllTimers();
+    vi.useRealTimers();
   });
 
   it("keeps access controls hidden and submit disabled until email is valid", async () => {
@@ -138,6 +151,7 @@ describe("GalleryAccessForm", () => {
       container.querySelector("input[name='email']") as HTMLInputElement,
       "invalid-email",
     );
+    await advanceRecipientEmailDebounce();
 
     expect(
       container.querySelector("[aria-hidden]")?.getAttribute("aria-hidden"),
@@ -157,6 +171,7 @@ describe("GalleryAccessForm", () => {
       container.querySelector("input[name='email']") as HTMLInputElement,
       "  user@example.com  ",
     );
+    await advanceRecipientEmailDebounce();
 
     expect(
       container.querySelector("[aria-hidden]")?.getAttribute("aria-hidden"),
@@ -201,6 +216,7 @@ describe("GalleryAccessForm", () => {
     ) as HTMLInputElement;
 
     await setInputValue(emailInput, "user@example.com");
+    await advanceRecipientEmailDebounce();
 
     await act(async () => {
       getNotificationCheckbox(container)?.dispatchEvent(
@@ -231,6 +247,7 @@ describe("GalleryAccessForm", () => {
       container.querySelector("input[name='email']") as HTMLInputElement,
       "new-user@example.com",
     );
+    await advanceRecipientEmailDebounce();
 
     expect(getNotificationCheckbox(container)?.checked).toBe(true);
     expect(getNotificationCheckbox(container)?.disabled).toBe(true);
@@ -247,17 +264,79 @@ describe("GalleryAccessForm", () => {
     });
   });
 
+  it("resets forced notification when email changes to registered recipient", async () => {
+    recipientRegistered = false;
+
+    const container = renderGalleryAccessForm();
+    const emailInput = container.querySelector(
+      "input[name='email']",
+    ) as HTMLInputElement;
+
+    await setInputValue(emailInput, "new-user@example.com");
+    await advanceRecipientEmailDebounce();
+
+    expect(getNotificationCheckbox(container)?.checked).toBe(true);
+    expect(getNotificationCheckbox(container)?.disabled).toBe(true);
+
+    recipientRegistered = true;
+
+    await setInputValue(emailInput, "registered@example.com");
+    await advanceRecipientEmailDebounce();
+
+    expect(getNotificationCheckbox(container)?.checked).toBe(false);
+    expect(getNotificationCheckbox(container)?.disabled).toBe(false);
+  });
+
   it("disables sharing while recipient lookup is pending", async () => {
     isRecipientPending = true;
 
     const container = renderGalleryAccessForm();
+    const emailInput = container.querySelector(
+      "input[name='email']",
+    ) as HTMLInputElement;
 
-    await setInputValue(
-      container.querySelector("input[name='email']") as HTMLInputElement,
-      "user@example.com",
-    );
+    emailInput.focus();
+
+    await setInputValue(emailInput, "user@example.com");
+    await advanceRecipientEmailDebounce();
+
+    expect(emailInput.disabled).toBe(false);
+    expect(document.activeElement).toBe(emailInput);
+    expect(getShareButton(container)?.disabled).toBe(true);
+  });
+
+  it("waits for typing to pause before checking recipient", async () => {
+    const container = renderGalleryAccessForm();
+    const emailInput = container.querySelector(
+      "input[name='email']",
+    ) as HTMLInputElement;
+
+    await setInputValue(emailInput, "user@example.com");
 
     expect(getShareButton(container)?.disabled).toBe(true);
+    expect(useGalleryAccessRecipientQueryMock).not.toHaveBeenLastCalledWith(
+      7,
+      "user@example.com",
+      true,
+    );
+
+    await advanceRecipientEmailDebounce(RECIPIENT_EMAIL_DEBOUNCE_DELAY_MS - 1);
+
+    expect(getShareButton(container)?.disabled).toBe(true);
+    expect(useGalleryAccessRecipientQueryMock).not.toHaveBeenLastCalledWith(
+      7,
+      "user@example.com",
+      true,
+    );
+
+    await advanceRecipientEmailDebounce(1);
+
+    expect(useGalleryAccessRecipientQueryMock).toHaveBeenLastCalledWith(
+      7,
+      "user@example.com",
+      true,
+    );
+    expect(getShareButton(container)?.disabled).toBe(false);
   });
 
   it("clears api errors when the email changes", async () => {
@@ -269,6 +348,7 @@ describe("GalleryAccessForm", () => {
     ) as HTMLInputElement;
 
     await setInputValue(emailInput, "user@example.com");
+    await advanceRecipientEmailDebounce();
     await submitForm(container);
 
     expect(getApiErrorMessageMock).toHaveBeenCalledWith(expect.any(Error));

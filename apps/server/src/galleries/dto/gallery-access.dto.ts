@@ -32,6 +32,17 @@ export class CreateGalleryAccessDto extends UpdateGalleryAccessDto {
   sendNotification!: boolean;
 }
 
+export class CheckGalleryAccessRecipientQueryDto {
+  @ApiProperty({
+    example: 'user@example.com',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
+  @IsEmail()
+  email!: string;
+}
+
 export class CreateGalleryAccessResponseDto {
   @ApiProperty({
     enum: ['access_granted', 'invitation_sent'],

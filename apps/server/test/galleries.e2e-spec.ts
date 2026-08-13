@@ -455,4 +455,32 @@ describe('Galleries integration', () => {
       }),
     );
   });
+
+  it('validates gallery access recipient email query', async () => {
+    const ownerToken = await registerUser(app);
+    const gallery = await createGallery(app, ownerToken);
+
+    const missingEmailResponse = await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access/recipient`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .expect(400);
+
+    const missingEmailBody =
+      missingEmailResponse.body as unknown as ValidationErrorResponseBody;
+
+    expect(missingEmailBody.message).toContain('email must be an email');
+
+    const invalidEmailResponse = await request(app.getHttpServer())
+      .get(`/galleries/${gallery.id}/access/recipient`)
+      .set('Authorization', `Bearer ${ownerToken}`)
+      .query({
+        email: 'not-an-email',
+      })
+      .expect(400);
+
+    const invalidEmailBody =
+      invalidEmailResponse.body as unknown as ValidationErrorResponseBody;
+
+    expect(invalidEmailBody.message).toContain('email must be an email');
+  });
 });

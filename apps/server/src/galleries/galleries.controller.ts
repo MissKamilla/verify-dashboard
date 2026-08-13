@@ -28,6 +28,7 @@ import { GalleriesService } from './galleries.service';
 import { GalleryResponseDto } from './dto/gallery-response.dto';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import {
+  CheckGalleryAccessRecipientQueryDto,
   CreateGalleryAccessDto,
   CreateGalleryAccessResponseDto,
   UpdateGalleryAccessDto,
@@ -292,16 +293,16 @@ export class GalleriesController {
     );
   }
 
-  @Get(':id/access/recipient')
+  @Get(':galleryId/access/recipient')
   checkAccessRecipient(
-    @Param('id', ParseIntPipe) galleryId: number,
+    @Param('galleryId', ParseIntPipe) galleryId: number,
     @CurrentUser('sub') currentUserId: number,
-    @Query('email') email: string,
+    @Query() query: CheckGalleryAccessRecipientQueryDto,
   ) {
     return this.galleriesService.checkAccessRecipient(
       galleryId,
       currentUserId,
-      email,
+      query.email,
     );
   }
 }
