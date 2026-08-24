@@ -12,7 +12,7 @@ import { createHash, randomInt } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 
 import { GalleriesService } from '../galleries/galleries.service';
-import { MailService } from '../mail/mail.service';
+import { MailQueueService } from '../mail/mail-queue.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { GalleryAccess } from '../galleries/entities/gallery-access.entity';
@@ -30,7 +30,7 @@ export class AuthService {
     private readonly galleriesService: GalleriesService,
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService,
+    private readonly mailQueueService: MailQueueService,
 
     @InjectRepository(EmailVerification)
     private readonly verificationRepository: Repository<EmailVerification>,
@@ -43,7 +43,10 @@ export class AuthService {
       if (!existingUser.verifiedAt) {
         const code = await this.createVerification(existingUser);
 
-        await this.mailService.sendVerificationCode(existingUser.email, code);
+        await this.mailQueueService.enqueueVerificationEmail(
+          existingUser.email,
+          code,
+        );
 
         return {
           message: 'Verification code sent',
@@ -64,7 +67,7 @@ export class AuthService {
 
     const code = await this.createVerification(user);
 
-    await this.mailService.sendVerificationCode(user.email, code);
+    await this.mailQueueService.enqueueVerificationEmail(user.email, code);
 
     return {
       message: 'Verification code sent',
@@ -126,7 +129,7 @@ export class AuthService {
 
     const code = await this.createVerification(user);
 
-    await this.mailService.sendVerificationCode(user.email, code);
+    await this.mailQueueService.enqueueVerificationEmail(user.email, code);
 
     return {
       message: 'Verification code sent',

@@ -12,6 +12,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    container_name: verify_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - redis_data:/data
+
   postgres-test:
     image: postgres:16-alpine
     container_name: verify_postgres_test
@@ -24,3 +34,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
