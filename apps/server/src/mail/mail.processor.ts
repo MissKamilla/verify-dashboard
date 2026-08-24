@@ -3,7 +3,11 @@ import { Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 
 import { MAIL_JOBS, MAIL_QUEUE } from './mail.constants';
-import type { VerificationEmailJobData } from './mail.types';
+import type {
+  GalleryInvitationEmailJobData,
+  GallerySharedEmailJobData,
+  VerificationEmailJobData,
+} from './mail.types';
 import { MailService } from './mail.service';
 
 @Processor(MAIL_QUEUE)
@@ -17,11 +21,31 @@ export class MailProcessor extends WorkerHost {
   async process(job: Job): Promise<void> {
     switch (job.name) {
       case MAIL_JOBS.VERIFICATION:
-        await this.mailService.sendVerificationCode(
-          (job.data as VerificationEmailJobData).email,
-          (job.data as VerificationEmailJobData).code,
-        );
+        const data = job.data as VerificationEmailJobData;
+
+        await this.mailService.sendVerificationCode(data.email, data.code);
         return;
+      case MAIL_JOBS.GALLERY_INVITATION: {
+        const data = job.data as GalleryInvitationEmailJobData;
+
+        await this.mailService.sendGalleryInvitation(
+          data.email,
+          data.galleryTitle,
+          data.token,
+        );
+
+        return;
+      }
+      case MAIL_JOBS.GALLERY_SHARED: {
+        const data = job.data as GallerySharedEmailJobData;
+
+        await this.mailService.sendGallerySharedNotification(
+          data.email,
+          data.galleryTitle,
+        );
+
+        return;
+      }
 
       default:
         throw new Error(`Unknown mail job: ${job.name}`);

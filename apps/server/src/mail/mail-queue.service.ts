@@ -3,7 +3,11 @@ import { Injectable } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 
 import { MAIL_JOBS, MAIL_QUEUE } from './mail.constants';
-import type { VerificationEmailJobData } from './mail.types';
+import type {
+  GalleryInvitationEmailJobData,
+  GallerySharedEmailJobData,
+  VerificationEmailJobData,
+} from './mail.types';
 
 @Injectable()
 export class MailQueueService {
@@ -19,5 +23,31 @@ export class MailQueueService {
     };
 
     await this.mailQueue.add(MAIL_JOBS.VERIFICATION, data);
+  }
+
+  async enqueueGalleryInvitation(
+    email: string,
+    galleryTitle: string,
+    token: string,
+  ): Promise<void> {
+    const data: GalleryInvitationEmailJobData = {
+      email,
+      galleryTitle,
+      token,
+    };
+
+    await this.mailQueue.add(MAIL_JOBS.GALLERY_INVITATION, data);
+  }
+
+  async enqueueGallerySharedNotification(
+    email: string,
+    galleryTitle: string,
+  ): Promise<void> {
+    const data: GallerySharedEmailJobData = {
+      email,
+      galleryTitle,
+    };
+
+    await this.mailQueue.add(MAIL_JOBS.GALLERY_SHARED, data);
   }
 }
