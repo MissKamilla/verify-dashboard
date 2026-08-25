@@ -1,4 +1,4 @@
-import { ServiceUnavailableException } from '@nestjs/common';
+import { Logger, ServiceUnavailableException } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 
 import { MAIL_JOBS } from './mail.constants';
@@ -55,6 +55,10 @@ describe('MailQueueService', () => {
   });
 
   it('throws service unavailable exception when queue add fails', async () => {
+    const loggerErrorSpy = jest
+      .spyOn(Logger.prototype, 'error')
+      .mockImplementation();
+
     queueMock.add.mockRejectedValue(new Error('Redis is down'));
 
     await expect(
@@ -63,5 +67,12 @@ describe('MailQueueService', () => {
         'Nature',
       ),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      'Failed to enqueue gallery notification',
+      expect.any(String),
+    );
+
+    loggerErrorSpy.mockRestore();
   });
 });
