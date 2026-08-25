@@ -10,7 +10,7 @@ import { createHash } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 
 import { GalleriesService } from '../galleries/galleries.service';
-import { MailService } from '../mail/mail.service';
+import { MailQueueService } from '../mail/mail-queue.service';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { GalleryAccess } from '../galleries/entities/gallery-access.entity';
@@ -55,8 +55,8 @@ describe('AuthService', () => {
     signAsync: jest.Mock;
   };
 
-  let mailServiceMock: {
-    sendVerificationCode: jest.Mock;
+  let mailQueueServiceMock: {
+    enqueueVerificationEmail: jest.Mock;
   };
 
   let verificationRepositoryMock: {
@@ -87,8 +87,8 @@ describe('AuthService', () => {
       signAsync: jest.fn(),
     };
 
-    mailServiceMock = {
-      sendVerificationCode: jest.fn(),
+    mailQueueServiceMock = {
+      enqueueVerificationEmail: jest.fn(),
     };
 
     verificationRepositoryMock = {
@@ -103,7 +103,7 @@ describe('AuthService', () => {
       galleriesServiceMock as unknown as GalleriesService,
       usersServiceMock as unknown as UsersService,
       jwtServiceMock as unknown as JwtService,
-      mailServiceMock as unknown as MailService,
+      mailQueueServiceMock as unknown as MailQueueService,
       verificationRepositoryMock as unknown as Repository<EmailVerification>,
     );
   });
@@ -137,7 +137,9 @@ describe('AuthService', () => {
 
       expect(verificationRepositoryMock.save).not.toHaveBeenCalled();
 
-      expect(mailServiceMock.sendVerificationCode).not.toHaveBeenCalled();
+      expect(
+        mailQueueServiceMock.enqueueVerificationEmail,
+      ).not.toHaveBeenCalled();
 
       expect(jwtServiceMock.signAsync).not.toHaveBeenCalled();
     });
@@ -188,7 +190,9 @@ describe('AuthService', () => {
         verification,
       );
 
-      expect(mailServiceMock.sendVerificationCode).toHaveBeenCalledWith(
+      expect(
+        mailQueueServiceMock.enqueueVerificationEmail,
+      ).toHaveBeenCalledWith(
         existingUser.email,
         expect.stringMatching(/^\d{6}$/),
       );
@@ -272,10 +276,9 @@ describe('AuthService', () => {
         verification,
       );
 
-      expect(mailServiceMock.sendVerificationCode).toHaveBeenCalledWith(
-        dto.email,
-        expect.stringMatching(/^\d{6}$/),
-      );
+      expect(
+        mailQueueServiceMock.enqueueVerificationEmail,
+      ).toHaveBeenCalledWith(dto.email, expect.stringMatching(/^\d{6}$/));
 
       expect(jwtServiceMock.signAsync).not.toHaveBeenCalled();
     });
@@ -613,7 +616,9 @@ describe('AuthService', () => {
 
       expect(verificationRepositoryMock.save).not.toHaveBeenCalled();
 
-      expect(mailServiceMock.sendVerificationCode).not.toHaveBeenCalled();
+      expect(
+        mailQueueServiceMock.enqueueVerificationEmail,
+      ).not.toHaveBeenCalled();
     });
 
     it('throws BadRequestException when email is already verified', async () => {
@@ -635,7 +640,9 @@ describe('AuthService', () => {
 
       expect(verificationRepositoryMock.save).not.toHaveBeenCalled();
 
-      expect(mailServiceMock.sendVerificationCode).not.toHaveBeenCalled();
+      expect(
+        mailQueueServiceMock.enqueueVerificationEmail,
+      ).not.toHaveBeenCalled();
     });
 
     it('stores new verification code and sends email', async () => {
@@ -674,10 +681,9 @@ describe('AuthService', () => {
         verification,
       );
 
-      expect(mailServiceMock.sendVerificationCode).toHaveBeenCalledWith(
-        dto.email,
-        expect.stringMatching(/^\d{6}$/),
-      );
+      expect(
+        mailQueueServiceMock.enqueueVerificationEmail,
+      ).toHaveBeenCalledWith(dto.email, expect.stringMatching(/^\d{6}$/));
     });
   });
 

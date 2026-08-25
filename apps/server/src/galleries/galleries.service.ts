@@ -31,7 +31,7 @@ import { GalleryRole, GalleryAccessRole } from './enums/gallery-role.enum';
 import { Gallery } from './entities/gallery.entity';
 import { GalleryAccess } from './entities/gallery-access.entity';
 import { GalleryInvitation } from './entities/gallery-invitation.entity';
-import { MailService } from '../mail/mail.service';
+import { MailQueueService } from '../mail/mail-queue.service';
 import { GalleryImage } from '../images/entities/image.entity';
 import { removeStoredImageFile } from '../images/images-storage.utils';
 import { User } from '../users/entities/user.entity';
@@ -95,7 +95,7 @@ export class GalleriesService {
 
     private readonly dataSource: DataSource,
 
-    private readonly mailService: MailService,
+    private readonly mailQueueService: MailQueueService,
   ) {}
 
   async getInvitation(token: string): Promise<{
@@ -276,7 +276,7 @@ export class GalleriesService {
     if (!targetUser) {
       const token = await this.createInvitation(galleryId, dto.email, dto.role);
 
-      await this.mailService.sendGalleryInvitation(
+      await this.mailQueueService.enqueueGalleryInvitation(
         dto.email,
         gallery.title,
         token,
@@ -316,13 +316,13 @@ export class GalleriesService {
 
     if (dto.sendNotification) {
       try {
-        await this.mailService.sendGallerySharedNotification(
+        await this.mailQueueService.enqueueGallerySharedNotification(
           targetUser.email,
           gallery.title,
         );
       } catch (error) {
         this.logger.error(
-          `Failed to send gallery notification for gallery ${galleryId}`,
+          `Failed to enqueue gallery notification for gallery ${galleryId}`,
           error instanceof Error ? error.stack : undefined,
         );
       }

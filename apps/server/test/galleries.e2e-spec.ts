@@ -506,7 +506,9 @@ describe('Galleries integration', () => {
     }
 
     await request(app.getHttpServer())
-      .delete(`/galleries/${gallery.id}/access/invitations/${pendingInvitation.id}`)
+      .delete(
+        `/galleries/${gallery.id}/access/invitations/${pendingInvitation.id}`,
+      )
       .set('Authorization', `Bearer ${ownerToken}`)
       .expect(204);
 
