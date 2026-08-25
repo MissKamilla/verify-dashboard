@@ -8,7 +8,8 @@ import { DataSource } from 'typeorm';
 
 import { AppModule } from '../src/app.module';
 import { UPLOAD_IMAGES_FIELD_NAME } from '../src/images/images.constants';
-import { MailService } from '../src/mail/mail.service';
+import { MailProcessor } from '../src/mail/mail.processor';
+import { MailQueueService } from '../src/mail/mail-queue.service';
 import {
   AuthResponseBody,
   CreateGalleryPayload,
@@ -34,20 +35,24 @@ export async function createE2eApp(): Promise<{
     imports: [AppModule],
   });
 
-  moduleBuilder.overrideProvider(MailService).useValue({
-    sendVerificationCode: jest.fn((to: string, code: string) => {
+  moduleBuilder.overrideProvider(MailQueueService).useValue({
+    enqueueVerificationEmail: jest.fn((to: string, code: string) => {
       sentVerificationCodes.set(to, code);
 
       return Promise.resolve();
     }),
-    sendGallerySharedNotification: jest.fn(() => Promise.resolve()),
-    sendGalleryInvitation: jest.fn(
+    enqueueGallerySharedNotification: jest.fn(() => Promise.resolve()),
+    enqueueGalleryInvitation: jest.fn(
       (to: string, _title: string, token: string) => {
         sentGalleryInvitations.set(to, token);
 
         return Promise.resolve();
       },
     ),
+  });
+
+  moduleBuilder.overrideProvider(MailProcessor).useValue({
+    process: jest.fn(() => Promise.resolve()),
   });
 
   const moduleFixture: TestingModule = await moduleBuilder.compile();

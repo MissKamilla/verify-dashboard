@@ -14,7 +14,7 @@ import { GalleryInvitation } from './entities/gallery-invitation.entity';
 import { Gallery } from './entities/gallery.entity';
 import { GalleryRole } from './enums/gallery-role.enum';
 import { GalleriesService } from './galleries.service';
-import { MailService } from '../mail/mail.service';
+import { MailQueueService } from '../mail/mail-queue.service';
 import { removeStoredImageFile } from '../images/images-storage.utils';
 import { User } from '../users/entities/user.entity';
 
@@ -62,9 +62,9 @@ describe('GalleriesService', () => {
     transaction: jest.Mock;
   };
 
-  let mailServiceMock: {
-    sendGalleryInvitation: jest.Mock;
-    sendGallerySharedNotification: jest.Mock;
+  let mailQueueServiceMock: {
+    enqueueGalleryInvitation: jest.Mock;
+    enqueueGallerySharedNotification: jest.Mock;
   };
 
   beforeEach(() => {
@@ -103,9 +103,9 @@ describe('GalleriesService', () => {
       transaction: jest.fn(),
     };
 
-    mailServiceMock = {
-      sendGalleryInvitation: jest.fn(),
-      sendGallerySharedNotification: jest.fn(),
+    mailQueueServiceMock = {
+      enqueueGalleryInvitation: jest.fn(),
+      enqueueGallerySharedNotification: jest.fn(),
     };
 
     galleriesService = new GalleriesService(
@@ -115,7 +115,7 @@ describe('GalleriesService', () => {
       galleryInvitationRepositoryMock as unknown as Repository<GalleryInvitation>,
       usersRepositoryMock as unknown as Repository<User>,
       dataSourceMock as unknown as DataSource,
-      mailServiceMock as unknown as MailService,
+      mailQueueServiceMock as unknown as MailQueueService,
     );
   });
 
@@ -852,7 +852,7 @@ describe('GalleriesService', () => {
         sendNotification: true,
       });
 
-      const [, , sentToken] = mailServiceMock.sendGalleryInvitation.mock
+      const [, , sentToken] = mailQueueServiceMock.enqueueGalleryInvitation.mock
         .calls[0] as [string, string, string];
 
       expect(sentToken).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
@@ -878,11 +878,9 @@ describe('GalleriesService', () => {
         invitation,
       );
 
-      expect(mailServiceMock.sendGalleryInvitation).toHaveBeenCalledWith(
-        invitation.email,
-        gallery.title,
-        sentToken,
-      );
+      expect(
+        mailQueueServiceMock.enqueueGalleryInvitation,
+      ).toHaveBeenCalledWith(invitation.email, gallery.title, sentToken);
 
       expect(galleryAccessRepositoryMock.create).not.toHaveBeenCalled();
 
@@ -935,7 +933,7 @@ describe('GalleriesService', () => {
       expect(galleryAccessRepositoryMock.save).toHaveBeenCalledWith(access);
 
       expect(
-        mailServiceMock.sendGallerySharedNotification,
+        mailQueueServiceMock.enqueueGallerySharedNotification,
       ).not.toHaveBeenCalled();
 
       expect(result).toEqual({
@@ -1096,7 +1094,7 @@ describe('GalleriesService', () => {
       });
 
       expect(
-        mailServiceMock.sendGallerySharedNotification,
+        mailQueueServiceMock.enqueueGallerySharedNotification,
       ).toHaveBeenCalledWith(targetUser.email, gallery.title);
 
       expect(result).toEqual({

@@ -7,6 +7,8 @@ process.env.DATABASE_NAME = 'verify_dashboard_test';
 process.env.JWT_SECRET = 'test_secret';
 process.env.JWT_EXPIRES_IN = '1d';
 
+process.env.REDIS_URL = 'redis://localhost:6379';
+
 process.env.SMTP_HOST = 'localhost';
 process.env.SMTP_PORT = '1025';
 process.env.SMTP_SECURE = 'false';

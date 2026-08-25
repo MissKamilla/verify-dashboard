@@ -20,11 +20,12 @@ export class MailProcessor extends WorkerHost {
 
   async process(job: Job): Promise<void> {
     switch (job.name) {
-      case MAIL_JOBS.VERIFICATION:
+      case MAIL_JOBS.VERIFICATION: {
         const data = job.data as VerificationEmailJobData;
 
         await this.mailService.sendVerificationCode(data.email, data.code);
         return;
+      }
       case MAIL_JOBS.GALLERY_INVITATION: {
         const data = job.data as GalleryInvitationEmailJobData;
 
@@ -60,7 +61,8 @@ export class MailProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   onFailed(job: Job | undefined, error: Error): void {
     this.logger.error(
-      `Mail job ${job?.id ?? 'unknown'} failed: ${job?.name ?? 'unknown'}`,
+      `Mail job ${job?.id ?? 'unknown'} failed: ${job?.name ?? 'unknown'} ` +
+        `(attempt ${job?.attemptsMade ?? 'unknown'}/${job?.opts.attempts ?? 'unknown'})`,
       error.stack,
     );
   }
