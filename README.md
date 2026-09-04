@@ -1,6 +1,7 @@
 # Verify Dashboard
 
 Fullstack project with React frontend and NestJS backend.
+[Live Demo](https://verify-dashboard-client.vercel.app/login)
 
 ## Tech Stack
 
