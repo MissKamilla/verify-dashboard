@@ -2,12 +2,14 @@ import { httpClient } from "@/shared/api/httpClient";
 
 import type {
   AuthResponse,
+  ForgotPasswordPayload,
   InvitationResponse,
   LoginFormValues,
   RegisterByInvitePayload,
   RegisterPayload,
   RegisterResponse,
   ResendVerificationPayload,
+  ResetPasswordPayload,
   VerifyEmailPayload,
 } from "./types";
 
@@ -69,6 +71,28 @@ export const loginUser = async (
   payload: LoginFormValues,
 ): Promise<AuthResponse> => {
   const response = await httpClient.post<AuthResponse>("/auth/login", payload);
+
+  return response.data;
+};
+
+export const requestPasswordReset = async (
+  payload: ForgotPasswordPayload,
+): Promise<RegisterResponse> => {
+  const response = await httpClient.post<RegisterResponse>(
+    "/auth/forgot-password",
+    payload,
+  );
+
+  return response.data;
+};
+
+export const resetPassword = async (
+  payload: ResetPasswordPayload,
+): Promise<RegisterResponse> => {
+  const response = await httpClient.post<RegisterResponse>(
+    "/auth/reset-password",
+    payload,
+  );
 
   return response.data;
 };

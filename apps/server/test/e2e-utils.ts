@@ -21,6 +21,7 @@ import {
 
 export const sentVerificationCodes = new Map<string, string>();
 export const sentGalleryInvitations = new Map<string, string>();
+export const sentPasswordResetTokens = new Map<string, string>();
 
 export const uploadImagesDir = join(
   process.cwd(),
@@ -38,6 +39,11 @@ export async function createE2eApp(): Promise<{
   moduleBuilder.overrideProvider(MailQueueService).useValue({
     enqueueVerificationEmail: jest.fn((to: string, code: string) => {
       sentVerificationCodes.set(to, code);
+
+      return Promise.resolve();
+    }),
+    enqueuePasswordResetEmail: jest.fn((to: string, token: string) => {
+      sentPasswordResetTokens.set(to, token);
 
       return Promise.resolve();
     }),
@@ -77,9 +83,10 @@ export async function createE2eApp(): Promise<{
 export async function resetE2eState(dataSource: DataSource): Promise<void> {
   sentVerificationCodes.clear();
   sentGalleryInvitations.clear();
+  sentPasswordResetTokens.clear();
 
   await dataSource.query(
-    'TRUNCATE TABLE "email_verifications", "gallery_invitations", "images", "galleries", "users" RESTART IDENTITY CASCADE',
+    'TRUNCATE TABLE "email_verifications", "password_resets", "gallery_invitations", "images", "galleries", "users" RESTART IDENTITY CASCADE',
   );
 
   await rm(uploadImagesDir, {

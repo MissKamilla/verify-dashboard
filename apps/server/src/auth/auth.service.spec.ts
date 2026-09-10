@@ -21,7 +21,9 @@ import { AuthService } from './auth.service';
 import { RegisterByInviteDto } from './dto/invitation.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
+import { PasswordReset } from './entities/password-reset.entity';
 
 jest.mock('bcrypt', () => ({
   hash: jest.fn(),
@@ -57,12 +59,21 @@ describe('AuthService', () => {
 
   let mailQueueServiceMock: {
     enqueueVerificationEmail: jest.Mock;
+    enqueuePasswordResetEmail: jest.Mock;
   };
 
   let verificationRepositoryMock: {
     findOne: jest.Mock;
     create: jest.Mock;
     save: jest.Mock;
+    remove: jest.Mock;
+  };
+
+  let passwordResetRepositoryMock: {
+    findOne: jest.Mock;
+    create: jest.Mock;
+    save: jest.Mock;
+    upsert: jest.Mock;
     remove: jest.Mock;
   };
 
@@ -89,12 +100,21 @@ describe('AuthService', () => {
 
     mailQueueServiceMock = {
       enqueueVerificationEmail: jest.fn(),
+      enqueuePasswordResetEmail: jest.fn(),
     };
 
     verificationRepositoryMock = {
       findOne: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
+      remove: jest.fn(),
+    };
+
+    passwordResetRepositoryMock = {
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      upsert: jest.fn(),
       remove: jest.fn(),
     };
 
@@ -105,6 +125,7 @@ describe('AuthService', () => {
       jwtServiceMock as unknown as JwtService,
       mailQueueServiceMock as unknown as MailQueueService,
       verificationRepositoryMock as unknown as Repository<EmailVerification>,
+      passwordResetRepositoryMock as unknown as Repository<PasswordReset>,
     );
   });
 
@@ -1150,6 +1171,343 @@ describe('AuthService', () => {
       expect(jwtServiceMock.signAsync).toHaveBeenCalledWith({
         sub: 1,
         email: dto.email,
+      });
+    });
+  });
+
+  describe('forgotPassword', () => {
+    let passwordResetUsersRepositoryMock: {
+      findOne: jest.Mock;
+    };
+
+    beforeEach(() => {
+      passwordResetUsersRepositoryMock = {
+        findOne: jest.fn(),
+      };
+
+      const managerMock = {
+        getRepository: jest.fn((entity: unknown) => {
+          if (entity === User) {
+            return passwordResetUsersRepositoryMock;
+          }
+
+          if (entity === PasswordReset) {
+            return passwordResetRepositoryMock;
+          }
+
+          throw new Error('Unexpected repository');
+        }),
+      };
+
+      dataSourceMock.transaction.mockImplementation(
+        async (callback: (manager: typeof managerMock) => Promise<unknown>) =>
+          callback(managerMock),
+      );
+    });
+
+    it('returns generic message when user does not exist', async () => {
+      const dto: ForgotPasswordDto = {
+        email: 'missing@example.com',
+      };
+
+      usersServiceMock.findByEmail.mockResolvedValue(null);
+
+      const result = await authService.forgotPassword(dto);
+
+      expect(result).toEqual({
+        message: 'If an account exists, password reset instructions were sent',
+      });
+
+      expect(passwordResetRepositoryMock.save).not.toHaveBeenCalled();
+      expect(
+        mailQueueServiceMock.enqueuePasswordResetEmail,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('returns generic message without email when user is not verified', async () => {
+      const dto: ForgotPasswordDto = {
+        email: 'anna@test.com',
+      };
+
+      usersServiceMock.findByEmail.mockResolvedValue({
+        id: 1,
+        email: dto.email,
+        verifiedAt: null,
+      });
+
+      const result = await authService.forgotPassword(dto);
+
+      expect(result).toEqual({
+        message: 'If an account exists, password reset instructions were sent',
+      });
+
+      expect(passwordResetRepositoryMock.save).not.toHaveBeenCalled();
+      expect(
+        mailQueueServiceMock.enqueuePasswordResetEmail,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('upserts reset token hash and sends reset email for verified user', async () => {
+      const dto: ForgotPasswordDto = {
+        email: 'anna@test.com',
+      };
+
+      const user = {
+        id: 1,
+        email: dto.email,
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      usersServiceMock.findByEmail.mockResolvedValue(user);
+      passwordResetUsersRepositoryMock.findOne.mockResolvedValue(user);
+      passwordResetRepositoryMock.findOne.mockResolvedValue(null);
+
+      const result = await authService.forgotPassword(dto);
+
+      expect(result).toEqual({
+        message: 'If an account exists, password reset instructions were sent',
+      });
+
+      const emailCall = mailQueueServiceMock.enqueuePasswordResetEmail.mock
+        .calls[0] as [string, string];
+      const [, token] = emailCall;
+
+      expect(emailCall[0]).toBe(dto.email);
+      expect(token).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
+      expect(passwordResetUsersRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: {
+          id: user.id,
+        },
+        lock: {
+          mode: 'pessimistic_write',
+        },
+      });
+
+      const [upsertPayload, conflictPaths] = passwordResetRepositoryMock.upsert
+        .mock.calls[0] as [
+        {
+          userId: number;
+          tokenHash: string;
+          expiresAt: Date;
+          lastSentAt: Date;
+        },
+        string[],
+      ];
+
+      expect(upsertPayload).toMatchObject({
+        userId: user.id,
+        tokenHash: createHash('sha256').update(token).digest('hex'),
+      });
+      expect(upsertPayload.expiresAt).toBeInstanceOf(Date);
+      expect(upsertPayload.lastSentAt).toBeInstanceOf(Date);
+      expect(conflictPaths).toEqual(['userId']);
+    });
+
+    it('does not rotate token or send email within reset email cooldown', async () => {
+      const dto: ForgotPasswordDto = {
+        email: 'anna@test.com',
+      };
+
+      const user = {
+        id: 1,
+        email: dto.email,
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      usersServiceMock.findByEmail.mockResolvedValue(user);
+      passwordResetUsersRepositoryMock.findOne.mockResolvedValue(user);
+      passwordResetRepositoryMock.findOne.mockResolvedValue({
+        id: 10,
+        userId: user.id,
+        tokenHash: 'existing-token-hash',
+        expiresAt: new Date(Date.now() + 60_000),
+        lastSentAt: new Date(),
+      });
+
+      const result = await authService.forgotPassword(dto);
+
+      expect(result).toEqual({
+        message: 'If an account exists, password reset instructions were sent',
+      });
+
+      expect(passwordResetRepositoryMock.upsert).not.toHaveBeenCalled();
+      expect(
+        mailQueueServiceMock.enqueuePasswordResetEmail,
+      ).not.toHaveBeenCalled();
+    });
+
+    it('rotates existing reset token after cooldown', async () => {
+      const dto: ForgotPasswordDto = {
+        email: 'anna@test.com',
+      };
+
+      const user = {
+        id: 1,
+        email: dto.email,
+        verifiedAt: new Date('2026-01-01T00:00:00.000Z'),
+      };
+
+      const passwordReset = {
+        id: 10,
+        user,
+        userId: user.id,
+        tokenHash: 'old-token-hash',
+        expiresAt: new Date('2026-01-01T00:00:00.000Z'),
+        lastSentAt: new Date(Date.now() - 61_000),
+      };
+
+      usersServiceMock.findByEmail.mockResolvedValue(user);
+      passwordResetUsersRepositoryMock.findOne.mockResolvedValue(user);
+      passwordResetRepositoryMock.findOne.mockResolvedValue(passwordReset);
+
+      await authService.forgotPassword(dto);
+
+      expect(passwordResetRepositoryMock.create).not.toHaveBeenCalled();
+      const [upsertPayload, conflictPaths] = passwordResetRepositoryMock.upsert
+        .mock.calls[0] as [
+        {
+          userId: number;
+          tokenHash: string;
+          expiresAt: Date;
+          lastSentAt: Date;
+        },
+        string[],
+      ];
+
+      expect(upsertPayload.userId).toBe(user.id);
+      expect(upsertPayload.tokenHash).not.toBe('old-token-hash');
+      expect(upsertPayload.expiresAt).toBeInstanceOf(Date);
+      expect(upsertPayload.lastSentAt).toBeInstanceOf(Date);
+      expect(conflictPaths).toEqual(['userId']);
+      expect(
+        mailQueueServiceMock.enqueuePasswordResetEmail,
+      ).toHaveBeenCalledWith(
+        dto.email,
+        expect.stringMatching(/^[a-f0-9]{64}$/),
+      );
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('throws BadRequestException when reset token does not exist', async () => {
+      const dto: ResetPasswordDto = {
+        token: 'a'.repeat(64),
+        password: 'NewPassword1',
+      };
+
+      passwordResetRepositoryMock.findOne.mockResolvedValue(null);
+
+      const resetPromise = authService.resetPassword(dto);
+
+      await expect(resetPromise).rejects.toBeInstanceOf(BadRequestException);
+      await expect(resetPromise).rejects.toThrow(
+        'Invalid password reset token',
+      );
+
+      expect(passwordResetRepositoryMock.findOne).toHaveBeenCalledWith({
+        where: {
+          tokenHash: createHash('sha256').update(dto.token).digest('hex'),
+        },
+        relations: {
+          user: true,
+        },
+      });
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+      expect(dataSourceMock.transaction).not.toHaveBeenCalled();
+    });
+
+    it('removes expired reset token and throws BadRequestException', async () => {
+      const dto: ResetPasswordDto = {
+        token: 'a'.repeat(64),
+        password: 'NewPassword1',
+      };
+
+      const passwordReset = {
+        id: 10,
+        userId: 1,
+        user: {
+          id: 1,
+          email: 'anna@test.com',
+        },
+        tokenHash: createHash('sha256').update(dto.token).digest('hex'),
+        expiresAt: new Date(Date.now() - 1000),
+      };
+
+      passwordResetRepositoryMock.findOne.mockResolvedValue(passwordReset);
+
+      const resetPromise = authService.resetPassword(dto);
+
+      await expect(resetPromise).rejects.toBeInstanceOf(BadRequestException);
+      await expect(resetPromise).rejects.toThrow(
+        'Password reset token expired',
+      );
+
+      expect(passwordResetRepositoryMock.remove).toHaveBeenCalledWith(
+        passwordReset,
+      );
+      expect(bcrypt.hash).not.toHaveBeenCalled();
+      expect(dataSourceMock.transaction).not.toHaveBeenCalled();
+    });
+
+    it('updates user password and deletes reset tokens when token is valid', async () => {
+      const dto: ResetPasswordDto = {
+        token: 'a'.repeat(64),
+        password: 'NewPassword1',
+      };
+
+      const passwordReset = {
+        id: 10,
+        userId: 1,
+        user: {
+          id: 1,
+          email: 'anna@test.com',
+          password: 'old-hash',
+        },
+        tokenHash: createHash('sha256').update(dto.token).digest('hex'),
+        expiresAt: new Date(Date.now() + 60_000),
+      };
+
+      const usersRepositoryMock = {
+        save: jest.fn(),
+      };
+
+      const resetRepositoryMock = {
+        delete: jest.fn(),
+      };
+
+      const managerMock = {
+        getRepository: jest.fn((entity: unknown) => {
+          if (entity === User) {
+            return usersRepositoryMock;
+          }
+
+          if (entity === PasswordReset) {
+            return resetRepositoryMock;
+          }
+
+          throw new Error('Unexpected repository');
+        }),
+      };
+
+      dataSourceMock.transaction.mockImplementation(
+        async (callback: (manager: typeof managerMock) => Promise<unknown>) =>
+          callback(managerMock),
+      );
+
+      passwordResetRepositoryMock.findOne.mockResolvedValue(passwordReset);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new-password-hash');
+
+      const result = await authService.resetPassword(dto);
+
+      expect(result).toEqual({
+        message: 'Password has been reset',
+      });
+
+      expect(bcrypt.hash).toHaveBeenCalledWith(dto.password, 10);
+      expect(passwordReset.user.password).toBe('new-password-hash');
+      expect(usersRepositoryMock.save).toHaveBeenCalledWith(passwordReset.user);
+      expect(resetRepositoryMock.delete).toHaveBeenCalledWith({
+        userId: passwordReset.userId,
       });
     });
   });

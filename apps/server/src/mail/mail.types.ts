@@ -3,6 +3,11 @@ export type VerificationEmailJobData = {
   code: string;
 };
 
+export type PasswordResetEmailJobData = {
+  email: string;
+  token: string;
+};
+
 export type GalleryInvitationEmailJobData = {
   email: string;
   galleryTitle: string;

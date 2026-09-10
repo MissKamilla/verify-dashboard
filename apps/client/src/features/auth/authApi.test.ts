@@ -7,6 +7,8 @@ import {
   loginUser,
   registerByInvite,
   registerUser,
+  requestPasswordReset,
+  resetPassword,
   resendVerification,
   verifyEmail,
 } from "./authApi";
@@ -155,5 +157,52 @@ describe("authApi", () => {
     expect(httpClient.post).toHaveBeenCalledWith("/auth/login", payload);
 
     expect(result).toEqual(authResponse);
+  });
+
+  it("requests password reset and returns response data", async () => {
+    const payload = {
+      email: "anna@test.com",
+    };
+
+    const response = {
+      message: "If an account exists, password reset instructions were sent",
+    };
+
+    vi.mocked(httpClient.post).mockResolvedValue({
+      data: response,
+    });
+
+    const result = await requestPasswordReset(payload);
+
+    expect(httpClient.post).toHaveBeenCalledWith(
+      "/auth/forgot-password",
+      payload,
+    );
+
+    expect(result).toEqual(response);
+  });
+
+  it("resets password and returns response data", async () => {
+    const payload = {
+      token: "reset-token",
+      password: "NewPassword123",
+    };
+
+    const response = {
+      message: "Password has been reset",
+    };
+
+    vi.mocked(httpClient.post).mockResolvedValue({
+      data: response,
+    });
+
+    const result = await resetPassword(payload);
+
+    expect(httpClient.post).toHaveBeenCalledWith(
+      "/auth/reset-password",
+      payload,
+    );
+
+    expect(result).toEqual(response);
   });
 });

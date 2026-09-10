@@ -7,8 +7,9 @@ export function PublicOnlyRoute() {
   const searchParams = new URLSearchParams(location.search);
   const isInviteRegistration =
     location.pathname === "/register" && searchParams.has("invite");
+  const isPasswordReset = location.pathname === "/reset-password";
 
-  if (hasAuthToken() && !isInviteRegistration) {
+  if (hasAuthToken() && !isInviteRegistration && !isPasswordReset) {
     return <Navigate to="/galleries" replace />;
   }
 

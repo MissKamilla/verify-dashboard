@@ -30,6 +30,10 @@ vi.mock("@/pages/EditGalleryPage", () => ({
   EditGalleryPage: () => createElement("div", null, "Edit gallery page"),
 }));
 
+vi.mock("@/pages/ForgotPasswordPage", () => ({
+  ForgotPasswordPage: () => createElement("div", null, "Forgot password page"),
+}));
+
 vi.mock("@/pages/GalleriesPage", () => ({
   GalleriesPage: () => createElement("div", null, "Galleries page"),
 }));
@@ -54,8 +58,16 @@ vi.mock("@/pages/RegisterPage", () => ({
   RegisterPage: () => createElement("div", null, "Register page"),
 }));
 
+vi.mock("@/pages/ResetPasswordPage", () => ({
+  ResetPasswordPage: () => createElement("div", null, "Reset password page"),
+}));
+
 vi.mock("@/pages/UploadPhotosPage", () => ({
   UploadPhotosPage: () => createElement("div", null, "Upload photos page"),
+}));
+
+vi.mock("@/pages/VerifyEmailPage", () => ({
+  VerifyEmailPage: () => createElement("div", null, "Verify email page"),
 }));
 
 const hasAuthTokenMock = vi.mocked(hasAuthToken);
@@ -133,8 +145,35 @@ describe("AppRouter", () => {
     expect(container.textContent).toContain("Register page");
   });
 
+  it("renders forgot password page for guest", () => {
+    const { container } = renderAppRouter("/forgot-password", false);
+
+    expect(container.textContent).toContain("Forgot password page");
+  });
+
+  it("renders reset password page for guest", () => {
+    const { container } = renderAppRouter(
+      "/reset-password?token=reset-token",
+      false,
+    );
+
+    expect(container.textContent).toContain("Reset password page");
+  });
+
+  it("renders reset password page for authenticated user", () => {
+    const { container } = renderAppRouter(
+      "/reset-password?token=reset-token",
+      true,
+    );
+
+    expect(container.textContent).toContain("Reset password page");
+  });
+
   it("renders invite registration page for authenticated user", () => {
-    const { container } = renderAppRouter("/register?invite=invite-token", true);
+    const { container } = renderAppRouter(
+      "/register?invite=invite-token",
+      true,
+    );
 
     expect(container.textContent).toContain("Register page");
   });

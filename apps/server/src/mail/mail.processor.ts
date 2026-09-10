@@ -6,6 +6,7 @@ import { MAIL_JOBS, MAIL_QUEUE } from './mail.constants';
 import type {
   GalleryInvitationEmailJobData,
   GallerySharedEmailJobData,
+  PasswordResetEmailJobData,
   VerificationEmailJobData,
 } from './mail.types';
 import { MailService } from './mail.service';
@@ -24,6 +25,12 @@ export class MailProcessor extends WorkerHost {
         const data = job.data as VerificationEmailJobData;
 
         await this.mailService.sendVerificationCode(data.email, data.code);
+        return;
+      }
+      case MAIL_JOBS.PASSWORD_RESET: {
+        const data = job.data as PasswordResetEmailJobData;
+
+        await this.mailService.sendPasswordReset(data.email, data.token);
         return;
       }
       case MAIL_JOBS.GALLERY_INVITATION: {

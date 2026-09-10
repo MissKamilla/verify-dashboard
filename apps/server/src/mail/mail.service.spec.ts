@@ -120,4 +120,25 @@ describe('MailService', () => {
       'https://app.test/register?invite=invite-token',
     );
   });
+
+  it('sends password reset email with frontend reset link', async () => {
+    const mailService = new MailService(
+      configServiceMock as unknown as ConfigService,
+    );
+
+    await mailService.sendPasswordReset('anna@test.com', 'reset-token');
+
+    const payload = getFirstMockCallArg<SendMailPayload>(sendMailMock);
+
+    expect(payload).toMatchObject({
+      from: '"Verify Test" <noreply@test.com>',
+      to: 'anna@test.com',
+      subject: 'Reset your password',
+      text: 'Reset your password here: https://app.test/reset-password?token=reset-token. This link expires in 1 hour.',
+    });
+
+    expect(payload.html).toContain(
+      'https://app.test/reset-password?token=reset-token',
+    );
+  });
 });

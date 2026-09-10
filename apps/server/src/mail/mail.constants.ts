@@ -2,6 +2,7 @@ export const MAIL_QUEUE = 'mail';
 
 export const MAIL_JOBS = {
   VERIFICATION: 'send-verification-email',
+  PASSWORD_RESET: 'send-password-reset-email',
   GALLERY_INVITATION: 'send-gallery-invitation',
   GALLERY_SHARED: 'send-gallery-shared-notification',
 } as const;
