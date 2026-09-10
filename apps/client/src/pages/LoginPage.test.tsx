@@ -241,7 +241,15 @@ describe("LoginPage", () => {
     expect(container.textContent).toContain("Auth layout: login");
     expect(container.textContent).toContain("Sign In");
     expect(container.textContent).toContain("Enter your email and password");
+    expect(container.textContent).toContain("Forgot password?");
     expect(container.textContent).toContain("Create an Account");
+    expect(
+      Array.from(container.querySelectorAll("a")).some(
+        (link) =>
+          link.textContent === "Forgot password?" &&
+          link.getAttribute("href") === "/forgot-password",
+      ),
+    ).toBe(true);
     expect(container.querySelector("button")?.disabled).toBe(true);
     expect(
       container

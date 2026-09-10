@@ -10,6 +10,7 @@ import { MAIL_JOBS, MAIL_QUEUE } from './mail.constants';
 import type {
   GalleryInvitationEmailJobData,
   GallerySharedEmailJobData,
+  PasswordResetEmailJobData,
   VerificationEmailJobData,
 } from './mail.types';
 
@@ -30,6 +31,17 @@ export class MailQueueService {
       };
 
       await this.mailQueue.add(MAIL_JOBS.VERIFICATION, data);
+    });
+  }
+
+  async enqueuePasswordResetEmail(email: string, token: string): Promise<void> {
+    await this.runQueueOperation('enqueue password reset email', async () => {
+      const data: PasswordResetEmailJobData = {
+        email,
+        token,
+      };
+
+      await this.mailQueue.add(MAIL_JOBS.PASSWORD_RESET, data);
     });
   }
 

@@ -4,12 +4,14 @@ import { AuthenticatedLayout } from "@/components/AuthenticatedLayout";
 
 import { CreateGalleryPage } from "@/pages/CreateGalleryPage";
 import { EditGalleryPage } from "@/pages/EditGalleryPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { GalleriesPage } from "@/pages/GalleriesPage";
 import { GalleryDetailsPage } from "@/pages/GalleryDetailsPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { ProfilePage } from "@/pages/ProfilePage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { ResetPasswordPage } from "@/pages/ResetPasswordPage";
 import { UploadPhotosPage } from "@/pages/UploadPhotosPage";
 import { VerifyEmailPage } from "@/pages/VerifyEmailPage";
 
@@ -21,7 +23,9 @@ export function AppRouter() {
       <Route element={<PublicOnlyRoute />}>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
       </Route>
 

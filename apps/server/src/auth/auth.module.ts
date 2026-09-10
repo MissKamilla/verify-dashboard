@@ -10,6 +10,7 @@ import { MailModule } from '../mail/mail.module';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { EmailVerification } from './entities/email-verification.entity';
 import { GalleriesModule } from '../galleries/galleries.module';
+import { PasswordReset } from './entities/password-reset.entity';
 
 @Global()
 @Module({
@@ -17,7 +18,7 @@ import { GalleriesModule } from '../galleries/galleries.module';
     MailModule,
     GalleriesModule,
     UsersModule,
-    TypeOrmModule.forFeature([EmailVerification]),
+    TypeOrmModule.forFeature([EmailVerification, PasswordReset]),
     JwtModule.registerAsync({
       global: true,
       imports: [ConfigModule],

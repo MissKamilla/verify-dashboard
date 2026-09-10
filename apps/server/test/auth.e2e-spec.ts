@@ -10,6 +10,7 @@ import {
   registerUser,
   resetE2eState,
   sentGalleryInvitations,
+  sentPasswordResetTokens,
   sentVerificationCodes,
 } from './e2e-utils';
 import {
@@ -228,6 +229,93 @@ describe('Auth integration', () => {
     const responseBody = response.body as ErrorResponseBody;
 
     expect(responseBody.message).toBe('Invalid verification code');
+  });
+
+  it('resets password using emailed reset token', async () => {
+    await registerUser(app, {
+      email: 'anna@test.com',
+      password: 'OldPassword123',
+    });
+
+    await request(app.getHttpServer())
+      .post('/auth/forgot-password')
+      .send({
+        email: 'ANNA@test.com',
+      })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          message:
+            'If an account exists, password reset instructions were sent',
+        });
+      });
+
+    const resetToken = sentPasswordResetTokens.get('anna@test.com');
+
+    expect(resetToken).toEqual(expect.stringMatching(/^[a-f0-9]{64}$/));
+
+    await request(app.getHttpServer())
+      .post('/auth/reset-password')
+      .send({
+        token: resetToken,
+        password: 'NewPassword123',
+      })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          message: 'Password has been reset',
+        });
+      });
+
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'anna@test.com',
+        password: 'OldPassword123',
+      })
+      .expect(401);
+
+    const response = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'anna@test.com',
+        password: 'NewPassword123',
+      })
+      .expect(200);
+
+    const responseBody = response.body as AuthResponseBody;
+
+    expect(responseBody.token).toEqual(expect.any(String));
+
+    await request(app.getHttpServer())
+      .post('/auth/reset-password')
+      .send({
+        token: resetToken,
+        password: 'AnotherPassword123',
+      })
+      .expect(400)
+      .expect(({ body }) => {
+        const responseBody = body as ErrorResponseBody;
+
+        expect(responseBody.message).toBe('Invalid password reset token');
+      });
+  });
+
+  it('returns generic password reset response for unknown email', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/forgot-password')
+      .send({
+        email: 'missing@test.com',
+      })
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body).toEqual({
+          message:
+            'If an account exists, password reset instructions were sent',
+        });
+      });
+
+    expect(sentPasswordResetTokens.has('missing@test.com')).toBe(false);
   });
 
   it('resends verification code for unverified user', async () => {

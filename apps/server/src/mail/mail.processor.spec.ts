@@ -7,6 +7,7 @@ import { MailService } from './mail.service';
 describe('MailProcessor', () => {
   let mailServiceMock: {
     sendVerificationCode: jest.Mock;
+    sendPasswordReset: jest.Mock;
     sendGalleryInvitation: jest.Mock;
     sendGallerySharedNotification: jest.Mock;
   };
@@ -16,6 +17,7 @@ describe('MailProcessor', () => {
   beforeEach(() => {
     mailServiceMock = {
       sendVerificationCode: jest.fn().mockResolvedValue(undefined),
+      sendPasswordReset: jest.fn().mockResolvedValue(undefined),
       sendGalleryInvitation: jest.fn().mockResolvedValue(undefined),
       sendGallerySharedNotification: jest.fn().mockResolvedValue(undefined),
     };
@@ -54,6 +56,21 @@ describe('MailProcessor', () => {
       'invitee@test.com',
       'Nature',
       'invite-token',
+    );
+  });
+
+  it('sends password reset email jobs through MailService', async () => {
+    await mailProcessor.process({
+      name: MAIL_JOBS.PASSWORD_RESET,
+      data: {
+        email: 'anna@test.com',
+        token: 'reset-token',
+      },
+    } as Job);
+
+    expect(mailServiceMock.sendPasswordReset).toHaveBeenCalledWith(
+      'anna@test.com',
+      'reset-token',
     );
   });
 

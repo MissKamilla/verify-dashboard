@@ -7,10 +7,14 @@ import {
 } from "@/shared/lib/validationRules";
 
 import type {
+  ForgotPasswordFormErrors,
+  ForgotPasswordFormValues,
   LoginFormErrors,
   LoginFormValues,
   RegisterFormErrors,
   RegisterFormValues,
+  ResetPasswordFormErrors,
+  ResetPasswordFormValues,
 } from "./types";
 
 export const validateRegisterForm = (
@@ -62,6 +66,42 @@ export const validateLoginForm = (values: LoginFormValues): LoginFormErrors => {
 
   if (passwordError) {
     errors.password = passwordError;
+  }
+
+  return errors;
+};
+
+export const validateForgotPasswordForm = (
+  values: ForgotPasswordFormValues,
+): ForgotPasswordFormErrors => {
+  const errors: ForgotPasswordFormErrors = {};
+
+  const emailError = getEmailError(values.email);
+
+  if (emailError) {
+    errors.email = emailError;
+  }
+
+  return errors;
+};
+
+export const validateResetPasswordForm = (
+  values: ResetPasswordFormValues,
+): ResetPasswordFormErrors => {
+  const errors: ResetPasswordFormErrors = {};
+
+  const passwordError = getStrongPasswordError(values.password);
+  const confirmPasswordError = getConfirmPasswordError(
+    values.password,
+    values.confirmPassword,
+  );
+
+  if (passwordError) {
+    errors.password = passwordError;
+  }
+
+  if (confirmPasswordError) {
+    errors.confirmPassword = confirmPasswordError;
   }
 
   return errors;

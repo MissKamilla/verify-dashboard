@@ -37,6 +37,26 @@ export class MailService {
     });
   }
 
+  async sendPasswordReset(to: string, token: string): Promise<void> {
+    const frontendUrl = this.configService
+      .getOrThrow<string>('FRONTEND_URL')
+      .replace(/\/$/, '');
+    const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
+
+    await this.sendMail({
+      to,
+      subject: 'Reset your password',
+      text: `Reset your password here: ${resetUrl}. This link expires in 1 hour.`,
+      html: `
+      <p>You requested a password reset.</p>
+      <p>
+        <a href="${resetUrl}">Reset password</a>
+      </p>
+      <p>This link expires in 1 hour.</p>
+    `,
+    });
+  }
+
   async sendGallerySharedNotification(
     to: string,
     galleryTitle: string,

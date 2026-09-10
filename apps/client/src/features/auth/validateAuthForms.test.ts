@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { validateLoginForm, validateRegisterForm } from "./validateAuthForms";
+import {
+  validateForgotPasswordForm,
+  validateLoginForm,
+  validateRegisterForm,
+  validateResetPasswordForm,
+} from "./validateAuthForms";
 
 describe("validateRegisterForm", () => {
   it("returns no errors for valid registration values", () => {
@@ -53,6 +58,49 @@ describe("validateLoginForm", () => {
     ).toEqual({
       email: "Email must be valid",
       password: "Password is required",
+    });
+  });
+});
+
+describe("validateForgotPasswordForm", () => {
+  it("returns no errors for valid email", () => {
+    expect(
+      validateForgotPasswordForm({
+        email: "anna@test.com",
+      }),
+    ).toEqual({});
+  });
+
+  it("returns email error for invalid email", () => {
+    expect(
+      validateForgotPasswordForm({
+        email: "invalid-email",
+      }),
+    ).toEqual({
+      email: "Email must be valid",
+    });
+  });
+});
+
+describe("validateResetPasswordForm", () => {
+  it("returns no errors for valid reset password values", () => {
+    expect(
+      validateResetPasswordForm({
+        password: "Password1",
+        confirmPassword: "Password1",
+      }),
+    ).toEqual({});
+  });
+
+  it("returns errors for weak and mismatched passwords", () => {
+    expect(
+      validateResetPasswordForm({
+        password: "short",
+        confirmPassword: "different",
+      }),
+    ).toEqual({
+      password: "Password must be at least 8 characters",
+      confirmPassword: "Passwords must match",
     });
   });
 });

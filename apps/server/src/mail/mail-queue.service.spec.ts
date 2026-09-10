@@ -42,6 +42,18 @@ describe('MailQueueService', () => {
     });
   });
 
+  it('enqueues password reset email job', async () => {
+    await mailQueueService.enqueuePasswordResetEmail(
+      'anna@test.com',
+      'reset-token',
+    );
+
+    expect(queueMock.add).toHaveBeenCalledWith(MAIL_JOBS.PASSWORD_RESET, {
+      email: 'anna@test.com',
+      token: 'reset-token',
+    });
+  });
+
   it('enqueues gallery shared notification job', async () => {
     await mailQueueService.enqueueGallerySharedNotification(
       'editor@test.com',

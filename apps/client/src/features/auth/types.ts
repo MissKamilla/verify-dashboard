@@ -21,6 +21,23 @@ export type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>;
 
 export type RegisterPayload = Omit<RegisterFormValues, "confirmPassword">;
 
+export type ForgotPasswordFormValues = {
+  email: string;
+};
+
+export type ForgotPasswordFormErrors = Partial<
+  Record<keyof ForgotPasswordFormValues, string>
+>;
+
+export type ResetPasswordFormValues = {
+  password: string;
+  confirmPassword: string;
+};
+
+export type ResetPasswordFormErrors = Partial<
+  Record<keyof ResetPasswordFormValues, string>
+>;
+
 export type RegisterResponse = {
   message: string;
 };
@@ -32,6 +49,15 @@ export type VerifyEmailPayload = {
 
 export type ResendVerificationPayload = {
   email: string;
+};
+
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
+  password: string;
 };
 
 export type AuthResponse = {

@@ -24,6 +24,11 @@ import {
   RegisterByInviteDto,
 } from './dto/invitation.dto';
 import { LoginDto } from './dto/login.dto';
+import {
+  ForgotPasswordDto,
+  PasswordResetResponseDto,
+  ResetPasswordDto,
+} from './dto/password-reset.dto';
 import { RegisterDto, RegisterResponseDto } from './dto/register.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
 
@@ -122,5 +127,37 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(dto);
+  }
+
+  @ApiOperation({ summary: 'Request password reset email' })
+  @ApiOkResponse({
+    description: 'Password reset instructions sent when account exists',
+    type: PasswordResetResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid request body',
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post('forgot-password')
+  forgotPassword(
+    @Body() dto: ForgotPasswordDto,
+  ): Promise<PasswordResetResponseDto> {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @ApiOperation({ summary: 'Reset user password' })
+  @ApiOkResponse({
+    description: 'Password reset successfully',
+    type: PasswordResetResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid or expired password reset token',
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post('reset-password')
+  resetPassword(
+    @Body() dto: ResetPasswordDto,
+  ): Promise<PasswordResetResponseDto> {
+    return this.authService.resetPassword(dto);
   }
 }

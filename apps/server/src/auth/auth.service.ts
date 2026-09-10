@@ -8,7 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { createHash, randomInt } from 'crypto';
+import { createHash, randomBytes, randomInt } from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 
 import { GalleriesService } from '../galleries/galleries.service';
@@ -21,7 +21,13 @@ import { RegisterByInviteDto } from './dto/invitation.dto';
 import { EmailVerification } from './entities/email-verification.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
 import { ResendVerificationDto, VerifyEmailDto } from './dto/verify-email.dto';
+import { PasswordReset } from './entities/password-reset.entity';
+
+const PASSWORD_RESET_MESSAGE =
+  'If an account exists, password reset instructions were sent';
+const PASSWORD_RESET_EMAIL_COOLDOWN_MS = 60 * 1000;
 
 @Injectable()
 export class AuthService {
@@ -34,6 +40,9 @@ export class AuthService {
 
     @InjectRepository(EmailVerification)
     private readonly verificationRepository: Repository<EmailVerification>,
+
+    @InjectRepository(PasswordReset)
+    private readonly passwordResetRepository: Repository<PasswordReset>,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ message: string }> {
@@ -250,6 +259,63 @@ export class AuthService {
     return { token };
   }
 
+  async forgotPassword(dto: ForgotPasswordDto): Promise<{ message: string }> {
+    const user = await this.usersService.findByEmail(dto.email);
+
+    if (!user?.verifiedAt) {
+      return {
+        message: PASSWORD_RESET_MESSAGE,
+      };
+    }
+
+    const token = await this.createPasswordReset(user);
+
+    if (token) {
+      await this.mailQueueService.enqueuePasswordResetEmail(user.email, token);
+    }
+
+    return {
+      message: PASSWORD_RESET_MESSAGE,
+    };
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<{ message: string }> {
+    const tokenHash = this.hashPasswordResetToken(dto.token);
+
+    const passwordReset = await this.passwordResetRepository.findOne({
+      where: { tokenHash },
+      relations: {
+        user: true,
+      },
+    });
+
+    if (!passwordReset) {
+      throw new BadRequestException('Invalid password reset token');
+    }
+
+    if (passwordReset.expiresAt < new Date()) {
+      await this.passwordResetRepository.remove(passwordReset);
+
+      throw new BadRequestException('Password reset token expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    passwordReset.user.password = hashedPassword;
+
+    await this.dataSource.transaction(async (manager) => {
+      await manager.getRepository(User).save(passwordReset.user);
+
+      await manager.getRepository(PasswordReset).delete({
+        userId: passwordReset.userId,
+      });
+    });
+
+    return {
+      message: 'Password has been reset',
+    };
+  }
+
   private async createVerification(user: User): Promise<string> {
     const code = randomInt(100000, 1000000).toString();
     const codeHash = await bcrypt.hash(code, 10);
@@ -273,6 +339,56 @@ export class AuthService {
     await this.verificationRepository.save(verification);
 
     return code;
+  }
+
+  private async createPasswordReset(user: User): Promise<string> {
+    return this.dataSource.transaction(async (manager) => {
+      const usersRepository = manager.getRepository(User);
+      const passwordResetRepository = manager.getRepository(PasswordReset);
+      const lockedUser = await usersRepository.findOne({
+        where: { id: user.id },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!lockedUser) {
+        return '';
+      }
+
+      const now = new Date();
+      const cooldownThreshold = new Date(
+        now.getTime() - PASSWORD_RESET_EMAIL_COOLDOWN_MS,
+      );
+      const existingPasswordReset = await passwordResetRepository.findOne({
+        where: { userId: lockedUser.id },
+      });
+
+      if (
+        existingPasswordReset &&
+        existingPasswordReset.lastSentAt > cooldownThreshold
+      ) {
+        return '';
+      }
+
+      const token = randomBytes(32).toString('hex');
+      const tokenHash = this.hashPasswordResetToken(token);
+      const expiresAt = new Date(now.getTime() + 60 * 60 * 1000);
+
+      await passwordResetRepository.upsert(
+        {
+          userId: lockedUser.id,
+          tokenHash,
+          expiresAt,
+          lastSentAt: now,
+        },
+        ['userId'],
+      );
+
+      return token;
+    });
+  }
+
+  private hashPasswordResetToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
   }
 
   private async applyPendingInvitations(user: User): Promise<void> {
