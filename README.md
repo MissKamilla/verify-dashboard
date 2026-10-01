@@ -21,8 +21,7 @@ Fullstack project with React frontend and NestJS backend.
 - TypeScript
 - TypeORM
 - PostgreSQL
-- BullMQ
-- Redis
+- BullMQ + Redis (background job queues)
 - bcrypt
 - Swagger
 
